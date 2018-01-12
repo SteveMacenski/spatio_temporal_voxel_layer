@@ -40,10 +40,50 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 ### costmap_common_params.yaml
 
+An example fully-described configuration is shown below.
+
+```
+rgbd_obstacle_layer:
+  enabled:               true
+  voxel_decay:           20 #seconds
+  voxel_decay_static:    1.
+  voxel_size:            0.05
+  track_unknown_space:   true
+  observation_persistence: 0.0
+  max_obstacle_height:   2.0
+  unknown_threshold:     15
+  mark_threshold:        0
+  combination_method:    1
+  obstacle_range:        3.0
+  raytrace_range:        15.0
+  origin_z:              0.0
+  publish_voxel_map:     true
+  observation_sources: rgbd_clear rgbd_clear
+  rgbd1_mark:
+    data_type: PointCloud2
+    topic: camera1/depth/points
+    marking: true
+    clearing: false
+    min_obstacle_height: 0.3
+    max_obstacle_height: 2.0
+  rgbd1_clear:
+    data_type: PointCloud2
+    topic: camera1/depth/points
+    marking: false
+    clearing: true
+    min_obstacle_height: -15.
+    max_obstacle_height: 15.
+```
+
 ### local/global_costmap_params.yaml
+
+Add this plugin to your costmap params file. 
+
+`- {name: rgbd_obstacle_layer,     type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"}`
+
 
 ### Running
 
-`roslaunch [navigation package] move_base.launch`
+`roslaunch [navigation_pkg] move_base.launch`
 
 **This is a highly experimental package under heavy development. Functionality is not guaranteed until the first full release.**
