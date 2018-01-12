@@ -1,0 +1,5 @@
+<library path="lib/libspatio_temporal_voxel_layer">
+  <class name="spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer" type="spatio_temporal_voxel_layer::SpatioTemporalVoxelLayer" base_class_type="costmap_2d::Layer">
+    <description>This is a plugin for a openvdb powered 3D obstacle layer</description>
+  </class>
+</library>
