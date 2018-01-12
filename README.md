@@ -59,14 +59,14 @@ rgbd_obstacle_layer:
   origin_z:              0.0
   publish_voxel_map:     true
   observation_sources: rgbd_clear rgbd_clear
-  rgbd1_mark:
+  rgbd_mark:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: true
     clearing: false
     min_obstacle_height: 0.3
     max_obstacle_height: 2.0
-  rgbd1_clear:
+  rgbd_clear:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: false
