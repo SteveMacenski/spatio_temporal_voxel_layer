@@ -6,10 +6,10 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
-## *Spatio*-Temporal
+## **Spatio**-Temporal
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
-## Spatio-*Temporal*
+## Spatio-**Temporal**
 The Temporal in this package is the novel concept of `voxel_decay` whereas we have functions that associate to voxels and their information expires over time. In development, exist infrasture to store times in each voxel after which the voxel will disappear from the map. The goal is also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.    
 
 ## Raytracing
@@ -17,4 +17,4 @@ This package utilizes OpenVDB's raytracing and intersector technologies to raytr
 
 In development is an additional method of tracing where frustums of cameras are projected into the levelset and cleared. This may be combined in the future with the temporal features above to accelerate the decay of those voxels that do not remain marked rather than simply clearing them naively.
 
-*This is a highly experimental package under heavy development. Functionality is not guaranteed until the first full release.*
+**This is a highly experimental package under heavy development. Functionality is not guaranteed until the first full release.**
