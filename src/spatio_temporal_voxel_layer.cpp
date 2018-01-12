@@ -35,24 +35,6 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-// temporal expiration of voxels, over known static obstacles stay longer / scale factor / always, connected component
-//     things randomly appear stay much less long
-// tracking of depth connected blobs/convex hull
-// allow different size than map and interpolate highest cost when projecting down
-
-// optional doing clear frustum then marking, or both
-
-// 4.5 make class to do ros-y things and instructions in it on how to build on top  for costmap_3d: lower barrier to entry
-// 5.5 implement for local costmap too, publish just that section of global lol
-// yaml keep out zones + service exposed / reset
-
-// how to rebuild all of nav stack to be better/faster. actions for get_path, execute_path, recovery, normal move_abse SMACH
-// no requirement on local/global costmaps. just planner plugins and they can spin up what they need
-// no loops on planning/controling/recovering, use different threads
-// maybe another thread for the environment representation that just fills out an abstract class with returning costs at XYZ (default z=0)
-
-// rename everythung
-
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.h"
 
 namespace spatio_temporal_voxel_layer {
