@@ -72,7 +72,8 @@
 #ifndef OPENVDB_OBSTACLE_LAYER_H_
 #define OPENVDB_OBSTACLE_LAYER_H_
 
-namespace spatio_temporal_voxel_layer {
+namespace spatio_temporal_voxel_layer
+{
 
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer
 {
@@ -117,7 +118,7 @@ private:
                           const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
 
   // Functions for adding static obstacle zones
-  bool AddStaticObservations(const costmap_2d::Observation& obs); //todo expose as service or read from file
+  bool AddStaticObservations(const costmap_2d::Observation& obs);
   bool RemoveStaticObservations(void);
 
   laser_geometry::LaserProjection                                  _laser_projector;
@@ -127,17 +128,16 @@ private:
   std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> >   _marking_buffers;
   std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> >   _clearing_buffers;
 
-  bool _publish_voxels;
-  ros::Publisher _voxel_pub;
-  std::string _global_frame;
-  double _voxel_size, _voxel_decay;
-  bool _rolling_window;
-  int _combination_method, _mark_threshold;
-  bool _update_footprint_enabled, _enabled;
-  std::vector<geometry_msgs::Point> _transformed_footprint;
+  bool                                 _publish_voxels;
+  ros::Publisher                       _voxel_pub;
+  std::string                          _global_frame;
+  double                               _voxel_size, _voxel_decay;
+  bool                                 _rolling_window;
+  int                                  _combination_method, _mark_threshold;
+  bool                                 _update_footprint_enabled, _enabled;
+  std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<costmap_2d::Observation> _static_observations;
-
-  LevelSet* _level_set;
+  LevelSet*                            _level_set;
 };
 
 }; // end namespace

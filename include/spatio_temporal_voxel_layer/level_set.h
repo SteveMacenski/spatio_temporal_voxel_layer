@@ -34,7 +34,7 @@
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  * Purpose: Implement OpenVDB's voxel library with ray tracing for our 
- * internal voxel grid layer.
+ *          internal voxel grid layer.
  *********************************************************************/
 
 // ros
@@ -59,7 +59,8 @@
 #ifndef OPENVDB_GRID_H_
 #define OPENVDB_GRID_H_
 
-namespace spatio_temporal_voxel_layer {
+namespace spatio_temporal_voxel_layer
+{
 
 struct parallel_request
 {
@@ -94,7 +95,7 @@ public:
   void ResizeLevelSet(int cells_dx, int cells_dy, double resolution, double origin_x, double origin_y);
   void CopyLevelSetRegion();
 
-  // convinience functions
+  // transformation functions
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
 
@@ -106,9 +107,9 @@ protected:
   bool ClearLevelSetPoint(const openvdb::Coord& pt) const;
 
   mutable openvdb::Int32Grid::Ptr _grid;
-  int _background_value;
-  double _voxel_size;
-  bool _marking;
+  int                             _background_value;
+  double                          _voxel_size;
+  bool                            _marking;
 };
 
 };

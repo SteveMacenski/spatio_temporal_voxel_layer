@@ -1,6 +1,6 @@
 /*********************************************************************
  *
- * Software License Agreement (Apache 2.0 License)
+ * Software License Agreement
  *
  *  Copyright (c) 2018, Simbe Robotics, Inc.
  *  All rights reserved.
@@ -34,22 +34,6 @@
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
-
-//names
-// OpenVDB Voxel Layer
-// OpenVDB 3D Obstacle Layer
-// Volume Obstacle Layer
-// Sparse Level Set Voxel Layer
-// Level Set 3D Obstacle Layer
-// Level Set Volumetric Obstacle Layer
-// Spatio-Temporal Volumetric Obstacle Level Set
-// Spatio-Temporal Volumetric Obstacle Layer 
-// Spatio-Temporal Voxel Layer 
-// Frustum-based Spatio-Temporal Voxel Layer
-// Spatio-Temporal Volumetric Level Set
-// not "layer" want to be a standalone thing too
-
-// set voxel expiration / connected component mathematics
 
 #include <spatio_temporal_voxel_layer/level_set.h>
 

@@ -17,4 +17,33 @@ This package utilizes OpenVDB's raytracing and intersector technologies to raytr
 
 In development is an additional method of tracing where frustums of cameras are projected into the levelset and cleared. This may be combined in the future with the temporal features above to accelerate the decay of those voxels that do not remain marked rather than simply clearing them naively.
 
+## Installation
+Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
+
+### ROS
+
+[See install instructions here.](http://wiki.ros.org/kinetic/Installation)
+
+### Navigation
+
+`sudo apt-get install ros-kinetic-navigation`
+
+### OpenVDB
+
+Coming soon.
+
+### TBB
+
+Coming soon;
+
+## Configuration and Running
+
+### costmap_common_params.yaml
+
+### local/global_costmap_params.yaml
+
+### Running
+
+`roslaunch [navigation package] move_base.launch`
+
 **This is a highly experimental package under heavy development. Functionality is not guaranteed until the first full release.**
