@@ -89,29 +89,12 @@ void LevelSet::ParallelMarkLevelSet(const std::vector<costmap_2d::Observation>& 
 void LevelSet::ParallelClearLevelSet(const std::vector<costmap_2d::Observation>& observations)
 /*****************************************************************************/
 {
-  if(_grid->empty())
+  if(_grid->empty() || observations.size() == 0)
   {
     return;
   }
-
-  // parallel process each data from sensor streams
-  std::vector<parallel_request> total_obs_vec;
-  for (int i=0; i!=observations.size(); i++)
-  {
-    const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
-    for (uint i=0; i!=cloud.size(); i++)
-    {
-      const pcl::PointXYZ& pt = cloud.points.at(i);
-      const double range = observations.at(i).raytrace_range_;
-      total_obs_vec.push_back(parallel_request(pt, range));
-    }
-  }
-
-  if (observations.size() > 0) 
-  {
-    _marking = false;
-    tbb::parallel_do(total_obs_vec, *this);
-  }
+  _marking = false;
+  tbb::parallel_do(observations, *this); //todo try just doing all in a loop and making 1 instance of the tracer object
   return;
 }
 
@@ -119,7 +102,7 @@ void LevelSet::ParallelClearLevelSet(const std::vector<costmap_2d::Observation>&
 void LevelSet::operator()(const costmap_2d::Observation& obs) const
 /*****************************************************************************/
 {
-  if (_marking) // _marking is safe b/c it is modified after threads have ended
+  if (_marking)
   {
     const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
     double mark_range_2 = obs.obstacle_range_ * obs.obstacle_range_;
@@ -146,7 +129,6 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
   else 
   {
     openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid> _tracer(*_grid);
-    //openvdb::v3_1::tools::LinearSearchImpl<openvdb::Int32Grid> _tracer(*_grid, 1.);
 
     const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
     double raytrace_range_2 = obs.raytrace_range_ * obs.raytrace_range_;
@@ -183,21 +165,6 @@ void LevelSet::RaytraceLevelSet(const geometry_msgs::Point& origin, \
     ROS_WARN_THROTTLE(10., "Levelset: Ray misses bbox of grid.");
     return;
   }
-
-  /*
-  if (!openvdb::math::LevelSetHDDA<openvdb::Int32Grid::TreeType, openvdb::Int32Grid::TreeType::RootNodeType::ChildNodeType::LEVEL>::test(_tracer)){
-    ROS_WARN_THROTTLE(10., "Levelset: Ray misses grid.");
-    return;
-  } 
-
-  openvdb::math::Vec3<double> hit;
-  _tracer.getWorldPos(hit);
-  openvdb::Vec3d clear_pose( WorldToIndex(hit));
-  if(!ClearLevelSetPoint(openvdb::Coord(clear_pose[0], clear_pose[1], clear_pose[2])))
-  {
-    ROS_WARN_THROTTLE(10.,"Failed to clear point (%f %f %f).", clear_pose[0], \
-                                               clear_pose[1], clear_pose[2]);
-  }*/
 
   // find hits in volume and clear them
   std::vector<GridRay::TimeSpan> hits;
@@ -271,8 +238,7 @@ void LevelSet::GridToPointCloud2(pcl::PointCloud<pcl::PointXYZ>& pc)
     if (citer.getValue() > _background_value )
     {
       openvdb::Vec3d pose_world = _grid->indexToWorld(citer.getCoord());
-      pcl::PointXYZ pt(pose_world[0], pose_world[1], pose_world[2]);
-      pc.push_back(pt);
+      pc.push_back(pcl::PointXYZ(pose_world[0], pose_world[1], pose_world[2]));
     }
   }
 }
@@ -281,13 +247,6 @@ void LevelSet::GridToPointCloud2(pcl::PointCloud<pcl::PointXYZ>& pc)
 void LevelSet::CopyLevelSetRegion()
 /*****************************************************************************/
 {
-  //TODO copy the VDB map region specified
-  /*openvdb::Int32Grid::Ptr source_map, \
-                                 unsigned int sm_lower_left_x, unsigned int sm_lower_left_y, \
-                                 unsigned int sm_size_x, openvdb::Int32Grid::Ptr dest_map, \
-                                 unsigned int dm_lower_left_x, unsigned int dm_lower_left_y, \
-                                 unsigned int dm_size_x, unsigned int region_size_x, \
-                                 unsigned int region_size_y*/
   ROS_FATAL("no copying VDB implemented, rolling costmaps are not possible. Do not proceed");
 }
 
@@ -310,8 +269,6 @@ void LevelSet::ResizeLevelSet(int cells_dx, int cells_dy, double resolution, \
                              double origin_x, double origin_y)
 /*****************************************************************************/
 {
-  //TODO, but seems for now we can maintain the full grid without needing to resize
-  // when we write to costmap, get there the dimensions to throw info to
   ROS_WARN("resizing VDB grid is not yet implemented");
 }
 

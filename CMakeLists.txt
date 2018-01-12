@@ -69,8 +69,8 @@ catkin_package(
 )
 
 add_library(spatio_temporal_voxel_layer
-  src/spatio_temporal_voxel_layer.cpp
-  src/level_set.cpp
+            src/spatio_temporal_voxel_layer.cpp
+            src/level_set.cpp
 )
 
 target_link_libraries(spatio_temporal_voxel_layer

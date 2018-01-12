@@ -64,11 +64,14 @@ namespace spatio_temporal_voxel_layer
 
 struct parallel_request
 {
-  parallel_request(const pcl::PointXYZ& _pt, const double& _range) : pt(_pt), 
-                                                                     range(_range)
+  parallel_request(const pcl::PointXYZ& _pt, const double& _range, const geometry_msgs::Point& _origin) : 
+                                                                     pt(_pt), 
+                                                                     range(_range),
+                                                                     origin(_origin)
   {return;}
 
   pcl::PointXYZ pt;
+  geometry_msgs::Point origin;
   double range;
 };
 
