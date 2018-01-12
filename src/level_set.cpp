@@ -120,7 +120,6 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
 /*****************************************************************************/
 {
   if (_marking) // _marking is safe b/c it is modified after threads have ended
-
   {
     const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
     double mark_range_2 = obs.obstacle_range_ * obs.obstacle_range_;
