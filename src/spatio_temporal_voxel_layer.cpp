@@ -131,7 +131,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
      sensor_frame = tf::resolve(tf_prefix, sensor_frame);
     }
 
-    if (!(data_type == "PointCloud2" || data_type == "PointCloud" || data_type == "LaserScan"))
+    if (!(data_type == "PointCloud2" || data_type == "LaserScan"))
     {
       ROS_FATAL("Only topics that use pointcloud2s or laser scans are supported.");
       throw std::runtime_error( \
@@ -226,26 +226,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_notifiers.push_back(filter);
     } 
 
-    else if (data_type == "PointCloud")
-    {
-      boost::shared_ptr < message_filters::Subscriber<sensor_msgs::PointCloud>
-          > sub(new message_filters::Subscriber<sensor_msgs::PointCloud>(g_nh, topic, 50));
-
-      if (inf_is_valid)
-      {
-       ROS_WARN("inf_is_valid option is not valid for PointClouds.");
-      }
-
-      boost::shared_ptr < tf::MessageFilter<sensor_msgs::PointCloud>
-          > filter(new tf::MessageFilter<sensor_msgs::PointCloud>(*sub, *tf_, _global_frame, 50));
-      filter->registerCallback(
-          boost::bind(&SpatioTemporalVoxelLayer::PointCloudCallback, this, _1, \
-                                                   _observation_buffers.back()));
-
-      _observation_subscribers.push_back(sub);
-      _observation_notifiers.push_back(filter);
-    }
-
     if (sensor_frame != "")
     {
       std::vector < std::string > target_frames;
@@ -309,24 +289,6 @@ void SpatioTemporalVoxelLayer::LaserScanValidInfCallback( \
   // buffer the point cloud
   buffer->lock();
   buffer->bufferCloud(cloud);
-  buffer->unlock();
-}
-
-/*****************************************************************************/
-void SpatioTemporalVoxelLayer::PointCloudCallback( \
-                           const sensor_msgs::PointCloudConstPtr& message, \
-                           const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer)
-/*****************************************************************************/
-{
-  sensor_msgs::PointCloud2 cloud2;
-  if (!sensor_msgs::convertPointCloudToPointCloud2(*message, cloud2))
-  {
-    ROS_ERROR("Failed to convert a PointCloud to a PointCloud2, dropping message");
-    return;
-  }
-  // buffer the point cloud
-  buffer->lock();
-  buffer->bufferCloud(cloud2);
   buffer->unlock();
 }
 
@@ -483,7 +445,7 @@ void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::AddStaticObservations(const costmap_2d::Observation& obs)
 /*****************************************************************************/
-{ //TODO expose as an external service / topic
+{
   // observations to always be added to the map each update cycle not explicitly marked on the map.
   ROS_INFO("%s: Adding static observation to map.", getName().c_str());
 
@@ -512,7 +474,6 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
   }
 }
 
-  /*ONLY FUNCTIONS NEEDED TO CHANGE FOR CHANGING A LAYER ARE BELOW TIL END*/
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::resetMaps(void)
 /*****************************************************************************/
@@ -623,10 +584,12 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-  // mark observations and publish PC2
+  //parallize these as well?
+
+  // mark observations
   _level_set->ParallelMarkLevelSet(marking_observations);
 
-  // ray trace clearing observations and clear voxels in grid
+  // ray trace clearing observations
   _level_set->ParallelClearLevelSet(clearing_observations);
 
   // update the ROS costmap
@@ -636,7 +599,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
 
   // publish point cloud
-  if (true)
+  if (_publish_voxels)
   {
     pcl::PointCloud<pcl::PointXYZ> pc;
     _level_set->GridToPointCloud2(pc);

@@ -104,10 +104,11 @@ public:
 
 protected:
   void InitializeGrid(const bool& rolling);
-  bool MarkLevelSetPoint(const openvdb::Coord& pt, const int& value) const;
+  bool MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::Int32Grid::Accessor& accessor) const;
   void RaytraceLevelSet(const geometry_msgs::Point& origin, const pcl::PointXYZ& terminal, \
-             const double& mag, openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid>& tracer) const;
-  bool ClearLevelSetPoint(const openvdb::Coord& pt) const;
+             const double& mag, openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid>& tracer, \
+             openvdb::Int32Grid::Accessor& accessor) const;
+  bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::Int32Grid::Accessor& accessor) const;
 
   mutable openvdb::Int32Grid::Ptr _grid;
   int                             _background_value;

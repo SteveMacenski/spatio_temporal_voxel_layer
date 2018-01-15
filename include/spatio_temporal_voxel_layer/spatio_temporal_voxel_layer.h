@@ -114,8 +114,6 @@ private:
                                  const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
   void PointCloud2Callback(const sensor_msgs::PointCloud2ConstPtr& message, \
                           const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
-  void PointCloudCallback(const sensor_msgs::PointCloudConstPtr& message, \
-                          const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
 
   // Functions for adding static obstacle zones
   bool AddStaticObservations(const costmap_2d::Observation& obs);

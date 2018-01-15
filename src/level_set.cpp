@@ -94,7 +94,7 @@ void LevelSet::ParallelClearLevelSet(const std::vector<costmap_2d::Observation>&
     return;
   }
   _marking = false;
-  tbb::parallel_do(observations, *this); //todo try just doing all in a loop and making 1 instance of the tracer object
+  tbb::parallel_do(observations, *this);
   return;
 }
 
@@ -102,25 +102,24 @@ void LevelSet::ParallelClearLevelSet(const std::vector<costmap_2d::Observation>&
 void LevelSet::operator()(const costmap_2d::Observation& obs) const
 /*****************************************************************************/
 {
+  openvdb::Int32Grid::Accessor accessor = _grid->getAccessor();
+
   if (_marking)
   {
-    const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
     double mark_range_2 = obs.obstacle_range_ * obs.obstacle_range_;
 
-    for (unsigned int i=0; i!=cloud.points.size(); i++)
+    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.cloud_->points.begin(); \
+                                                    it < obs.cloud_->points.end(); ++it)
     {
-      pcl::PointXYZ pt = cloud.points[i];
-      double distance_2 = (pt.x - obs.origin_.x) * (pt.x - obs.origin_.x) \
-                        + (pt.y - obs.origin_.y) * (pt.y - obs.origin_.y) \
-                        + (pt.z - obs.origin_.z) * (pt.z - obs.origin_.z);
-      if (distance_2 > mark_range_2)
+      double distance_2 = (it->x - obs.origin_.x) * (it->x - obs.origin_.x) \
+                        + (it->y - obs.origin_.y) * (it->y - obs.origin_.y) \
+                        + (it->z - obs.origin_.z) * (it->z - obs.origin_.z);
+      if (distance_2 > mark_range_2 || distance_2 < 0.0001)
       {
         continue;
       }
-      openvdb::Vec3d mark_grid = WorldToIndex(openvdb::Vec3d(cloud.points[i].x, \
-                                                             cloud.points[i].y, \
-                                                             cloud.points[i].z));
-      if(!MarkLevelSetPoint(openvdb::Coord(mark_grid[0], mark_grid[1], mark_grid[2]), 255)) {
+      openvdb::Vec3d mark_grid(this->WorldToIndex(openvdb::Vec3d(it->x, it->y, it->z)));
+      if(!MarkLevelSetPoint(openvdb::Coord(mark_grid[0], mark_grid[1], mark_grid[2]), 255, accessor)) {
         ROS_WARN_THROTTLE(1.,"Failed to mark point in levelset coordinates (%f %f %f)", 
                                             mark_grid[0], mark_grid[1], mark_grid[2]);
       }
@@ -128,22 +127,20 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
   }
   else 
   {
-    openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid> _tracer(*_grid);
-
-    const pcl::PointCloud<pcl::PointXYZ>& cloud = *(obs.cloud_);
+    openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid> _tracer(*_grid, 1);
     double raytrace_range_2 = obs.raytrace_range_ * obs.raytrace_range_;
 
-    for (unsigned int i=0; i!=cloud.points.size(); i++)
+    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.cloud_->points.begin(); \
+                                                    it < obs.cloud_->points.end(); ++it)
     {
-      pcl::PointXYZ pt = cloud.points[i];
-      double distance_2 = (pt.x - obs.origin_.x) * (pt.x - obs.origin_.x) \
-                        + (pt.y - obs.origin_.y) * (pt.y - obs.origin_.y) \
-                        + (pt.z - obs.origin_.z) * (pt.z - obs.origin_.z);
+      double distance_2 = (it->x - obs.origin_.x) * (it->x - obs.origin_.x) \
+                        + (it->y - obs.origin_.y) * (it->y - obs.origin_.y) \
+                        + (it->z - obs.origin_.z) * (it->z - obs.origin_.z);
       if (distance_2 > raytrace_range_2 || distance_2 < 0.0001)
       {
         continue;
       }
-      RaytraceLevelSet(obs.origin_, pt, std::sqrt(distance_2), _tracer);
+      RaytraceLevelSet(obs.origin_, *it, std::sqrt(distance_2), _tracer, accessor);
     }
   }
 }
@@ -152,17 +149,18 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
 void LevelSet::RaytraceLevelSet(const geometry_msgs::Point& origin, \
                                 const pcl::PointXYZ& terminal, \
                                 const double& mag, \
-                                 openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid>& _tracer) const
+                                openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid>& _tracer, \
+                                openvdb::Int32Grid::Accessor& accessor) const
 /*****************************************************************************/
 {
-  // find origin of measurement and vector ray
-  Vec3Type eye(origin.x, origin.y, origin.z); 
-
-  GridRay ray(eye, Vec3Type((terminal.x-origin.x)/mag, (terminal.y-origin.y)/mag, (terminal.z-origin.z)/mag), \
-              0.01 , 1.05*mag);
+  GridRay ray(Vec3Type(origin.x, origin.y, origin.z), \
+              Vec3Type((terminal.x-origin.x)/mag,     \
+                       (terminal.y-origin.y)/mag,     \
+                       (terminal.z-origin.z)/mag ),   \
+              0.01, mag);
 
   if(!_tracer.setWorldRay(ray)) {
-    ROS_WARN_THROTTLE(10., "Levelset: Ray misses bbox of grid.");
+    ROS_WARN_THROTTLE(10., "Levelset: Ray misses grid entries.");
     return;
   }
 
@@ -170,19 +168,22 @@ void LevelSet::RaytraceLevelSet(const geometry_msgs::Point& origin, \
   std::vector<GridRay::TimeSpan> hits;
   _tracer.hits(hits);
 
-  if (hits.size() > 0)
+  // try marching instead todo
+  if (hits.empty())
   {
-    for (int i=0; i!=hits.size(); i++)
+    return;
+  }
+  unsigned int hits_size = hits.size();
+  for (std::vector<GridRay::TimeSpan>::const_iterator iter = hits.begin(); iter != hits.end(); ++iter)
+  {
+    openvdb::Vec3d clear_pose = this->WorldToIndex(_tracer.getWorldPos(iter->t0));
+    if(!ClearLevelSetPoint(openvdb::Coord(clear_pose[0], clear_pose[1], clear_pose[2]), accessor))
     {
-      openvdb::math::Vec3<double> hit(_tracer.getWorldPos(hits.at(i).t0));
-      openvdb::Vec3d clear_pose( WorldToIndex(hit));
-      if(!ClearLevelSetPoint(openvdb::Coord(clear_pose[0], clear_pose[1], clear_pose[2])))
-      {
-        ROS_WARN_THROTTLE(1.,"Failed to clear point (%f %f %f).", clear_pose[0], \
-                                                  clear_pose[1], clear_pose[2]);
-      }
+      ROS_WARN_THROTTLE(1.,"Failed to clear point (%f %f %f).", clear_pose[0], \
+                                                clear_pose[1], clear_pose[2]);
     }
   }
+
 }
 
 /*****************************************************************************/
@@ -273,33 +274,30 @@ void LevelSet::ResizeLevelSet(int cells_dx, int cells_dy, double resolution, \
 }
 
 /*****************************************************************************/
-bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, const int& value) const
+bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::Int32Grid::Accessor& accessor) const
 /*****************************************************************************/
 {
-  openvdb::Int32Grid::Accessor accessor = _grid->getAccessor();
   int curr_value = accessor.getValue(pt);
   if (curr_value == _background_value || curr_value < value)
   {
     accessor.setValueOn(pt, value);
   }
-  return (accessor.getValue(pt) == value && accessor.isValueOn(pt));
+  return true; //(accessor.getValue(pt) == value && accessor.isValueOn(pt));
 }
 
 /*****************************************************************************/
-bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt) const
+bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::Int32Grid::Accessor& accessor) const
 /*****************************************************************************/
 {
-  openvdb::Int32Grid::Accessor accessor = _grid->getAccessor();
   accessor.setValueOff(pt, _background_value);
-  return (accessor.getValue(pt) == _background_value && !accessor.isValueOn(pt));
+  return true; //(accessor.getValue(pt) == _background_value && !accessor.isValueOn(pt));
 }
 
 /*****************************************************************************/
 openvdb::Vec3d LevelSet::IndexToWorld(const openvdb::Coord& coord) const
 /*****************************************************************************/
 {
-  // convert indices in map (# voxels) to world coordinates (m). Applies
-  // tranform stored in getTransform.
+  // Applies tranform stored in getTransform.
   return _grid->indexToWorld(coord);
 }
 
@@ -307,8 +305,7 @@ openvdb::Vec3d LevelSet::IndexToWorld(const openvdb::Coord& coord) const
 openvdb::Vec3d LevelSet::WorldToIndex(const openvdb::Vec3d& vec) const
 /*****************************************************************************/
 {
-  // convert indices in world (m) to world coordinates (# voxels). Applies
-  // tranform stored in getTransform.
+  // Applies inverse tranform stored in getTransform.
   return _grid->worldToIndex(vec);
 }
 
