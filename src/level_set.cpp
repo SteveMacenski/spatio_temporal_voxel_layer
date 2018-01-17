@@ -56,7 +56,7 @@ void LevelSet::InitializeGrid(const bool& rolling)
   // initialize the OpenVDB Grid volume
   openvdb::initialize();
 
-  _grid = openvdb::Int32Grid::create( _background_value );
+  _grid = openvdb::FloatGrid::create( _background_value );
 
   openvdb::Mat4d m = openvdb::Mat4d::identity();
   m.preScale(openvdb::Vec3d(_voxel_size, _voxel_size, _voxel_size));
@@ -73,47 +73,44 @@ void LevelSet::InitializeGrid(const bool& rolling)
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelMarkLevelSet(const std::vector<costmap_2d::Observation>& observations)
+void LevelSet::ParallelizeMarkAndClear(const std::vector<costmap_2d::Observation>& marking_observations, \
+                                       const std::vector<costmap_2d::Observation>& clearing_observations)
 /*****************************************************************************/
 {
-  // parallel process each sensor stream
-  if (observations.size() > 0) 
+  std::vector<parallel_request> observation_requests;
+  for (std::vector<costmap_2d::Observation>::const_iterator it = marking_observations.begin(); \
+                                                       it != marking_observations.end(); ++it)
   {
-    _marking = true;
-    tbb::parallel_do(observations, *this);
+    observation_requests.push_back(parallel_request(*it, true));
+  }
+  for (std::vector<costmap_2d::Observation>::const_iterator it = clearing_observations.begin(); \
+                                                       it != clearing_observations.end(); ++it)
+  {
+    observation_requests.push_back(parallel_request(*it, false));
+  }
+  if (observation_requests.size() > 0) 
+  {
+    tbb::parallel_do(observation_requests, *this);
   }
   return;
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelClearLevelSet(const std::vector<costmap_2d::Observation>& observations)
+void LevelSet::operator()(const parallel_request& obs) const
 /*****************************************************************************/
 {
-  if(_grid->empty() || observations.size() == 0)
+  openvdb::FloatGrid::Accessor accessor = _grid->getAccessor();
+
+  if (obs.marking)
   {
-    return;
-  }
-  _marking = false;
-  tbb::parallel_do(observations, *this);
-  return;
-}
+    double mark_range_2 = obs.observation.obstacle_range_ * obs.observation.obstacle_range_;
 
-/*****************************************************************************/
-void LevelSet::operator()(const costmap_2d::Observation& obs) const
-/*****************************************************************************/
-{
-  openvdb::Int32Grid::Accessor accessor = _grid->getAccessor();
-
-  if (_marking)
-  {
-    double mark_range_2 = obs.obstacle_range_ * obs.obstacle_range_;
-
-    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.cloud_->points.begin(); \
-                                                    it < obs.cloud_->points.end(); ++it)
+    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.observation.cloud_->points.begin(); \
+                                                    it < obs.observation.cloud_->points.end(); ++it)
     {
-      double distance_2 = (it->x - obs.origin_.x) * (it->x - obs.origin_.x) \
-                        + (it->y - obs.origin_.y) * (it->y - obs.origin_.y) \
-                        + (it->z - obs.origin_.z) * (it->z - obs.origin_.z);
+      double distance_2 = (it->x - obs.observation.origin_.x) * (it->x - obs.observation.origin_.x) \
+                        + (it->y - obs.observation.origin_.y) * (it->y - obs.observation.origin_.y) \
+                        + (it->z - obs.observation.origin_.z) * (it->z - obs.observation.origin_.z);
       if (distance_2 > mark_range_2 || distance_2 < 0.0001)
       {
         continue;
@@ -127,20 +124,24 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
   }
   else 
   {
-    openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid> _tracer(*_grid, 1);
-    double raytrace_range_2 = obs.raytrace_range_ * obs.raytrace_range_;
-
-    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.cloud_->points.begin(); \
-                                                    it < obs.cloud_->points.end(); ++it)
+    if(_grid->empty())
     {
-      double distance_2 = (it->x - obs.origin_.x) * (it->x - obs.origin_.x) \
-                        + (it->y - obs.origin_.y) * (it->y - obs.origin_.y) \
-                        + (it->z - obs.origin_.z) * (it->z - obs.origin_.z);
-      if (distance_2 > raytrace_range_2 || distance_2 < 0.0001)
+      return;
+    }  
+    openvdb::v3_1::tools::LevelSetRayIntersector<openvdb::FloatGrid> _tracer(*_grid);
+    double raytrace_range_2 = obs.observation.raytrace_range_ * obs.observation.raytrace_range_;
+
+    for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.observation.cloud_->points.begin(); \
+                                                    it < obs.observation.cloud_->points.end(); ++it)
+    {
+      double distance_2 = (it->x - obs.observation.origin_.x) * (it->x - obs.observation.origin_.x) \
+                        + (it->y - obs.observation.origin_.y) * (it->y - obs.observation.origin_.y) \
+                        + (it->z - obs.observation.origin_.z) * (it->z - obs.observation.origin_.z);
+      if (distance_2 > (raytrace_range_2+0.1) || distance_2 < 0.0001)
       {
         continue;
       }
-      RaytraceLevelSet(obs.origin_, *it, std::sqrt(distance_2), _tracer, accessor);
+      RaytraceLevelSet(obs.observation.origin_, *it, std::sqrt(distance_2), _tracer, accessor);
     }
   }
 }
@@ -149,41 +150,37 @@ void LevelSet::operator()(const costmap_2d::Observation& obs) const
 void LevelSet::RaytraceLevelSet(const geometry_msgs::Point& origin, \
                                 const pcl::PointXYZ& terminal, \
                                 const double& mag, \
-                                openvdb::v3_1::tools::VolumeRayIntersector<openvdb::Int32Grid>& _tracer, \
-                                openvdb::Int32Grid::Accessor& accessor) const
+                                openvdb::v3_1::tools::LevelSetRayIntersector<openvdb::FloatGrid>& _tracer, \
+                                openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
   GridRay ray(Vec3Type(origin.x, origin.y, origin.z), \
               Vec3Type((terminal.x-origin.x)/mag,     \
                        (terminal.y-origin.y)/mag,     \
-                       (terminal.z-origin.z)/mag ),   \
-              0.01, mag);
+                       (terminal.z-origin.z)/mag ), 0.01, mag);
 
   if(!_tracer.setWorldRay(ray)) {
-    ROS_WARN_THROTTLE(10., "Levelset: Ray misses grid entries.");
     return;
   }
 
   // find hits in volume and clear them
   std::vector<GridRay::TimeSpan> hits;
   _tracer.hits(hits);
-
-  // try marching instead todo
+  
   if (hits.empty())
   {
     return;
   }
-  unsigned int hits_size = hits.size();
+
   for (std::vector<GridRay::TimeSpan>::const_iterator iter = hits.begin(); iter != hits.end(); ++iter)
   {
-    openvdb::Vec3d clear_pose = this->WorldToIndex(_tracer.getWorldPos(iter->t0));
+    openvdb::Vec3d clear_pose = _tracer.getIndexPos(iter->mid());
     if(!ClearLevelSetPoint(openvdb::Coord(clear_pose[0], clear_pose[1], clear_pose[2]), accessor))
     {
-      ROS_WARN_THROTTLE(1.,"Failed to clear point (%f %f %f).", clear_pose[0], \
-                                                clear_pose[1], clear_pose[2]);
+     ROS_WARN_THROTTLE(1.,"Failed to clear point (%f %f %f).", clear_pose[0], \
+                                               clear_pose[1], clear_pose[2]);
     }
   }
-
 }
 
 /*****************************************************************************/
@@ -201,7 +198,7 @@ void LevelSet::ProjectVoxelGridTo2DPlane(std::vector<std::vector<int> >& flatten
     return;
   }
   /*
-  for (openvdb::Int32Grid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer)
+  for (openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer)
   {
     if (citer.getValue() > _background_value)
     {
@@ -228,13 +225,12 @@ void LevelSet::GridToPointCloud2(pcl::PointCloud<pcl::PointXYZ>& pc)
 /*****************************************************************************/
 {
   // convert the openvdb voxel grid to a pointcloud for publishing
-  // only add new points that were raytraced out / added. Update this during clearing/marking functions
   if(_grid->empty())
   {
     return;
   }
 
-  for (openvdb::Int32Grid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer)
+  for (openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer) // enforce temporal constraints here
   {
     if (citer.getValue() > _background_value )
     {
@@ -274,7 +270,7 @@ void LevelSet::ResizeLevelSet(int cells_dx, int cells_dy, double resolution, \
 }
 
 /*****************************************************************************/
-bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::Int32Grid::Accessor& accessor) const
+bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
   int curr_value = accessor.getValue(pt);
@@ -282,15 +278,15 @@ bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, ope
   {
     accessor.setValueOn(pt, value);
   }
-  return true; //(accessor.getValue(pt) == value && accessor.isValueOn(pt));
+  return accessor.getValue(pt) == value;
 }
 
 /*****************************************************************************/
-bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::Int32Grid::Accessor& accessor) const
+bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
   accessor.setValueOff(pt, _background_value);
-  return true; //(accessor.getValue(pt) == _background_value && !accessor.isValueOn(pt));
+  return !accessor.isValueOn(pt);
 }
 
 /*****************************************************************************/

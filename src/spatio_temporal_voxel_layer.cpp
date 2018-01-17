@@ -516,48 +516,7 @@ void SpatioTemporalVoxelLayer::updateOrigin(double new_origin_x, double new_orig
   // takes care of 2D ROS costmap
   Costmap2D::updateOrigin(new_origin_x, new_origin_y);
 
-  //takes care of our level set 
-  //TODO maybe rather than actually move stuff, how about just save the transformation and offset?
-  /*int cell_dx = int( ( new_origin_x - origin_x_ ) / _voxel_size );
-  int cell_dy = int( ( new_origin_y - origin_y_ ) / _voxel_size );
-
-  // find new world coordinates of the grid when align-shifted
-  double new_grid_ox = origin_x_ + cell_dx * _voxel_size;
-  double new_grid_oy = origin_x_ + cell_dy * _voxel_size;
-
-  // cast to int for convinience
-  int size_x = size_x_;
-  int size_y = size_y_;
-
-  // find the bounding box of the overlapping area when align-shifted
-  int lower_left_x = std::min(std::max(cell_dx, 0), size_x);
-  int lower_left_y = std::min(std::max(cell_dy, 0), size_y);
-  int upper_right_x = std::min(std::max(cell_dx + size_x, 0), size_x);
-  int upper_right_y = std::min(std::max(cell_dy + size_y, 0), size_y);
-  unsigned int cell_size_x = upper_right_x - lower_left_x;
-  unsigned int cell_size_y = upper_right_y - lower_left_y;
-
-  // save this regions info during a map clear and origin shift
-  unsigned char* local_map = new unsigned char[cell_size_x * cell_size_y];
-  openvdb::Int32Grid::Ptr local_voxel_map = openvdb::Int32Grid::create();
-
-  copyMapRegion(costmap_, lower_left_x, lower_left_y, size_x_, \
-                local_map, 0, 0, cell_size_x, cell_size_x, cell_size_y);
-
-  _level_set->CopyVDBGridRegion();
-  resetMaps();
-  origin_x_ = new_grid_ox;
-  origin_y_ = new_grid_oy;
-
-  // copy this regions info back to the map in updated location
-  int start_x = lower_left_x - cell_dx;
-  int start_y = lower_left_y - cell_dy;
-
-  copyMapRegion(local_map, 0, 0, cell_size_x, \
-                costmap_, start_x, start_y, size_x_, cell_size_x, cell_size_y);
-  _level_set->CopyVDBGridRegion();
-  delete[] local_map; 
-  */
+  //take care of our level set TODO
 }
 
 /*****************************************************************************/
@@ -584,13 +543,11 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-  //parallize these as well?
 
-  // mark observations
-  _level_set->ParallelMarkLevelSet(marking_observations);
-
-  // ray trace clearing observations
-  _level_set->ParallelClearLevelSet(clearing_observations);
+  // mark and clear observations
+  _level_set->ParallelizeMarkAndClear(marking_observations, clearing_observations);
+  //_level_set->ParallelMarkLevelSet(marking_observations);
+  //_level_set->ParallelClearLevelSet(clearing_observations);
 
   // update the ROS costmap
   UpdateROSCostmap(*min_x, *min_y, *max_x, *max_y);
