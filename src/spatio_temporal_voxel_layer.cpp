@@ -543,13 +543,11 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-
   // mark and clear observations
-  _level_set->ParallelizeMarkAndClear(marking_observations, clearing_observations);
-  //_level_set->ParallelMarkLevelSet(marking_observations);
-  //_level_set->ParallelClearLevelSet(clearing_observations);
+  _level_set->TemporallyClearFrustums(clearing_observations);
+  _level_set->ParallelizeMark(marking_observations);
 
-  // update the ROS costmap
+  // update the ROS Layered Costmap
   UpdateROSCostmap(*min_x, *min_y, *max_x, *max_y);
 
   // update footprint 
@@ -558,10 +556,10 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // publish point cloud
   if (_publish_voxels)
   {
-    pcl::PointCloud<pcl::PointXYZ> pc;
-    _level_set->GridToPointCloud2(pc);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
+    _level_set->GetOccupancyPointCloud(pc);
     sensor_msgs::PointCloud2 pc2;
-    pcl::toROSMsg(pc, pc2);
+    pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = std::string("map");
     pc2.header.stamp = ros::Time::now();
     _voxel_pub.publish(pc2);
@@ -575,7 +573,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double min_x, double min_y, \
 {
   // project 3D voxels to 2D, populate costmap_ and touch for updates
   std::vector<std::vector<int> > flattened_costmap(size_x_, std::vector<int>(size_y_, 0));
-  _level_set->ProjectVoxelGridTo2DPlane(flattened_costmap, _mark_threshold, size_x_, size_y_); //return only incides of meaning TOOD ##
+  _level_set->GetFlattenedCostmap(flattened_costmap, _mark_threshold); //return only incides of meaning TOOD ##
   Costmap2D::resetMaps(); //todo <-- why is this here? probably bad
 
   for (int i=0; i!= size_x_; i++) // then 1 for loop over useful stuff ##

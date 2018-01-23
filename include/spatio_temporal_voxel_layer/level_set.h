@@ -46,9 +46,12 @@
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Point.h>
-// OpenVDB / Optimization
+#include <visualization_msgs/Marker.h>
+// TBB
 #include <tbb/parallel_do.h>
+// OpenVDB
 #include <openvdb/openvdb.h>
+#include <openvdb/tools/GridTransformer.h>
 #include <openvdb/tools/RayIntersector.h>
 // pcl
 #include <pcl/point_cloud.h>
@@ -82,21 +85,21 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   LevelSet(const float& voxel_size, const int& background_value, const bool& rolling);
+  ~LevelSet();
 
   // mark and clear
-  void ParallelizeMarkAndClear(const std::vector<costmap_2d::Observation>& marking_observations, \
-                               const std::vector<costmap_2d::Observation>& clearing_observations);
-  void operator()(const parallel_request& obs) const;
+  void ParallelizeMark(const std::vector<costmap_2d::Observation>& marking_observations);
+  void operator()(const costmap_2d::Observation& obs) const;
+  void TemporallyClearFrustums(const std::vector<costmap_2d::Observation>& clearing_observations);
 
   // visualize and projection for ROS
-  void GridToPointCloud2(pcl::PointCloud<pcl::PointXYZ>& pc);
-  void ProjectVoxelGridTo2DPlane(std::vector<std::vector<int> >& costmap, \
-                                 const int& mark_threshold, const int& size_x, const int& size_y);
+  void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
+  void GetFlattenedCostmap(std::vector<std::vector<int> >& costmap, \
+                          const int& mark_threshold);
 
   // ROS required primitives
   bool ResetLevelSet(void);
   void ResizeLevelSet(int cells_dx, int cells_dy, double resolution, double origin_x, double origin_y);
-  void CopyLevelSetRegion();
 
   // transformation functions
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
@@ -105,14 +108,13 @@ public:
 protected:
   void InitializeGrid(const bool& rolling);
   bool MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::FloatGrid::Accessor& accessor) const;
-  void RaytraceLevelSet(const geometry_msgs::Point& origin, const pcl::PointXYZ& terminal, \
-             const double& mag, openvdb::v3_1::tools::LevelSetRayIntersector<openvdb::FloatGrid>& tracer, \
-             openvdb::FloatGrid::Accessor& accessor) const;
   bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const;
+  bool IsGridEmpty() const;
 
   mutable openvdb::FloatGrid::Ptr _grid;
   int                             _background_value;
   double                          _voxel_size;
+  bool                            _pub_voxels;
 };
 
 };
