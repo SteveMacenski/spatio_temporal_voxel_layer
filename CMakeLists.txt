@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   tf
+  visualization_msgs
 )
 
 find_package(PCL REQUIRED)
@@ -60,6 +61,7 @@ catkin_package(
         std_msgs
         costmap_2d
         tf
+        visualization_msgs
     DEPENDS
         TBB
         OpenVDB
