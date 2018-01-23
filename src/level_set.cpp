@@ -283,7 +283,7 @@ openvdb::Vec3d LevelSet::WorldToIndex(const openvdb::Vec3d& vec) const
 bool LevelSet::IsGridEmpty() const
 /*****************************************************************************/
 {
-  // Applies inverse tranform stored in getTransform.
+  // Returns grid's population status
   return _grid->empty();
 }
 
