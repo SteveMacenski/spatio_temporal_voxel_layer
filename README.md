@@ -10,12 +10,14 @@ Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional 
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
 ## -**Temporal**
-The Temporal in this package is the novel concept of `voxel_decay` whereas we have functions that associate to voxels and their information expires over time. In development, exist infrasture to store times in each voxel after which the voxel will disappear from the map. The goal is also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.    
+The Temporal in this package is the novel concept of `voxel_decay` whereas we have functions that associate to voxels and their information expires over time. In development,  infrasture to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements and remain marked rather than simply clearing them naively or via costly raytracing.
 
-## Raytracing
-This package utilizes OpenVDB's raytracing and intersector technologies to raytrace out voxels to be cleared in the levelset. This is true raytracing, unlike the 2D->3D attempt the traditional voxel grid uses. 
+Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.    
 
-In development is an additional method of tracing where frustums of cameras are projected into the levelset and cleared. This may be combined in the future with the temporal features above to accelerate the decay of those voxels that do not remain marked rather than simply clearing them naively.
+## Local Costmap
+This package utilizes all of the information coming in from the robot before the decay time for the local costmap. Rather than having a defined, discrete spatial barrier for the local planner to operate in, it instead relies on the user configuration of the layer to have a short decay time of voxels (1-30 seconds) so that you only plan in relavent space. This was a conscious design requirement since frequently the local planner should operate with more information than other times when the speed is greater or slower. This natively implements dynamic costmap scaling for speed.
+
+It is the user's responsibility to chose a decay time that makes sense for your robot's local planner. 5-15 seconds I have found to be nominally good for most opensourced local planner plugins.
 
 ## Installation
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
