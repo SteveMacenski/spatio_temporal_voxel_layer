@@ -82,10 +82,10 @@ MeasurementReading(const MeasurementReading& obs) :
                            _origin(obs._origin),                                      \
                            _cloud(new pcl::PointCloud<pcl::PointXYZ>(*(obs._cloud))), \
                            _obstacle_range_in_m(obs._obstacle_range_in_m),            \
-                           _min_z_in_m(min_z),                                        \
-                           _max_z_in_m(max_z),                                        \
-                           _vertical_fov_in_rad(vFOV),                                \
-                           _horizontal_fov_in_rad(hFOV)
+                           _min_z_in_m(obs._min_z_in_m),                              \
+                           _max_z_in_m(obs._max_z_in_m),                              \
+                           _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
+                           _horizontal_fov_in_rad(obs._horizontal_fov_in_rad)
 {
 }
 
