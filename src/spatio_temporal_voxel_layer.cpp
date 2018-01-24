@@ -110,7 +110,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height,  max_obstacle_height;
-    std::string topic, sensor_frame, data_type;
+    std::string topic, sensor_frame, data_type, min_z, max_z, vFOV, hFOV;
     bool inf_is_valid, clearing, marking;
 
     source_node.param("topic", topic, source);
@@ -138,7 +138,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                 "Only topics that use pointclouds or laser scans are supported.");
     }
 
-    std::string raytrace_range_param_name, obstacle_range_param_name;
+    std::string obstacle_range_param_name;
 
     // get the obstacle range for the sensor
     double obstacle_range = 3.0;
@@ -147,23 +147,16 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
 
-    // get the raytrace range for the sensor
-    double raytrace_range = 3.0;
-    if (source_node.searchParam("raytrace_range", raytrace_range_param_name))
-    {
-      source_node.getParam(raytrace_range_param_name, raytrace_range);
-    }
-
     ROS_DEBUG("Creating an observation buffer for source %s, topic %s, frame %s", \
               source.c_str(), topic.c_str(), sensor_frame.c_str());
 
     // create an observation buffer
     _observation_buffers.push_back(
-        boost::shared_ptr <costmap_2d::ObservationBuffer> 
-        (new costmap_2d::ObservationBuffer(topic, observation_keep_time, \
+        boost::shared_ptr <buffer::MeasurementBuffer> 
+        (new buffer::MeasurementBuffer(topic, observation_keep_time,     \
         expected_update_rate, min_obstacle_height, max_obstacle_height,  \
-        obstacle_range, raytrace_range, *tf_, _global_frame,             \
-        sensor_frame, transform_tolerance)));
+        obstacle_range, *tf_, _global_frame,                             \
+        sensor_frame, transform_tolerance, min_z, max_z, vFOV, hFOV)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -240,7 +233,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::LaserScanCallback( \
                 const sensor_msgs::LaserScanConstPtr& message, \
-                const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer)
+                const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
   // laser scan where infinity is invalid callback function
@@ -255,15 +248,15 @@ void SpatioTemporalVoxelLayer::LaserScanCallback( \
     _laser_projector.projectLaser(*message, cloud);
   }
   // buffer the point cloud
-  buffer->lock();
-  buffer->bufferCloud(cloud);
-  buffer->unlock();
+  buffer->Lock();
+  buffer->BufferROSCloud(cloud);
+  buffer->Unlock();
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::LaserScanValidInfCallback( \
                 const sensor_msgs::LaserScanConstPtr& raw_message, \
-                const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer)
+                const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
   // Filter infinity to max_range
@@ -287,26 +280,26 @@ void SpatioTemporalVoxelLayer::LaserScanValidInfCallback( \
     _laser_projector.projectLaser(message, cloud);
   }
   // buffer the point cloud
-  buffer->lock();
-  buffer->bufferCloud(cloud);
-  buffer->unlock();
+  buffer->Lock();
+  buffer->BufferROSCloud(cloud);
+  buffer->Unlock();
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::PointCloud2Callback( \
                 const sensor_msgs::PointCloud2ConstPtr& message, \
-                const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer)
+                const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
   // buffer the point cloud 
-  buffer->lock();
-  buffer->bufferCloud(*message);
-  buffer->unlock();
+  buffer->Lock();
+  buffer->BufferROSCloud(*message);
+  buffer->Unlock();
 }
 
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
-              std::vector<costmap_2d::Observation>& marking_observations) const
+              std::vector<MeasurementReading>& marking_observations) const
 /*****************************************************************************/
 {
   // get marking observations and static marked areas
@@ -314,10 +307,10 @@ bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
 
   for (unsigned int i=0; i!=_marking_buffers.size(); ++i) //1
   {
-    _marking_buffers[i]->lock();
-    _marking_buffers[i]->getObservations(marking_observations);
-    current = _marking_buffers[i]->isCurrent() && current;
-    _marking_buffers[i]->unlock();
+    _marking_buffers[i]->Lock();
+    _marking_buffers[i]->GetObservations(marking_observations);
+    current = _marking_buffers[i]->UpdatedAtExpectedRate() && current;
+    _marking_buffers[i]->Unlock();
   }
   marking_observations.insert(marking_observations.end(),   \
                               _static_observations.begin(), \
@@ -327,17 +320,17 @@ bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
 
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::GetClearingObservations( \
-            std::vector<costmap_2d::Observation>& clearing_observations) const
+            std::vector<MeasurementReading>& clearing_observations) const
 /*****************************************************************************/
 {
   // get clearing observations
   bool current = true;
   for (unsigned int i = 0; i < _clearing_buffers.size(); ++i) 
   {
-    _clearing_buffers[i]->lock();
-    _clearing_buffers[i]->getObservations(clearing_observations);
-    current = _clearing_buffers[i]->isCurrent() && current;
-    _clearing_buffers[i]->unlock();
+    _clearing_buffers[i]->Lock();
+    _clearing_buffers[i]->GetObservations(clearing_observations);
+    current = _clearing_buffers[i]->UpdatedAtExpectedRate() && current;
+    _clearing_buffers[i]->Unlock();
   }
 return current;
 }
@@ -410,7 +403,7 @@ void SpatioTemporalVoxelLayer::activate(void)
   {
     if (_observation_buffers[i])
     {
-      _observation_buffers[i]->resetLastUpdated();
+      _observation_buffers[i]->ResetLastUpdatedTime();
     }
   }
 }
@@ -443,7 +436,7 @@ void SpatioTemporalVoxelLayer::reset(void)
 }
 
 /*****************************************************************************/
-bool SpatioTemporalVoxelLayer::AddStaticObservations(const costmap_2d::Observation& obs)
+bool SpatioTemporalVoxelLayer::AddStaticObservations(const MeasurementReading& obs)
 /*****************************************************************************/
 {
   // observations to always be added to the map each update cycle not explicitly marked on the map.
@@ -499,7 +492,7 @@ void SpatioTemporalVoxelLayer::matchSize(void)
   //takes care of 2D ROS costmap
   CostmapLayer::matchSize(); 
 
-  //takes care of our level set, proabaly dont need to do
+  //takes care of our level set, probably dont need to do
   _level_set->ResizeLevelSet(layered_costmap_->getCostmap()->getSizeInCellsX(), \
                              layered_costmap_->getCostmap()->getSizeInCellsY(), \
                              layered_costmap_->getCostmap()->getResolution(),   \
@@ -511,12 +504,8 @@ void SpatioTemporalVoxelLayer::matchSize(void)
 void SpatioTemporalVoxelLayer::updateOrigin(double new_origin_x, double new_origin_y)
 /*****************************************************************************/
 {
-  // update the grid and costmap_ if the layer is a rolling window find change in origin in grid-aligned space
-
   // takes care of 2D ROS costmap
   Costmap2D::updateOrigin(new_origin_x, new_origin_y);
-
-  //take care of our level set TODO
 }
 
 /*****************************************************************************/
@@ -538,7 +527,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   useExtraBounds(min_x, min_y, max_x, max_y);
 
   bool current = true;
-  std::vector<costmap_2d::Observation> marking_observations, clearing_observations;
+  std::vector<MeasurementReading> marking_observations, clearing_observations;
   current = GetMarkingObservations(marking_observations) && current;
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
@@ -580,7 +569,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double min_x, double min_y, \
   {
     for (int j=0; j!=size_y_; j++)
     {
-      if ( flattened_costmap[i][j] > 0 ) // bit shift for it, also check if time is past to remove, do this in level_set ##
+      if ( flattened_costmap[i][j] > 0 ) //check for mark threahold here ##
       {
         openvdb::Coord pose_index(i,j,0);
         openvdb::Vec3d pose_world(_level_set->IndexToWorld(pose_index));

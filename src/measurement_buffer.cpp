@@ -1,0 +1,300 @@
+/*********************************************************************
+ *
+ * Software License Agreement
+ *
+ *  Copyright (c) 2018, Simbe Robotics, Inc.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: Steve Macenski (steven.macenski@simberobotics.com)
+ *********************************************************************/
+
+#include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl_ros/transforms.h>
+#include <pcl/conversions.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+namespace buffer
+{
+
+/*****************************************************************************/
+MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
+                                     const double& observation_keep_time, \
+                                     const double& expected_update_rate, \
+                                     const double& min_obstacle_height, \
+                                     const double& max_obstacle_height, \
+                                     const double& obstacle_range, \
+                                     tf::TransformListener& tf, \
+                                     const std::string& global_frame, \
+                                     const std::string& sensor_frame, \
+                                     const double& tf_tolerance, \
+                                     const double& min_d, \
+                                     const double& max_d, \
+                                     const double& vFOV, \
+                                     const double& hFOV) :
+/*****************************************************************************/
+    _tf(tf), _observation_keep_time(observation_keep_time), 
+    _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
+    _global_frame(global_frame), _sensor_frame(sensor_frame),
+    _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
+    _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
+    _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
+    _vertical_fov(vFOV), _horizontal_fov(hFOV)
+{
+}
+
+/*****************************************************************************/
+MeasurementBuffer::~MeasurementBuffer()
+/*****************************************************************************/
+{
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::SetGlobalFrame(const std::string& new_frame)
+/*****************************************************************************/
+{
+  const ros::Time transform_time = ros::Time::now();
+  std::string tf_error;
+
+  if (!_tf.waitForTransform(new_frame, _global_frame, transform_time, \
+                          ros::Duration(_tf_tolerance), ros::Duration(0.01), \
+                          &tf_error))
+  {
+    ROS_ERROR("Transform between %s and %s with tolerance %.2f failed: %s.", \
+              new_frame.c_str(), _global_frame.c_str(), \
+              _tf_tolerance, tf_error.c_str());
+    return false;
+  }
+
+  for (readings_iter it = _observation_list.begin(); \
+                                   it != _observation_list.end(); ++it)
+  {
+    try
+    {
+      MeasurementReading& reading = *it;
+
+      geometry_msgs::PointStamped origin;
+      origin.header.frame_id = _global_frame;
+      origin.header.stamp = transform_time;
+      origin.point = reading._origin;
+      _tf.transformPoint(new_frame, origin, origin);
+      reading._origin = origin.point;
+
+      pcl_ros::transformPointCloud(new_frame, *reading._cloud, \
+                                   *reading._cloud, _tf);
+    }
+    catch (tf::TransformException& ex)
+    {
+      ROS_ERROR("TF failed to transform a reading from %s to %s: %s", \
+                _global_frame.c_str(), new_frame.c_str(), ex.what());
+      return false;
+    }
+  }
+
+  _global_frame = new_frame;
+  return true;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
+/*****************************************************************************/
+{
+  try
+  {
+    pcl::PCLPointCloud2 pcl_pc2;
+    pcl_conversions::toPCL(cloud, pcl_pc2);
+    pcl::PointCloud < pcl::PointXYZ > pcl_cloud;
+    pcl::fromPCLPointCloud2(pcl_pc2, pcl_cloud);
+    BufferPCLCloud(pcl_cloud);
+  }
+  catch (pcl::PCLException& ex)
+  {
+    ROS_ERROR("Failed to convert to pcl type, dropping observation: %s", \
+              ex.what());
+    return;
+  }
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& cloud)
+/*****************************************************************************/
+{
+  // add a new measurement to be populated
+  _observation_list.push_front(MeasurementReading());
+
+  const std::string origin_frame = \
+                  _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
+
+  try
+  {
+    tf::Stamped<tf::Vector3> global_origin,
+                  local_origin(tf::Vector3(0, 0, 0),
+                  pcl_conversions::fromPCL(cloud.header).stamp, origin_frame);
+    _tf.waitForTransform(_global_frame, local_origin.frame_id_, \
+                         local_origin.stamp_, ros::Duration(0.5));
+    _tf.transformPoint(_global_frame, local_origin, global_origin);
+
+    _observation_list.front()._origin.x = global_origin.getX();
+    _observation_list.front()._origin.y = global_origin.getY();
+    _observation_list.front()._origin.z = global_origin.getZ();
+    _observation_list.front()._obstacle_range_in_m = _obstacle_range;
+    _observation_list.front()._min_z_in_m = _min_z;
+    _observation_list.front()._max_z_in_m = _max_z;
+    _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
+    _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
+
+    point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
+    cld_global->header.stamp = cloud.header.stamp;
+
+    // remove points that are below or above our height restrictions
+    pcl::PointCloud<pcl::PointXYZ>& obs_cloud = \
+                                *(_observation_list.front()._cloud);
+    unsigned int cloud_size = cld_global->points.size();
+
+    obs_cloud.points.resize(cloud_size);
+    unsigned int point_count = 0;
+    pcl::PointCloud<pcl::PointXYZ>::iterator it;
+    for (it = cld_global->begin(); it != cld_global->end(); ++it)
+    {
+      if (it->z <= _max_obstacle_height && it->z >= _min_obstacle_height)
+      {
+        obs_cloud.points.at(point_count++) = *it;
+      }
+    }
+
+    // resize the cloud for the number of legal points
+    obs_cloud.points.resize(point_count);
+    obs_cloud.header.stamp = cloud.header.stamp;
+    obs_cloud.header.frame_id = cld_global->header.frame_id;
+  }
+  catch (tf::TransformException& ex)
+  {
+    // if fails, remove the empty observation
+    _observation_list.pop_front();
+    ROS_ERROR( \
+      "TF Exception for sensor frame: %s, cloud frame: %s, %s", \
+      _sensor_frame.c_str(), cloud.header.frame_id.c_str(), ex.what());
+    return;
+  }
+
+  _last_updated = ros::Time::now();
+  RemoveStaleObservations();
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::GetObservations(std::vector<MeasurementReading>& observations)
+/*****************************************************************************/
+{
+  RemoveStaleObservations();
+
+  for (readings_iter it = _observation_list.begin(); \
+                                          it != _observation_list.end(); ++it)
+  {
+    observations.push_back(*it);
+  }
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::RemoveStaleObservations()
+/*****************************************************************************/
+{
+  if (_observation_list.empty())
+  {
+    return;
+  }
+
+  readings_iter it = _observation_list.begin();
+  if (_observation_keep_time == ros::Duration(0.0))
+  {
+    _observation_list.erase(++it, _observation_list.end());
+    return;
+  }
+
+  for (it = _observation_list.begin(); it != _observation_list.end(); ++it)
+  {
+    MeasurementReading& obs = *it;
+    const ros::Duration time_diff = \
+            _last_updated - pcl_conversions::fromPCL(obs._cloud->header).stamp;
+
+    if (time_diff > _observation_keep_time)
+    {
+      _observation_list.erase(it, _observation_list.end());
+      return;
+    }
+  }
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::UpdatedAtExpectedRate() const
+/*****************************************************************************/
+{
+  if (_expected_update_rate == ros::Duration(0.0))
+  {
+    return true;
+  }
+
+  const ros::Duration update_time = ros::Time::now() - _last_updated;
+  const bool current = update_time.toSec() <= _expected_update_rate.toSec();
+  if (!current)
+  {
+    ROS_WARN_THROTTLE(10.,
+      "%s buffer updated in %.2fs, it should be updated every %.2fs.",
+      _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
+  }
+  return current;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::ResetLastUpdatedTime()
+/*****************************************************************************/
+{
+  _last_updated = ros::Time::now();
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::Lock()
+/*****************************************************************************/
+{
+  _lock.lock();
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::Unlock()
+/*****************************************************************************/
+{
+  _lock.unlock();
+}
+
+}  // namespace buffer
+

@@ -41,7 +41,6 @@
 // ros
 #include <ros/ros.h>
 // costmap
-#include <costmap_2d/observation_buffer.h>
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/costmap_layer.h>
@@ -68,6 +67,7 @@
 #include <dynamic_reconfigure/server.h>
 // voxel grid
 #include <spatio_temporal_voxel_layer/level_set.h>
+#include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 
 #ifndef OPENVDB_OBSTACLE_LAYER_H_
 #define OPENVDB_OBSTACLE_LAYER_H_
@@ -98,8 +98,8 @@ public:
   virtual void deactivate(void);
 
   // Functions for sensor feeds
-  bool GetMarkingObservations(std::vector<costmap_2d::Observation>& marking_observations) const;
-  bool GetClearingObservations(std::vector<costmap_2d::Observation>& marking_observations) const;
+  bool GetMarkingObservations(std::vector<MeasurementReading>& marking_observations) const;
+  bool GetClearingObservations(std::vector<MeasurementReading>& marking_observations) const;
 
   // Functions to interact with maps
   void UpdateROSCostmap(double min_x, double min_y, double max_x, double max_y);
@@ -109,22 +109,22 @@ public:
 
 private:
   void LaserScanCallback(const sensor_msgs::LaserScanConstPtr& message, \
-                         const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
+                         const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
   void LaserScanValidInfCallback(const sensor_msgs::LaserScanConstPtr& raw_message, \
-                                 const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
+                                 const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
   void PointCloud2Callback(const sensor_msgs::PointCloud2ConstPtr& message, \
-                          const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
+                          const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
 
   // Functions for adding static obstacle zones
-  bool AddStaticObservations(const costmap_2d::Observation& obs);
+  bool AddStaticObservations(const MeasurementReading& obs);
   bool RemoveStaticObservations(void);
 
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
   std::vector<boost::shared_ptr<tf::MessageFilterBase> >           _observation_notifiers;
-  std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> >   _observation_buffers;
-  std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> >   _marking_buffers;
-  std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> >   _clearing_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _observation_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _marking_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _clearing_buffers;
 
   bool                                 _publish_voxels;
   ros::Publisher                       _voxel_pub;
@@ -134,7 +134,7 @@ private:
   int                                  _combination_method, _mark_threshold;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
-  std::vector<costmap_2d::Observation> _static_observations;
+  std::vector<MeasurementReading>      _static_observations;
   LevelSet*                            _level_set;
 };
 
