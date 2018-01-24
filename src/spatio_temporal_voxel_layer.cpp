@@ -109,8 +109,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     ros::NodeHandle source_node(nh, source);
 
     // get the parameters for the specific topic
-    double observation_keep_time, expected_update_rate, min_obstacle_height,  max_obstacle_height;
-    std::string topic, sensor_frame, data_type, min_z, max_z, vFOV, hFOV;
+    double observation_keep_time, expected_update_rate, min_obstacle_height;
+    double max_obstacle_height, min_z, max_z, vFOV, hFOV;
+    std::string topic, sensor_frame, data_type;
     bool inf_is_valid, clearing, marking;
 
     source_node.param("topic", topic, source);
@@ -125,6 +126,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("inf_is_valid", inf_is_valid, false);
     source_node.param("clearing", clearing, false);
     source_node.param("marking", marking, true);
+    source_node.param("min_z", marking, 0.);
+    source_node.param("max_z", marking, 10.);
+    source_node.param("vertical_fov_angle", marking, 0.7);
+    source_node.param("horizontal_fov_angle", marking, 1.04);
 
     if (!sensor_frame.empty())
     {
