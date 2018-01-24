@@ -82,23 +82,12 @@ void LevelSet::InitializeGrid(const bool& rolling)
 }
 
 /*****************************************************************************/
-void LevelSet::TemporallyClearFrustums(const std::vector<costmap_2d::Observation>& clearing_observations)
+void LevelSet::TemporallyClearFrustums(const std::vector<MeasurementReading>& clearing_observations)
 /*****************************************************************************/
 {
 
   // (1) parameterize from sensor orientation / frames for frustum
-  // (3) TF orientation
-  // (4) frustum stuff what it means - visualize in RVIZ vis msgs lines 
-  // (5) embed times and do
-
-
-  // maybe define planes and check if interior. 
-  // iterate through full grid and use as time to evaluate all time and acceleration? + project down + pointcloud conversion
-
-  // The points (0,0,0), (100,0,0), (0,50,0) and (100,50,0) will map to
-  // the corners of the near plane of the frustum, while the corners
-  // of the far plane will be the images of (0,0,120), (100,0,120),
-  // (0,50,120) and (100,50,120).
+  // (2) embed times and do
 
   if(this->IsGridEmpty())
   {
@@ -109,49 +98,39 @@ void LevelSet::TemporallyClearFrustums(const std::vector<costmap_2d::Observation
 
   for (uint i=0; i!=clearing_observations.size(); i++)
   {
-    const geometry_msgs::Point& origin = clearing_observations.at(i).origin_;
-
-    const openvdb::Vec3d near_plane = this->WorldToIndex(openvdb::Vec3d(0, 0, 0));
-    const openvdb::Vec3d far_plane = this->WorldToIndex(openvdb::Vec3d(0.4,0.4,7));
-
-    const openvdb::math::BBox<openvdb::Vec3d> bbox(near_plane, far_plane); //planes of camera, from its geometry TODO
-
-    const double taper = .2;// The far plane of the frustum will be twice as big as the near plane TODO
-    const double depth = 1;// The depth of the frustum will be 10 times the x-width of the near plane TODO
-    openvdb::math::NonlinearFrustumMap* frustumTransform = new openvdb::math::NonlinearFrustumMap(bbox, taper, depth);
-    frustumTransform->preScale(openvdb::Vec3d(_voxel_size, _voxel_size, _voxel_size));
-    frustumTransform->postTranslate(openvdb::math::Vec3d(origin.x, origin.y, origin.z));
-    frustumTransform->postRotate(0., openvdb::math::Z_AXIS); //tf get rpy from baselink->camera depth frame transform TODO
-
-    const openvdb::math::BBox<openvdb::Vec3d> frustumIndexBounds = frustumTransform->getBBox();
-
-    for (openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer) 
-    {
-      const openvdb::Coord pt_ig(citer.getCoord());                                             // point in index-grid
-      const openvdb::Vec3d pt_if(frustumTransform->applyInverseMap(this->IndexToWorld(pt_ig))); // point in index-frustum
-      if (!frustumIndexBounds.isInside(pt_if))
-      {
-        // check temporal constraints here and clear if needed TODO for now passing
-        continue;
-      }
-      else
-      {
-        // check temporal constraints here and accelerate by chosen model TODO for now just clearing
-        ROS_WARN_THROTTLE(2.,"a point was in frustum!");
-        if(!this->ClearLevelSetPoint(pt_ig, accessor))
-        {
-          ROS_WARN_THROTTLE(1.,"Failed to clear point in levelset.");
-        }
-      }
+    const geometry_msgs::Point& origin = clearing_observations.at(i)._origin;
+    ROS_INFO("%f %f %f", origin.x, origin.y, origin.z);
 
 
-    }
-    delete frustumTransform;
+    // get 6 planes - what do you need: angle FOV vert, horizon. min z, max z ---> Observation vector should provide -- new MeasurementReading
+
+    // compute normals
+
+
+
+    // for (openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn(); citer; ++citer) 
+    // {
+    //   const openvdb::Coord pt_index(citer.getCoord());
+    //   if (!frustum.isInside(this->IndexToWorld(pt_index)))
+    //   {
+    //     // check temporal constraints here and clear if needed TODO
+    //     continue;
+    //   }
+    //   else
+    //   {
+    //     // check temporal constraints here and accelerate by chosen model TODO
+    //     ROS_WARN_THROTTLE(2.,"a point was in frustum!");
+    //     if(!this->ClearLevelSetPoint(pt_ig, accessor))
+    //     {
+    //       ROS_WARN_THROTTLE(1.,"Failed to clear point in levelset.");
+    //     }
+    //   }
+    // }
   }
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelizeMark(const std::vector<costmap_2d::Observation>& marking_observations)
+void LevelSet::ParallelizeMark(const std::vector<MeasurementReading>& marking_observations)
 /*****************************************************************************/
 {
   if (marking_observations.size() > 0) 
@@ -162,18 +141,18 @@ void LevelSet::ParallelizeMark(const std::vector<costmap_2d::Observation>& marki
 }
 
 /*****************************************************************************/
-void LevelSet::operator()(const costmap_2d::Observation& obs) const
+void LevelSet::operator()(const MeasurementReading& obs) const
 /*****************************************************************************/
 {
   openvdb::FloatGrid::Accessor accessor = _grid->getAccessor();
-  double mark_range_2 = obs.obstacle_range_ * obs.obstacle_range_;
+  double mark_range_2 = obs._obstacle_range_in_m * obs._obstacle_range_in_m;
 
-  for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs.cloud_->points.begin(); \
-                                                  it < obs.cloud_->points.end(); ++it)
+  for (pcl::PointCloud<pcl::PointXYZ>::const_iterator it = obs._cloud->points.begin(); \
+                                                  it < obs._cloud->points.end(); ++it)
   {
-    double distance_2 = (it->x - obs.origin_.x) * (it->x - obs.origin_.x) \
-                      + (it->y - obs.origin_.y) * (it->y - obs.origin_.y) \
-                      + (it->z - obs.origin_.z) * (it->z - obs.origin_.z);
+    double distance_2 = (it->x - obs._origin.x) * (it->x - obs._origin.x) \
+                      + (it->y - obs._origin.y) * (it->y - obs._origin.y) \
+                      + (it->z - obs._origin.z) * (it->z - obs._origin.z);
     if (distance_2 > mark_range_2 || distance_2 < 0.0001)
     {
       continue;

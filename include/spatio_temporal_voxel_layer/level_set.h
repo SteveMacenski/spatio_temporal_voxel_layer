@@ -41,8 +41,8 @@
 #include <ros/ros.h>
 // STL
 #include <math.h>
-// costmap
-#include <costmap_2d/observation.h>
+// measurement struct
+#include <spatio_temporal_voxel_layer/measurement_reading.h>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Point.h>
@@ -67,14 +67,14 @@ namespace spatio_temporal_voxel_layer
 
 struct parallel_request
 {
-  parallel_request(const costmap_2d::Observation& _obs, const bool& _marking) :
+  parallel_request(const MeasurementReading& _obs, const bool& _marking) :
                                                         observation(_obs),
                                                         marking(_marking)
   {
     return;
   }
 
-  costmap_2d::Observation observation;
+  MeasurementReading observation;
   bool marking;
 };
 
@@ -88,9 +88,9 @@ public:
   ~LevelSet();
 
   // mark and clear
-  void ParallelizeMark(const std::vector<costmap_2d::Observation>& marking_observations);
-  void operator()(const costmap_2d::Observation& obs) const;
-  void TemporallyClearFrustums(const std::vector<costmap_2d::Observation>& clearing_observations);
+  void ParallelizeMark(const std::vector<MeasurementReading>& marking_observations);
+  void operator()(const MeasurementReading& obs) const;
+  void TemporallyClearFrustums(const std::vector<MeasurementReading>& clearing_observations);
 
   // visualize and projection for ROS
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);

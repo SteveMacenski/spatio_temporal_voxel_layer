@@ -35,7 +35,7 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
 )
 
-#add_definitions(${EIGEN3_DEFINITIONS})
+add_definitions(${EIGEN3_DEFINITIONS})
 
 generate_dynamic_reconfigure_options(
   cfg/SpatioTemporalVoxelLayerPlugin.cfg
@@ -48,7 +48,7 @@ catkin_package(
         ${PCL_INCLUDE_DIRS}
         ${OpenVDB_INCLUDE_DIR}
         ${TBB_INCLUDE_DIRS}
-    LIBRARIES spatio_temporal_voxel_layer
+    LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         dynamic_reconfigure
         geometry_msgs
@@ -70,12 +70,16 @@ catkin_package(
         Boost
 )
 
-add_library(spatio_temporal_voxel_layer
+add_library(${PROJECT_NAME}
             src/spatio_temporal_voxel_layer.cpp
             src/level_set.cpp
+            src/measurement_buffer.cpp
+            src/frustum.cpp
 )
 
-target_link_libraries(spatio_temporal_voxel_layer
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+
+target_link_libraries(${PROJECT_NAME}
   ${PCL_LIBRARIES}
   ${OpenVDB_LIBRARIES}
   ${TBB_LIBRARIES}
@@ -84,7 +88,7 @@ target_link_libraries(spatio_temporal_voxel_layer
 )
 
 install(TARGETS
-    spatio_temporal_voxel_layer
+    ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
