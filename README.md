@@ -48,6 +48,7 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 An example fully-described configuration is shown below.
 
 ```
+
 rgbd_obstacle_layer:
   enabled:               true
   voxel_decay:           20 #seconds
@@ -60,24 +61,25 @@ rgbd_obstacle_layer:
   mark_threshold:        0
   combination_method:    1
   obstacle_range:        3.0
-  raytrace_range:        15.0
   origin_z:              0.0
   publish_voxel_map:     true
-  observation_sources: rgbd_clear rgbd_clear
-  rgbd_mark:
+  observation_sources: rgbd1_clear rgbd1_mark
+  rgbd1_mark:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: true
     clearing: false
     min_obstacle_height: 0.3
     max_obstacle_height: 2.0
-  rgbd_clear:
+  rgbd1_clear:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: false
     clearing: true
-    min_obstacle_height: -15.
-    max_obstacle_height: 15.
+    min_z: 0.1
+    max_z: 7.0
+    vertical_fov_angle: 0.7
+    horizontal_fov_angle: 1.04
 ```
 
 ### local/global_costmap_params.yaml
