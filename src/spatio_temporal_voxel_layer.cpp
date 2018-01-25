@@ -35,7 +35,7 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.h"
+#include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
 
 namespace spatio_temporal_voxel_layer {
 
@@ -126,10 +126,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("inf_is_valid", inf_is_valid, false);
     source_node.param("clearing", clearing, false);
     source_node.param("marking", marking, true);
-    source_node.param("min_z", marking, 0.);
-    source_node.param("max_z", marking, 10.);
-    source_node.param("vertical_fov_angle", marking, 0.7);
-    source_node.param("horizontal_fov_angle", marking, 1.04);
+    source_node.param("min_z", min_z, 0.); // minimum distance from camera it can see
+    source_node.param("max_z", max_z, 10.); // maximum distance from camera it can see
+    source_node.param("vertical_fov_angle", vFOV, 0.7); // vertical FOV angle in rad
+    source_node.param("horizontal_fov_angle", hFOV, 1.04); // horizontal FOV angle in rad
 
     if (!sensor_frame.empty())
     {
@@ -304,7 +304,7 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
 
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
-              std::vector<MeasurementReading>& marking_observations) const
+              std::vector<observation::MeasurementReading>& marking_observations) const
 /*****************************************************************************/
 {
   // get marking observations and static marked areas
@@ -313,8 +313,8 @@ bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
   for (unsigned int i=0; i!=_marking_buffers.size(); ++i) //1
   {
     _marking_buffers[i]->Lock();
-    _marking_buffers[i]->GetObservations(marking_observations);
-    current = _marking_buffers[i]->UpdatedAtExpectedRate() && current;
+    _marking_buffers[i]->GetReadings(marking_observations);
+    current = _marking_buffers[i]->UpdatedAtExpectedRate();
     _marking_buffers[i]->Unlock();
   }
   marking_observations.insert(marking_observations.end(),   \
@@ -325,7 +325,7 @@ bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
 
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::GetClearingObservations( \
-            std::vector<MeasurementReading>& clearing_observations) const
+            std::vector<observation::MeasurementReading>& clearing_observations) const
 /*****************************************************************************/
 {
   // get clearing observations
@@ -333,8 +333,8 @@ bool SpatioTemporalVoxelLayer::GetClearingObservations( \
   for (unsigned int i = 0; i < _clearing_buffers.size(); ++i) 
   {
     _clearing_buffers[i]->Lock();
-    _clearing_buffers[i]->GetObservations(clearing_observations);
-    current = _clearing_buffers[i]->UpdatedAtExpectedRate() && current;
+    _clearing_buffers[i]->GetReadings(clearing_observations);
+    current = _clearing_buffers[i]->UpdatedAtExpectedRate();
     _clearing_buffers[i]->Unlock();
   }
 return current;
@@ -441,7 +441,7 @@ void SpatioTemporalVoxelLayer::reset(void)
 }
 
 /*****************************************************************************/
-bool SpatioTemporalVoxelLayer::AddStaticObservations(const MeasurementReading& obs)
+bool SpatioTemporalVoxelLayer::AddStaticObservations(const observation::MeasurementReading& obs)
 /*****************************************************************************/
 {
   // observations to always be added to the map each update cycle not explicitly marked on the map.
@@ -532,7 +532,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   useExtraBounds(min_x, min_y, max_x, max_y);
 
   bool current = true;
-  std::vector<MeasurementReading> marking_observations, clearing_observations;
+  std::vector<observation::MeasurementReading> marking_observations, clearing_observations;
   current = GetMarkingObservations(marking_observations) && current;
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;

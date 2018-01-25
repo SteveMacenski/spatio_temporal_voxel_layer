@@ -27,12 +27,13 @@ find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 include_directories(
     include
-    ${catkin_INCLUDE_DIRS}
-    ${OpenVDB_INCLUDE_DIR}
-    ${TBB_INCLUDE_DIRS}
+    ${BOOST_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+    ${OpenVDB_INCLUDE_DIR}
+    ${TBB_INCLUDE_DIRS}
 )
 
 add_definitions(${EIGEN3_DEFINITIONS})
@@ -44,6 +45,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
     INCLUDE_DIRS
         include
+        ${BOOST_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
         ${OpenVDB_INCLUDE_DIR}
@@ -55,6 +57,7 @@ catkin_package(
         laser_geometry
         message_filters
         pcl_ros
+        pcl_conversions
         pluginlib
         roscpp
         sensor_msgs
@@ -80,10 +83,11 @@ add_library(${PROJECT_NAME}
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(${PROJECT_NAME}
+  ${Boost_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenVDB_LIBRARIES}
   ${TBB_LIBRARIES}
-  ${Boost_LIBRARIES}
   ${catkin_LIBRARIES}
 )
 

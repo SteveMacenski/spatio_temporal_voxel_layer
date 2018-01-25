@@ -37,12 +37,6 @@
 
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 
-#include <pcl/point_types.h>
-#include <pcl_ros/transforms.h>
-#include <pcl/conversions.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
-
 namespace buffer
 {
 
@@ -73,55 +67,9 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
 }
 
 /*****************************************************************************/
-MeasurementBuffer::~MeasurementBuffer()
+MeasurementBuffer::~MeasurementBuffer(void)
 /*****************************************************************************/
 {
-}
-
-/*****************************************************************************/
-bool MeasurementBuffer::SetGlobalFrame(const std::string& new_frame)
-/*****************************************************************************/
-{
-  const ros::Time transform_time = ros::Time::now();
-  std::string tf_error;
-
-  if (!_tf.waitForTransform(new_frame, _global_frame, transform_time, \
-                          ros::Duration(_tf_tolerance), ros::Duration(0.01), \
-                          &tf_error))
-  {
-    ROS_ERROR("Transform between %s and %s with tolerance %.2f failed: %s.", \
-              new_frame.c_str(), _global_frame.c_str(), \
-              _tf_tolerance, tf_error.c_str());
-    return false;
-  }
-
-  for (readings_iter it = _observation_list.begin(); \
-                                   it != _observation_list.end(); ++it)
-  {
-    try
-    {
-      MeasurementReading& reading = *it;
-
-      geometry_msgs::PointStamped origin;
-      origin.header.frame_id = _global_frame;
-      origin.header.stamp = transform_time;
-      origin.point = reading._origin;
-      _tf.transformPoint(new_frame, origin, origin);
-      reading._origin = origin.point;
-
-      pcl_ros::transformPointCloud(new_frame, *reading._cloud, \
-                                   *reading._cloud, _tf);
-    }
-    catch (tf::TransformException& ex)
-    {
-      ROS_ERROR("TF failed to transform a reading from %s to %s: %s", \
-                _global_frame.c_str(), new_frame.c_str(), ex.what());
-      return false;
-    }
-  }
-
-  _global_frame = new_frame;
-  return true;
 }
 
 /*****************************************************************************/
@@ -149,7 +97,7 @@ void MeasurementBuffer::BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& clo
 /*****************************************************************************/
 {
   // add a new measurement to be populated
-  _observation_list.push_front(MeasurementReading());
+  _observation_list.push_front(observation::MeasurementReading());
 
   const std::string origin_frame = \
                   _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
@@ -213,7 +161,7 @@ void MeasurementBuffer::BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& clo
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::GetObservations(std::vector<MeasurementReading>& observations)
+void MeasurementBuffer::GetReadings(std::vector<observation::MeasurementReading>& observations)
 /*****************************************************************************/
 {
   RemoveStaleObservations();
@@ -226,7 +174,7 @@ void MeasurementBuffer::GetObservations(std::vector<MeasurementReading>& observa
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::RemoveStaleObservations()
+void MeasurementBuffer::RemoveStaleObservations(void)
 /*****************************************************************************/
 {
   if (_observation_list.empty())
@@ -243,7 +191,7 @@ void MeasurementBuffer::RemoveStaleObservations()
 
   for (it = _observation_list.begin(); it != _observation_list.end(); ++it)
   {
-    MeasurementReading& obs = *it;
+    observation::MeasurementReading& obs = *it;
     const ros::Duration time_diff = \
             _last_updated - pcl_conversions::fromPCL(obs._cloud->header).stamp;
 
@@ -256,7 +204,7 @@ void MeasurementBuffer::RemoveStaleObservations()
 }
 
 /*****************************************************************************/
-bool MeasurementBuffer::UpdatedAtExpectedRate() const
+bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
   if (_expected_update_rate == ros::Duration(0.0))
@@ -276,21 +224,21 @@ bool MeasurementBuffer::UpdatedAtExpectedRate() const
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::ResetLastUpdatedTime()
+void MeasurementBuffer::ResetLastUpdatedTime(void)
 /*****************************************************************************/
 {
   _last_updated = ros::Time::now();
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::Lock()
+void MeasurementBuffer::Lock(void)
 /*****************************************************************************/
 {
   _lock.lock();
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::Unlock()
+void MeasurementBuffer::Unlock(void)
 /*****************************************************************************/
 {
   _lock.unlock();

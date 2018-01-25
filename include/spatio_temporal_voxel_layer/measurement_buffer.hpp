@@ -39,22 +39,29 @@
 #ifndef MEASUREMENT_BUFFER_H_
 #define MEASUREMENT_BUFFER_H_
 
+// measurement structs
+#include <spatio_temporal_voxel_layer/measurement_reading.h>
+// PCL
+#include <pcl_ros/transforms.h>
+// STL
 #include <vector>
 #include <list>
 #include <string>
+// ROS
+#include <ros/ros.h>
 #include <ros/time.h>
-#include <spatio_temporal_voxel_layer/measurement_reading.h>
+// TF
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
-
-#include <pcl/point_cloud.h>
+// msgs
 #include <sensor_msgs/PointCloud2.h>
-
+// Mutex
 #include <boost/thread.hpp>
 
 namespace buffer
 {
-typedef std::list<MeasurementReading>::iterator readings_iter;
+
+typedef std::list<observation::MeasurementReading>::iterator readings_iter;
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr;
 
 class MeasurementBuffer
@@ -75,30 +82,28 @@ public:
                     const double& vFOV, \
                     const double& hFOV);
 
-  ~MeasurementBuffer();
-
-  bool SetGlobalFrame(const std::string& new_global_frame);
+  ~MeasurementBuffer(void);
 
   void BufferROSCloud(const sensor_msgs::PointCloud2& cloud);
   void BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 
-  void GetObservations(std::vector<MeasurementReading>& observations);
+  void GetReadings(std::vector<observation::MeasurementReading>& observations);
 
-  bool UpdatedAtExpectedRate() const;
-  void ResetLastUpdatedTime();
+  bool UpdatedAtExpectedRate(void) const;
+  void ResetLastUpdatedTime(void);
 
-  void Lock();
-  void Unlock();
+  void Lock(void);
+  void Unlock(void);
 
 private:
-  void RemoveStaleObservations();
+  void RemoveStaleObservations(void);
 
   tf::TransformListener& _tf;
   const ros::Duration _observation_keep_time, _expected_update_rate;
   boost::recursive_mutex _lock;
   ros::Time _last_updated;
   std::string _global_frame, _topic_name, _sensor_frame;
-  std::list<MeasurementReading> _observation_list;
+  std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _horizontal_fov;
 };

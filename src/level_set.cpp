@@ -35,7 +35,7 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include <spatio_temporal_voxel_layer/level_set.h>
+#include <spatio_temporal_voxel_layer/level_set.hpp>
 
 namespace spatio_temporal_voxel_layer
 {
@@ -82,7 +82,7 @@ void LevelSet::InitializeGrid(const bool& rolling)
 }
 
 /*****************************************************************************/
-void LevelSet::TemporallyClearFrustums(const std::vector<MeasurementReading>& clearing_observations)
+void LevelSet::TemporallyClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations)
 /*****************************************************************************/
 {
 
@@ -130,7 +130,7 @@ void LevelSet::TemporallyClearFrustums(const std::vector<MeasurementReading>& cl
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelizeMark(const std::vector<MeasurementReading>& marking_observations)
+void LevelSet::ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations)
 /*****************************************************************************/
 {
   if (marking_observations.size() > 0) 
@@ -141,7 +141,7 @@ void LevelSet::ParallelizeMark(const std::vector<MeasurementReading>& marking_ob
 }
 
 /*****************************************************************************/
-void LevelSet::operator()(const MeasurementReading& obs) const
+void LevelSet::operator()(const observation::MeasurementReading& obs) const
 /*****************************************************************************/
 {
   openvdb::FloatGrid::Accessor accessor = _grid->getAccessor();

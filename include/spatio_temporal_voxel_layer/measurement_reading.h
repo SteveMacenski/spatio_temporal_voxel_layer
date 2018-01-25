@@ -37,63 +37,68 @@
  *          and frustum clearing.
  *********************************************************************/
 
-
-#ifndef MEASUREMENT_H_
-#define MEASUREMENT_H_
-
+#ifndef MEASUREMENT_READING_H_
+#define MEASUREMENT_READING_H_
+// PCL
+#include <pcl/point_cloud.h>
 #include <pcl_ros/point_cloud.h>
+// msgs
 #include <geometry_msgs/Point.h>
+
+namespace observation
+{
 
 struct MeasurementReading
 {
+  /*****************************************************************************/
+  MeasurementReading() :
+  /*****************************************************************************/
+    _cloud(new pcl::PointCloud<pcl::PointXYZ>)
+  {
+  }
 
-/*****************************************************************************/
-MeasurementReading() :
-/*****************************************************************************/
-  _cloud(new pcl::PointCloud<pcl::PointXYZ>)
-{
-}
+  /*****************************************************************************/
+  MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
+            double obstacle_range, double min_z, double max_z, double vFOV, double hFOV) :
+  /*****************************************************************************/
+                                      _origin(origin),                                   \
+                                      _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
+                                      _obstacle_range_in_m(obstacle_range),              \
+                                      _min_z_in_m(min_z),                                \
+                                      _max_z_in_m(max_z),                                \
+                                      _vertical_fov_in_rad(vFOV),                        \
+                                      _horizontal_fov_in_rad(hFOV)
+  {
+  }
 
-/*****************************************************************************/
-MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
-          double obstacle_range, double min_z, double max_z, double vFOV, double hFOV) :
-/*****************************************************************************/
-                                    _origin(origin),                                   \
+  /*****************************************************************************/
+  MeasurementReading(pcl::PointCloud<pcl::PointXYZ> cloud, double obstacle_range) :
+  /*****************************************************************************/
                                     _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
-                                    _obstacle_range_in_m(obstacle_range),              \
-                                    _min_z_in_m(min_z),                                \
-                                    _max_z_in_m(max_z),                                \
-                                    _vertical_fov_in_rad(vFOV),                        \
-                                    _horizontal_fov_in_rad(hFOV)
-{
-}
+                                    _obstacle_range_in_m(obstacle_range)
+  {
+  }
 
-/*****************************************************************************/
-MeasurementReading(pcl::PointCloud<pcl::PointXYZ> cloud, double obstacle_range) :
-/*****************************************************************************/
-                                  _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
-                                  _obstacle_range_in_m(obstacle_range)
-{
-}
+  /*****************************************************************************/
+  MeasurementReading(const MeasurementReading& obs) :
+  /*****************************************************************************/
+                             _origin(obs._origin),                                      \
+                             _cloud(new pcl::PointCloud<pcl::PointXYZ>(*(obs._cloud))), \
+                             _obstacle_range_in_m(obs._obstacle_range_in_m),            \
+                             _min_z_in_m(obs._min_z_in_m),                              \
+                             _max_z_in_m(obs._max_z_in_m),                              \
+                             _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
+                             _horizontal_fov_in_rad(obs._horizontal_fov_in_rad)
+  {
+  }
 
-/*****************************************************************************/
-MeasurementReading(const MeasurementReading& obs) :
-/*****************************************************************************/
-                           _origin(obs._origin),                                      \
-                           _cloud(new pcl::PointCloud<pcl::PointXYZ>(*(obs._cloud))), \
-                           _obstacle_range_in_m(obs._obstacle_range_in_m),            \
-                           _min_z_in_m(obs._min_z_in_m),                              \
-                           _max_z_in_m(obs._max_z_in_m),                              \
-                           _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
-                           _horizontal_fov_in_rad(obs._horizontal_fov_in_rad)
-{
-}
-
-geometry_msgs::Point _origin;
-pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
-double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
-double _vertical_fov_in_rad, _horizontal_fov_in_rad;
+  geometry_msgs::Point _origin;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
+  double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
+  double _vertical_fov_in_rad, _horizontal_fov_in_rad;
 
 };
 
-#endif  // MEASUREMENT_H_
+} // end namespace
+
+#endif  // MEASUREMENT_READING_H_

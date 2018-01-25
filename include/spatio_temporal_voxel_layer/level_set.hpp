@@ -37,15 +37,18 @@
  *          internal voxel grid layer.
  *********************************************************************/
 
-// ros
+#ifndef VOLUME_GRID_H_
+#define VOLUME_GRID_H_
+
+// PCL
+#include <pcl_ros/transforms.h>
+#include <pcl/PCLPointCloud2.h>
+// ROS
 #include <ros/ros.h>
 // STL
 #include <math.h>
-// measurement struct
-#include <spatio_temporal_voxel_layer/measurement_reading.h>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
-#include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 // TBB
 #include <tbb/parallel_do.h>
@@ -53,28 +56,22 @@
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/GridTransformer.h>
 #include <openvdb/tools/RayIntersector.h>
-// pcl
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/conversions.h>
-#include <pcl_ros/point_cloud.h>
-
-#ifndef OPENVDB_GRID_H_
-#define OPENVDB_GRID_H_
+// measurement struct
+#include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 
 namespace spatio_temporal_voxel_layer
 {
 
 struct parallel_request
 {
-  parallel_request(const MeasurementReading& _obs, const bool& _marking) :
+  parallel_request(const observation::MeasurementReading& _obs, const bool& _marking) :
                                                         observation(_obs),
                                                         marking(_marking)
   {
     return;
   }
 
-  MeasurementReading observation;
+  observation::MeasurementReading observation;
   bool marking;
 };
 
@@ -88,9 +85,9 @@ public:
   ~LevelSet();
 
   // mark and clear
-  void ParallelizeMark(const std::vector<MeasurementReading>& marking_observations);
-  void operator()(const MeasurementReading& obs) const;
-  void TemporallyClearFrustums(const std::vector<MeasurementReading>& clearing_observations);
+  void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
+  void operator()(const observation::MeasurementReading& obs) const;
+  void TemporallyClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   // visualize and projection for ROS
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);

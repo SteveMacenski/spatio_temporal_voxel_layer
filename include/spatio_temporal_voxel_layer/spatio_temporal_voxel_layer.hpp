@@ -38,7 +38,12 @@
  *          ray tracing and knn. 
  *********************************************************************/
 
-// ros
+#ifndef VOLUME_GRID_LAYER_H_
+#define VOLUME_GRID_LAYER_H_
+
+// voxel grid
+#include <spatio_temporal_voxel_layer/level_set.hpp>
+// ROS
 #include <ros/ros.h>
 // costmap
 #include <costmap_2d/layer.h>
@@ -53,7 +58,6 @@
 #include <iostream>
 // msgs
 #include <sensor_msgs/LaserScan.h>
-#include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point.h>
@@ -65,12 +69,9 @@
 #include <tf/exceptions.h>
 // reconfigure
 #include <dynamic_reconfigure/server.h>
-// voxel grid
-#include <spatio_temporal_voxel_layer/level_set.h>
-#include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 
-#ifndef OPENVDB_OBSTACLE_LAYER_H_
-#define OPENVDB_OBSTACLE_LAYER_H_
+
+
 
 namespace spatio_temporal_voxel_layer
 {
@@ -98,8 +99,8 @@ public:
   virtual void deactivate(void);
 
   // Functions for sensor feeds
-  bool GetMarkingObservations(std::vector<MeasurementReading>& marking_observations) const;
-  bool GetClearingObservations(std::vector<MeasurementReading>& marking_observations) const;
+  bool GetMarkingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
+  bool GetClearingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
 
   // Functions to interact with maps
   void UpdateROSCostmap(double min_x, double min_y, double max_x, double max_y);
@@ -116,7 +117,7 @@ private:
                           const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
 
   // Functions for adding static obstacle zones
-  bool AddStaticObservations(const MeasurementReading& obs);
+  bool AddStaticObservations(const observation::MeasurementReading& obs);
   bool RemoveStaticObservations(void);
 
   laser_geometry::LaserProjection                                  _laser_projector;
@@ -134,7 +135,7 @@ private:
   int                                  _combination_method, _mark_threshold;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
-  std::vector<MeasurementReading>      _static_observations;
+  std::vector<observation::MeasurementReading> _static_observations;
   LevelSet*                            _level_set;
 };
 
