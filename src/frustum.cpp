@@ -127,11 +127,11 @@ void Frustum::ComputePlaneNormals(void)
 }
 
 /*****************************************************************************/
-bool Frustum::IsInside(const openvdb::Vec3d& pt) const
+bool Frustum::IsInside(const openvdb::Vec3d& pt)
 /*****************************************************************************/
 {
-  std::vector<Vector3D>::iterator it = _plane_normals.begin();
-  for (it; it!=_plane_normals.end(); ++it)
+  std::vector<Vector3D>::iterator it;
+  for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
   {
     if (Dot(*it, pt) < 0.)
     {
