@@ -57,8 +57,15 @@ struct Vector3D
 {
   Vector3D(const double& x_, const double& y_, const double& z_) : x(x_), y(y_), z(z_)
   {}
+  
   Vector3D(void) : x(), y(), z()
   {}
+
+  inline Vector3D operator*(double a)
+  {
+    return Vector3D(a*x, a*y, a*z);
+  }
+
   void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
     Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
@@ -88,6 +95,7 @@ private:
   std::vector<Vector3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
+  bool _valid_frustum;
 };
 
 } // end namespace
