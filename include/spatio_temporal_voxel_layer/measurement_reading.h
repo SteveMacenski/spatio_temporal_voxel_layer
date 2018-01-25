@@ -44,6 +44,7 @@
 #include <pcl_ros/point_cloud.h>
 // msgs
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/Quaternion.h>
 
 namespace observation
 {
@@ -93,11 +94,13 @@ struct MeasurementReading
                              _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
                              _horizontal_fov_in_rad(obs._horizontal_fov_in_rad),        \
                              _marking(obs._marking),                                    \
-                             _clearing(obs._clearing)
+                             _clearing(obs._clearing),                                  \
+                             _orientation(obs._orientation)
   {
   }
 
   geometry_msgs::Point _origin;
+  geometry_msgs::Quaternion _orientation;
   pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
   double _vertical_fov_in_rad, _horizontal_fov_in_rad;

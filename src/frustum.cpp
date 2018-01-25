@@ -131,10 +131,10 @@ void Frustum::SetPosition(const geometry_msgs::Point& origin)
 }
 
 /*****************************************************************************/
-void Frustum::SetOrientation(/*const geometry_msgs::Quaternion& rpy*/)
+void Frustum::SetOrientation(const geometry_msgs::Quaternion& quat)
 /*****************************************************************************/
 {
-  _orientation = Eigen::Quaterniond(/*rpy.x, rpy.y, rpy.z*/);
+  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
 }
 
 } // end namespace

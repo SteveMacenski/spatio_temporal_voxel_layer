@@ -78,7 +78,7 @@ public:
   bool IsInside(const openvdb::Vec3d& pt);
 
   void SetPosition(const geometry_msgs::Point& origin);
-  void SetOrientation(/*const geometry_msgs::Quaternion& rpy*/);
+  void SetOrientation(const geometry_msgs::Quaternion& quat);
 
 private:
   void ComputePlaneNormals(void);

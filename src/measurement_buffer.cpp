@@ -108,16 +108,23 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
   try
   {
-    tf::Stamped<tf::Vector3> global_origin,
-                  local_origin(tf::Vector3(0, 0, 0),
-                  pcl_conversions::fromPCL(cloud.header).stamp, origin_frame);
-    _tf.waitForTransform(_global_frame, local_origin.frame_id_, \
-                         local_origin.stamp_, ros::Duration(0.5));
-    _tf.transformPoint(_global_frame, local_origin, global_origin);
+    geometry_msgs::Quaternion orientation;
+    tf::Stamped<tf::Pose> local_pose, global_pose;
+    local_pose.setOrigin(tf::Vector3(0, 0, 0));
+    local_pose.setRotation(tf::Quaternion(0, 0, 0, 1));
+    local_pose.stamp_ = pcl_conversions::fromPCL(cloud.header).stamp;
+    local_pose.frame_id_ = origin_frame;
 
-    _observation_list.front()._origin.x = global_origin.getX();
-    _observation_list.front()._origin.y = global_origin.getY();
-    _observation_list.front()._origin.z = global_origin.getZ();
+    _tf.waitForTransform(_global_frame, local_pose.frame_id_, \
+                         local_pose.stamp_, ros::Duration(0.5));
+    _tf.transformPose(_global_frame, local_pose, global_pose);
+
+    _observation_list.front()._origin.x = global_pose.getOrigin().getX();
+    _observation_list.front()._origin.y = global_pose.getOrigin().getY();
+    _observation_list.front()._origin.z = global_pose.getOrigin().getZ();
+
+    tf::quaternionTFToMsg(global_pose.getRotation(), orientation);
+    _observation_list.front()._orientation = orientation;
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;

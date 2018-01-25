@@ -55,6 +55,7 @@
 #include <tf/transform_datatypes.h>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/Quaternion.h>
 // Mutex
 #include <boost/thread.hpp>
 

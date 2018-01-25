@@ -146,7 +146,7 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
                               obs._min_z_in_m,            \
                               obs._max_z_in_m);
     frustum.SetPosition(obs._origin);
-    frustum.SetOrientation();
+    frustum.SetOrientation(obs._orientation);
     frustum.TransformPlaneNormals();
 
     openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
