@@ -69,32 +69,27 @@ public:
   typedef openvdb::math::Ray<openvdb::Real> GridRay;
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
-  LevelSet(const float& voxel_size, const int& background_value, const bool& rolling);
+  LevelSet(const float& voxel_size, const int& background_value);
   ~LevelSet();
 
-  // mark and clear
   void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
   void operator()(const observation::MeasurementReading& obs) const;
   void ParallelizeClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
-  // visualize and projection for ROS
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
   void GetFlattenedCostmap(std::vector<std::vector<int> >& costmap, \
                           const int& mark_threshold);
 
-  // ROS required primitives
   bool ResetLevelSet(void);
-  void ResizeLevelSet(int cells_dx, int cells_dy, double resolution, double origin_x, double origin_y);
-
-  // transformation functions
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
-  openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
 
 protected:
-  void InitializeGrid(const bool& rolling);
+  void InitializeGrid();
   bool MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::FloatGrid::Accessor& accessor) const;
   bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const;
   bool IsGridEmpty() const;
+
+  openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
 
   mutable openvdb::FloatGrid::Ptr _grid;
   int                             _background_value;

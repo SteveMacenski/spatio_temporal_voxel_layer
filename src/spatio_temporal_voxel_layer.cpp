@@ -66,8 +66,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
 
   bool track_unknown_space;
-  double transform_tolerance;
-  int background;
+  double transform_tolerance, _voxel_decay, _voxel_decay_static;
+  int background, decay_model;
   std::string topics_string;
   nh.param("observation_sources", topics_string, std::string(""));
   nh.param("background_value", background, 0);
@@ -77,6 +77,14 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("voxel_size", _voxel_size, 0.05);
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
+  // decay model for voxels to follow 0 is linear, 1 is exponential
+  nh.param("decay_model", decay_model, 0);
+  //temporal -1 means keep forever. 0. means most recent only in s
+  // seconds if model is linear, e^n if exponential
+  nh.param("voxel_decay", _voxel_decay, -1.);
+  // decay when voxel is part of a connected component of static map
+  // seconds if model is linear, e^n if exponential
+  nh.param("voxel_decay_static", _voxel_decay_static, -1.);
 
   if (track_unknown_space)
   {
@@ -87,11 +95,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   if (_publish_voxels)
   {
-    _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid" , 1);
+    _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
   }
 
-  _level_set = new volume_grid::LevelSet(_voxel_size, \
-                                         background, _rolling_window);
+  _level_set = new volume_grid::LevelSet(_voxel_size, background);
   matchSize();
   current_ = true;
 
@@ -104,7 +111,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height;
-    double max_obstacle_height, min_z, max_z, vFOV, hFOV;
+    double max_obstacle_height, min_z, max_z, vFOV, hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
     bool inf_is_valid, clearing, marking;
 
@@ -114,22 +121,20 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("expected_update_rate", expected_update_rate, 0.0);
     source_node.param("data_type", data_type, std::string("PointCloud2"));
     source_node.param("min_obstacle_height", min_obstacle_height, 0.0);
-    source_node.param("max_obstacle_height", max_obstacle_height, 2.0);
+    source_node.param("max_obstacle_height", max_obstacle_height, 3.0);
     source_node.param("inf_is_valid", inf_is_valid, false);
     source_node.param("clearing", clearing, false);
-    source_node.param("marking", marking, false);
+    source_node.param("marking", marking, true);
     // minimum distance from camera it can see
     source_node.param("min_z", min_z, 0.); 
     // maximum distance from camera it can see
     source_node.param("max_z", max_z, 10.); 
     // vertical FOV angle in rad
-    source_node.param("vertical_fov_angle", vFOV, 0.7); 
+    source_node.param("vertical_fov_angle", vFOV, 0.7);
     // horizontal FOV angle in rad
-    source_node.param("horizontal_fov_angle", hFOV, 1.04); 
-    //temporal -1 means keep forever. 0. means most recent only in s
-    source_node.param("voxel_decay", _voxel_decay, -1.); 
-    // decay when voxel is part of a connected component of static map
-    source_node.param("voxel_decay_static", _voxel_decay, -1.); 
+    source_node.param("horizontal_fov_angle", hFOV, 1.04);
+    // acceleration value scales the model's decay in presence of readings
+    source_node.param("decay_acceleration", decay_acceleration, 1.);
 
     if (!sensor_frame.empty())
     {
@@ -489,17 +494,8 @@ void SpatioTemporalVoxelLayer::resetMaps(void)
 void SpatioTemporalVoxelLayer::matchSize(void)
 /*****************************************************************************/
 {
-  // match the master costmap size
-
-  //takes care of 2D ROS costmap
-  CostmapLayer::matchSize(); 
-
-  //takes care of our level set, probably dont need to do
-  _level_set->ResizeLevelSet(layered_costmap_->getCostmap()->getSizeInCellsX(), \
-                             layered_costmap_->getCostmap()->getSizeInCellsY(), \
-                             layered_costmap_->getCostmap()->getResolution(),   \
-                             layered_costmap_->getCostmap()->getOriginX(),      \
-                             layered_costmap_->getCostmap()->getOriginY());
+  // match the master costmap size, volume_grid maintains full w/ expiration.
+  CostmapLayer::matchSize();
 }
 
 /*****************************************************************************/
@@ -547,7 +543,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
 
   // publish point cloud
-  if (_publish_voxels)
+  if (_publish_voxels && _voxel_pub.getNumSubscribers() > 0)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _level_set->GetOccupancyPointCloud(pc);
@@ -565,6 +561,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double min_x, double min_y, \
 /*****************************************************************************/
 {
   // project 3D voxels to 2D, populate costmap_ and touch for updates
+  //TODO instead dont resize but check in updateROSCostmap if it belongs in the bounding box // give it bounds to report
   std::vector<std::vector<int> > flattened_costmap(size_x_, \
                                     std::vector<int>(size_y_, 0));
   _level_set->GetFlattenedCostmap(flattened_costmap, _mark_threshold); //return only incides of meaning TOOD ##

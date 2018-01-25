@@ -3,6 +3,7 @@ rgbd_obstacle_layer:
   enabled:               true
   voxel_decay:           20 #seconds
   voxel_decay_static:    1.
+  decay_model:           0
   voxel_size:            0.05
   track_unknown_space:   true
   observation_persistence: 0.0
@@ -30,3 +31,4 @@ rgbd_obstacle_layer:
     max_z: 7.0
     vertical_fov_angle: 0.7
     horizontal_fov_angle: 1.04
+    decay_acceleration: 1.

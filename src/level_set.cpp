@@ -41,13 +41,12 @@ namespace volume_grid
 {
 
 /*****************************************************************************/
-LevelSet::LevelSet(const float& voxel_size, const int& background_value, \
-                                    const bool& rolling) : 
+LevelSet::LevelSet(const float& voxel_size, const int& background_value) : 
                                        _background_value( background_value ), \
                                        _voxel_size( voxel_size )
 /*****************************************************************************/
 {
-  this->InitializeGrid(rolling);
+  this->InitializeGrid();
 }
 
 /*****************************************************************************/
@@ -57,7 +56,7 @@ LevelSet::~LevelSet()
 }
 
 /*****************************************************************************/
-void LevelSet::InitializeGrid(const bool& rolling)
+void LevelSet::InitializeGrid()
 /*****************************************************************************/
 {
   // initialize the OpenVDB Grid volume
@@ -71,12 +70,8 @@ void LevelSet::InitializeGrid(const bool& rolling)
   m.preRotate(openvdb::math::Z_AXIS, 0);
 
   _grid->setTransform(openvdb::math::Transform::createLinearTransform( m ));
-  _grid->insertMeta("ObstacleLayerVoxelGrid", openvdb::BoolMetadata( 1 ));
   _grid->setName("SpatioTemporalVoxelLayer");
-  _grid->insertMeta("Rolling", openvdb::BoolMetadata( rolling ));
-  _grid->insertMeta("Effective Voxel Size in Meters", \
-                    openvdb::FloatMetadata( _voxel_size ));
-
+  _grid->insertMeta("Voxel Size", openvdb::FloatMetadata( _voxel_size ));
   _grid->setGridClass(openvdb::GRID_LEVEL_SET);
 }
 
@@ -132,15 +127,14 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
                                        openvdb::Vec3d(it->x, it->y, it->z)));
       if(!this->MarkLevelSetPoint(openvdb::Coord( \
                  mark_grid[0], mark_grid[1], mark_grid[2]), 255, accessor)) {
-        ROS_WARN_THROTTLE(1., \
-                    "Failed to mark point in levelset coordinates (%f %f %f)", 
-                                    mark_grid[0], mark_grid[1], mark_grid[2]);
+        ROS_WARN_THROTTLE(1., "Failed to mark point in levelset coordinates");
       }
     }
   }
 
   if (obs._clearing)
   {
+    ROS_INFO("got clearing obs");
     geometry::Frustum frustum(obs._vertical_fov_in_rad,   \
                               obs._horizontal_fov_in_rad, \
                               obs._min_z_in_m,            \
@@ -148,10 +142,12 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
     frustum.SetPosition(obs._origin);
     frustum.SetOrientation(obs._orientation);
     frustum.TransformPlaneNormals();
+    ROS_INFO("making and transforming frustum"); // 3
 
     openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
     for (citer; citer; ++citer) 
     {
+      ROS_INFO_THROTTLE(1.,"cheking interior inclusion");
       const openvdb::Coord pt_index(citer.getCoord());
       if (!frustum.IsInside(this->IndexToWorld(pt_index)))
       {
@@ -160,14 +156,12 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
         // each threaded obs iterate through full grid TODO
         continue;
       }
-      else
+
+      ROS_INFO_THROTTLE(1.,"c;earing included");
+      // check temporal constraints here and accelerate by chosen model TODO
+      if(!this->ClearLevelSetPoint(pt_index, accessor))
       {
-        // check temporal constraints here and accelerate by chosen model TODO
-        ROS_WARN_THROTTLE(2.,"a point was in frustum!");
-        if(!this->ClearLevelSetPoint(pt_index, accessor))
-        {
-          ROS_WARN_THROTTLE(1.,"Failed to clear point in levelset.");
-        }
+        ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
       }
     }
   }
@@ -223,14 +217,6 @@ bool LevelSet::ResetLevelSet(void)
 }
 
 /*****************************************************************************/
-void LevelSet::ResizeLevelSet(int cells_dx, int cells_dy, double resolution, \
-                             double origin_x, double origin_y)
-/*****************************************************************************/
-{
-  ROS_WARN("resizing VDB grid is not yet implemented");
-}
-
-/*****************************************************************************/
 bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
                 const int& value, openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
@@ -248,7 +234,10 @@ bool LevelSet::ClearLevelSetPoint(const \
               openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
-  accessor.setValueOff(pt, _background_value);
+  if (accessor.isValueOn(pt))
+  {
+    accessor.setValueOff(pt, _background_value);
+  }
   return !accessor.isValueOn(pt);
 }
 
