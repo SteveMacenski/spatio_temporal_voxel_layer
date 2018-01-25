@@ -123,7 +123,7 @@ void Frustum::ComputePlaneNormals(void)
 
   // cross them for a-positive normals
 
-  // store  normals and corners
+  // store  normals
 }
 
 /*****************************************************************************/
@@ -142,14 +142,6 @@ bool Frustum::IsInside(const openvdb::Vec3d& pt) const
 }
 
 /*****************************************************************************/
-bool Frustum::Dot(const Vector3D& plane_pt, \
-                                          const openvdb::Vec3d& query_pt) const
-/*****************************************************************************/
-{
-  return plane_pt[0]*query_pt[0]+plane_pt[1]*query_pt[1]+plane_pt[2]*query_pt[2];
-}
-
-/*****************************************************************************/
 void Frustum::SetPosition(const geometry_msgs::Point& origin)
 /*****************************************************************************/
 {
@@ -161,6 +153,14 @@ void Frustum::SetOrientation(const geometry_msgs::Quaternion& quat)
 /*****************************************************************************/
 {
   _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+}
+
+/*****************************************************************************/
+bool Frustum::Dot(const Vector3D& plane_pt, \
+                                          const openvdb::Vec3d& query_pt) const
+/*****************************************************************************/
+{
+  return plane_pt.x*query_pt[0]+plane_pt.y*query_pt[1]+plane_pt.z*query_pt[2];
 }
 
 } // end namespace
