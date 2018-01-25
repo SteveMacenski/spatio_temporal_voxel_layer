@@ -54,7 +54,9 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
                                      const double& min_d, \
                                      const double& max_d, \
                                      const double& vFOV, \
-                                     const double& hFOV) :
+                                     const double& hFOV, \
+                                     const bool& marking, \
+                                     const bool& clearing) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -62,7 +64,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _horizontal_fov(hFOV)
+    _vertical_fov(vFOV), _horizontal_fov(hFOV), 
+    _marking(marking), _clearing(clearing)
 {
 }
 
@@ -93,7 +96,8 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& cloud)
+void MeasurementBuffer::BufferPCLCloud(const \
+                                         pcl::PointCloud<pcl::PointXYZ>& cloud)
 /*****************************************************************************/
 {
   // add a new measurement to be populated
@@ -161,7 +165,8 @@ void MeasurementBuffer::BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& clo
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::GetReadings(std::vector<observation::MeasurementReading>& observations)
+void MeasurementBuffer::GetReadings( \
+                    std::vector<observation::MeasurementReading>& observations)
 /*****************************************************************************/
 {
   RemoveStaleObservations();

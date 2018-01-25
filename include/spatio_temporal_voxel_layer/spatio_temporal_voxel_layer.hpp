@@ -70,9 +70,6 @@
 // reconfigure
 #include <dynamic_reconfigure/server.h>
 
-
-
-
 namespace spatio_temporal_voxel_layer
 {
 
@@ -123,9 +120,9 @@ private:
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
   std::vector<boost::shared_ptr<tf::MessageFilterBase> >           _observation_notifiers;
-  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _observation_buffers;
-  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _marking_buffers;
-  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >   _clearing_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _observation_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
+  std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
 
   bool                                 _publish_voxels;
   ros::Publisher                       _voxel_pub;
@@ -136,7 +133,7 @@ private:
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
-  LevelSet*                            _level_set;
+  volume_grid::LevelSet*               _level_set;
 };
 
 }; // end namespace

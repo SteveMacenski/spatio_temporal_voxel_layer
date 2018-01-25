@@ -67,20 +67,22 @@ typedef pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr;
 class MeasurementBuffer
 {
 public:
-  MeasurementBuffer(const std::string& topic_name, \
+  MeasurementBuffer(const std::string& topic_name,       \
                     const double& observation_keep_time, \
-                    const double& expected_update_rate, \
-                    const double& min_obstacle_height, \
-                    const double& max_obstacle_height, \
-                    const double& obstacle_range, \
-                    tf::TransformListener& tf, \
-                    const std::string& global_frame, \
-                    const std::string& sensor_frame, \
-                    const double& tf_tolerance, \
-                    const double& min_d, \
-                    const double& max_d, \
-                    const double& vFOV, \
-                    const double& hFOV);
+                    const double& expected_update_rate,  \
+                    const double& min_obstacle_height,   \
+                    const double& max_obstacle_height,   \
+                    const double& obstacle_range,        \
+                    tf::TransformListener& tf,           \
+                    const std::string& global_frame,     \
+                    const std::string& sensor_frame,     \
+                    const double& tf_tolerance,          \
+                    const double& min_d,                 \
+                    const double& max_d,                 \
+                    const double& vFOV,                  \
+                    const double& hFOV,                  \
+                    const bool& marking,                 \
+                    const bool& clearing);
 
   ~MeasurementBuffer(void);
 
@@ -106,6 +108,7 @@ private:
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _horizontal_fov;
+  bool _marking, _clearing;
 };
 
 } // namespace buffer

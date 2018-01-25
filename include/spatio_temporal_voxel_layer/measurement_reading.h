@@ -59,7 +59,8 @@ struct MeasurementReading
 
   /*****************************************************************************/
   MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
-            double obstacle_range, double min_z, double max_z, double vFOV, double hFOV) :
+            double obstacle_range, double min_z, double max_z, double vFOV, double hFOV,
+            bool marking, bool clearing) :
   /*****************************************************************************/
                                       _origin(origin),                                   \
                                       _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
@@ -67,7 +68,9 @@ struct MeasurementReading
                                       _min_z_in_m(min_z),                                \
                                       _max_z_in_m(max_z),                                \
                                       _vertical_fov_in_rad(vFOV),                        \
-                                      _horizontal_fov_in_rad(hFOV)
+                                      _horizontal_fov_in_rad(hFOV),                      \
+                                      _marking(marking),                                 \
+                                      _clearing(clearing)
   {
   }
 
@@ -88,7 +91,9 @@ struct MeasurementReading
                              _min_z_in_m(obs._min_z_in_m),                              \
                              _max_z_in_m(obs._max_z_in_m),                              \
                              _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
-                             _horizontal_fov_in_rad(obs._horizontal_fov_in_rad)
+                             _horizontal_fov_in_rad(obs._horizontal_fov_in_rad),        \
+                             _marking(obs._marking),                                    \
+                             _clearing(obs._clearing)
   {
   }
 
@@ -96,6 +101,7 @@ struct MeasurementReading
   pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
   double _vertical_fov_in_rad, _horizontal_fov_in_rad;
+  double _marking, _clearing;
 
 };
 

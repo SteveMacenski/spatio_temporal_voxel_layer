@@ -40,10 +40,15 @@
 #ifndef FRUSTUM_H_
 #define FRUSTUM_H_
 
+// Eigen
+#include <Eigen/Geometry>
 // STL
 #include <vector>
 // OpenVDB
 #include <openvdb/openvdb.h>
+// msgs
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Quaternion.h>
 
 namespace geometry
 {
@@ -51,38 +56,37 @@ namespace geometry
 struct Vector3D
 {
   Vector3D(const double& x_, const double& y_, const double& z_) : x(x_), y(y_), z(z_)
+  {}
+  Vector3D(void) : x(), y(), z()
+  {}
+  void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
+    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
+    x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
   }
 
-  Vector3D() : x(), y(), z()
-  {
-  }
-
-  void TransformFrames()
-  {
-
-  }
-  double x,y,z;
-}
+  double x, y, z;
+};
 
 class Frustum
 {
 public:
-  Frustum(void);
   Frustum(const double& vFOV, const double& hFOV, const double& min_dist, const double& max_dist);
   ~Frustum(void);
 
-  void ComputePlaneNormals();
-  void SetPosition();
-  void SetOrientation();
-
+  void TransformPlaneNormals(void);
   bool IsInside(const openvdb::Vec3d& pt);
 
+  void SetPosition(const geometry_msgs::Point& origin);
+  void SetOrientation(/*const geometry_msgs::Quaternion& rpy*/);
+
 private:
-  void TransformPlaneNormals();
+  void ComputePlaneNormals(void);
 
   double _vFOV, _hFOV, _min_d, _max_d;
   std::vector<Vector3D> _plane_normals;
+  Eigen::Vector3d _position;
+  Eigen::Quaterniond _orientation;
 };
 
 } // end namespace

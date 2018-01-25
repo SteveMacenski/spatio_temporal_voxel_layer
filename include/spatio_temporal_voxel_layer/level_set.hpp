@@ -58,22 +58,10 @@
 #include <openvdb/tools/RayIntersector.h>
 // measurement struct
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
+#include <spatio_temporal_voxel_layer/frustum.hpp>
 
-namespace spatio_temporal_voxel_layer
+namespace volume_grid
 {
-
-struct parallel_request
-{
-  parallel_request(const observation::MeasurementReading& _obs, const bool& _marking) :
-                                                        observation(_obs),
-                                                        marking(_marking)
-  {
-    return;
-  }
-
-  observation::MeasurementReading observation;
-  bool marking;
-};
 
 class LevelSet
 {
@@ -87,7 +75,7 @@ public:
   // mark and clear
   void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
   void operator()(const observation::MeasurementReading& obs) const;
-  void TemporallyClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
+  void ParallelizeClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   // visualize and projection for ROS
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
