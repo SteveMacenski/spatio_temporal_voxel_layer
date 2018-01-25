@@ -113,14 +113,40 @@ void Frustum::TransformPlaneNormals(void)
 void Frustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
+  //TODO
 
+  // find center vector + dists
+
+  // deflect to 4 corners
+
+  // separate into point for each plane
+
+  // cross them for a-positive normals
+
+  // store  normals and corners
 }
 
 /*****************************************************************************/
-bool Frustum::IsInside(const openvdb::Vec3d& pt)
+bool Frustum::IsInside(const openvdb::Vec3d& pt) const
 /*****************************************************************************/
 {
-  return false;
+  std::vector<Vector3D>::iterator it = _plane_normals.begin();
+  for (it; it!=_plane_normals.end(); ++it)
+  {
+    if (Dot(*it, pt) < 0.)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+/*****************************************************************************/
+bool Frustum::Dot(const Vector3D& plane_pt, \
+                                          const openvdb::Vec3d& query_pt) const
+/*****************************************************************************/
+{
+  return plane_pt[0]*query_pt[0]+plane_pt[1]*query_pt[1]+plane_pt[2]*query_pt[2];
 }
 
 /*****************************************************************************/

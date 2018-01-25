@@ -143,16 +143,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     }
 
     std::string obstacle_range_param_name;
-
-    // get the obstacle range for the sensor
     double obstacle_range = 3.0;
     if (source_node.searchParam("obstacle_range", obstacle_range_param_name))
     {
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
-
-    ROS_DEBUG("Creating a buffer for source %s, topic %s, frame %s", \
-              source.c_str(), topic.c_str(), sensor_frame.c_str());
 
     // create an observation buffer
     _observation_buffers.push_back(
@@ -174,12 +169,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     {
       _clearing_buffers.push_back(_observation_buffers.back());
     }
-
-    ROS_DEBUG(
-      "Created an observation buffer for source %s, topic %s, global frame: %s"
-      " expected update rate: %.2f, observation persistence: %.2f",
-      source.c_str(), topic.c_str(), _global_frame.c_str(), \
-      expected_update_rate, observation_keep_time);
 
     // create a callback for the topic
     if (data_type == "LaserScan")
@@ -489,13 +478,11 @@ void SpatioTemporalVoxelLayer::resetMaps(void)
   // takes care of ROS 2D costmap
   Costmap2D::resetMaps();
 
-  // takes care of our layer TODO, keeps doing:
-  /*move_base: /usr/include/openvdb/tree/InternalNode.h:3110: void openvdb::v3_1::tree::InternalNode<_ChildNodeType, Log2Dim>::setChildNode(openvdb::v3_1::Index, openvdb::v3_1::tree::InternalNode<_ChildNodeType, Log2Dim>::ChildNodeType*) [with _ChildNodeType = openvdb::v3_1::tree::InternalNode<openvdb::v3_1::tree::LeafNode<int, 3u>, 4u>; unsigned int Log2Dim = 5u; openvdb::v3_1::Index = unsigned int; openvdb::v3_1::tree::InternalNode<_ChildNodeType, Log2Dim>::ChildNodeType = openvdb::v3_1::tree::InternalNode<openvdb::v3_1::tree::LeafNode<int, 3u>, 4u>]: Assertion `mChildMask.isOff(i)' failed.
-*/
-  //if (!_level_set->ResetLevelSet())
- // {
- //   ROS_WARN("Did not clear level set in %s!", getName().c_str());
-  //}
+  // takes care of our layer TODO
+  if (!_level_set->ResetLevelSet())
+ {
+   ROS_WARN("Did not clear level set in %s!", getName().c_str());
+  }
 }
 
 /*****************************************************************************/
@@ -581,7 +568,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double min_x, double min_y, \
   std::vector<std::vector<int> > flattened_costmap(size_x_, \
                                     std::vector<int>(size_y_, 0));
   _level_set->GetFlattenedCostmap(flattened_costmap, _mark_threshold); //return only incides of meaning TOOD ##
-  Costmap2D::resetMaps(); //todo <-- why is this here? probably bad
+  Costmap2D::resetMaps();
 
   for (int i=0; i!= size_x_; i++) // then 1 for loop over useful stuff ##
   {

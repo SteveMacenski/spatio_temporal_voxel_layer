@@ -155,11 +155,9 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
       const openvdb::Coord pt_index(citer.getCoord());
       if (!frustum.IsInside(this->IndexToWorld(pt_index)))
       {
-        // check temporal constraints here and clear if needed TODO or
-        // not, and do in 
-        //costmap flat/PC2 since this would happen for each threaded obs 
-        //iterate through 
-        //full grid TODO
+        // check temporal constraints here and clear if needed TODO
+        //  or not, and do in costmap flat/PC2 since this would happen for
+        // each threaded obs iterate through full grid TODO
         continue;
       }
       else
@@ -214,13 +212,14 @@ bool LevelSet::ResetLevelSet(void)
 /*****************************************************************************/
 {
   // clear the voxel grid
-  _grid->clear();
-  if (this->IsGridEmpty())
-  {
-    ROS_INFO("Level set has been reset.");
-    return true;
-  }
-  return false;
+  // _grid->clear();
+  // if (this->IsGridEmpty())
+  // {
+  //   ROS_INFO("Level set has been reset.");
+  //   return true;
+  // }
+  // return false; TODO with mutex
+  return true;
 }
 
 /*****************************************************************************/

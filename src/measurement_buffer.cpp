@@ -130,6 +130,8 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
+    _observation_list.front()._marking = _marking;
+    _observation_list.front()._clearing = _clearing;
 
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 
