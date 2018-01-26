@@ -59,9 +59,26 @@
 // measurement struct
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 #include <spatio_temporal_voxel_layer/frustum.hpp>
+// Mutex
+#include <boost/thread/mutex.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 namespace volume_grid
 {
+
+typedef boost::mutex mutex;
+typedef boost::interprocess::scoped_lock<boost::mutex> scoped_lock;
+
+struct occupany_cell
+{
+  occupany_cell(const double& _x, const double& _y, const int& i) :
+    x(_x), y(_y), value(i)
+  {
+  }
+
+  double x, y;
+  int value;
+};
 
 class LevelSet
 {
@@ -77,24 +94,26 @@ public:
   void ParallelizeClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
-  void GetFlattenedCostmap(std::vector<std::vector<int> >& costmap, \
-                          const int& mark_threshold);
+  void GetFlattenedCostmap(std::vector<occupany_cell>& costmap_cells);
 
   bool ResetLevelSet(void);
-  openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
 protected:
   void InitializeGrid();
-  bool MarkLevelSetPoint(const openvdb::Coord& pt, const int& value, openvdb::FloatGrid::Accessor& accessor) const;
+  bool MarkLevelSetPoint(const openvdb::Coord& pt, const float& value, openvdb::FloatGrid::Accessor& accessor) const;
   bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const;
   bool IsGridEmpty() const;
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
+  openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
   mutable openvdb::FloatGrid::Ptr _grid;
   int                             _background_value;
   double                          _voxel_size;
   bool                            _pub_voxels;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr _pc;
+  boost::mutex                    _grid_lock;
+
 };
 
 };

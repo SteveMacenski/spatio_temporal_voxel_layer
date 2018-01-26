@@ -42,8 +42,9 @@ namespace volume_grid
 
 /*****************************************************************************/
 LevelSet::LevelSet(const float& voxel_size, const int& background_value) : 
-                                       _background_value( background_value ), \
-                                       _voxel_size( voxel_size )
+                            _background_value( background_value ), \
+                            _voxel_size( voxel_size ),             \
+                            _pc(new pcl::PointCloud<pcl::PointXYZ>)
 /*****************************************************************************/
 {
   this->InitializeGrid();
@@ -80,15 +81,49 @@ void LevelSet::ParallelizeClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
+  scoped_lock l(_grid_lock);
+
   if(this->IsGridEmpty())
   {
     return;
   }
+  openvdb::FloatGrid::Accessor accessor = _grid->getAccessor();
 
   if (clearing_readings.size() > 0) 
   {
-    tbb::parallel_do(clearing_readings, *this);
+    std::vector<observation::MeasurementReading>::const_iterator it = \
+                                                    clearing_readings.begin();
+    for (it; it!=clearing_readings.end(); ++it)
+    {
+      const observation::MeasurementReading& obs = *it;
+
+      geometry::Frustum frustum(obs._vertical_fov_in_rad,   \
+                                obs._horizontal_fov_in_rad, \
+                                obs._min_z_in_m,            \
+                                obs._max_z_in_m);
+      frustum.SetPosition(obs._origin);
+      frustum.SetOrientation(obs._orientation);
+      frustum.TransformPlaneNormals();
+
+      openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
+      for (citer; citer; ++citer) 
+      {
+        const openvdb::Coord pt_index(citer.getCoord());
+        if (!frustum.IsInside(this->IndexToWorld(pt_index)))
+        {
+          continue;
+        }
+
+        // check temporal constraints here and accelerate by chosen model TODO
+        if(!this->ClearLevelSetPoint(pt_index, accessor))
+        {
+          ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
+        }
+      }
+    }
   }
+
+  return;
 }
 
 /*****************************************************************************/
@@ -96,6 +131,8 @@ void LevelSet::ParallelizeMark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
+  scoped_lock l(_grid_lock);
+
   if (marking_readings.size() > 0) 
   {
     tbb::parallel_do(marking_readings, *this);
@@ -126,42 +163,8 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
       openvdb::Vec3d mark_grid(this->WorldToIndex( \
                                        openvdb::Vec3d(it->x, it->y, it->z)));
       if(!this->MarkLevelSetPoint(openvdb::Coord( \
-                 mark_grid[0], mark_grid[1], mark_grid[2]), 255, accessor)) {
+                 mark_grid[0], mark_grid[1], mark_grid[2]), 255., accessor)) { //TODO embed timestamp here
         ROS_WARN_THROTTLE(1., "Failed to mark point in levelset coordinates");
-      }
-    }
-  }
-
-  if (obs._clearing)
-  {
-    ROS_INFO("got clearing obs");
-    geometry::Frustum frustum(obs._vertical_fov_in_rad,   \
-                              obs._horizontal_fov_in_rad, \
-                              obs._min_z_in_m,            \
-                              obs._max_z_in_m);
-    frustum.SetPosition(obs._origin);
-    frustum.SetOrientation(obs._orientation);
-    frustum.TransformPlaneNormals();
-    ROS_INFO("making and transforming frustum"); // 3
-
-    openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
-    for (citer; citer; ++citer) 
-    {
-      ROS_INFO_THROTTLE(1.,"cheking interior inclusion");
-      const openvdb::Coord pt_index(citer.getCoord());
-      if (!frustum.IsInside(this->IndexToWorld(pt_index)))
-      {
-        // check temporal constraints here and clear if needed TODO
-        //  or not, and do in costmap flat/PC2 since this would happen for
-        // each threaded obs iterate through full grid TODO
-        continue;
-      }
-
-      ROS_INFO_THROTTLE(1.,"c;earing included");
-      // check temporal constraints here and accelerate by chosen model TODO
-      if(!this->ClearLevelSetPoint(pt_index, accessor))
-      {
-        ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
       }
     }
   }
@@ -169,36 +172,75 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 
 /*****************************************************************************/
 void LevelSet::GetFlattenedCostmap( \
-                           std::vector<std::vector<int> >& flattened_costmap, \
-                           const int& mark_threshold)
+                                 std::vector<occupany_cell>& flattened_costmap)
 /*****************************************************************************/
 {
-  // project voxelgrid onto 2D plane for conversion to ROS Costmap2d
+  scoped_lock l(_grid_lock);
+
   if(this->IsGridEmpty())
   {
     return;
   }
-  //TODO
+
+  _pc->clear();
+
+  openvdb::FloatGrid::Accessor accessor = _grid->getAccessor();
+  openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
+  for (citer; citer; ++citer)
+  {
+    float cell_value = citer.getValue();
+    if (cell_value > _background_value ) // TODO check timestamps for expiring
+    {
+      openvdb::Vec3d pose_world = _grid->indexToWorld(citer.getCoord());
+      if (_pub_voxels)
+      {
+        _pc->push_back(pcl::PointXYZ(pose_world[0], pose_world[1], \
+                                     pose_world[2]));
+      }
+
+      //hash function this  TODO
+      // projected_list<struct, uint16>, projected_list[struct]++;
+      // store this for return not the vector, check if there first
+      bool match = false;
+      int costmap_size = flattened_costmap.size(); 
+      for (uint i=0; i!=costmap_size; i++)
+      {
+        if (pose_world[0] == flattened_costmap.at(i).x && \
+                pose_world[1] == flattened_costmap.at(i).y)
+        {
+          flattened_costmap.at(i).value += 1;
+          match = true;
+          continue;
+        }
+      }
+      if (!match)
+      {
+        flattened_costmap.push_back(occupany_cell(pose_world[0], \
+                                                     pose_world[1], 1));
+      }
+    }
+    else
+    {
+      if(!this->ClearLevelSetPoint(citer.getCoord(), accessor))
+      {
+        ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
+      }
+    }
+  }
+
+  return;
 }
 
 /*****************************************************************************/
 void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 /*****************************************************************************/
 {
-  // convert the openvdb voxel grid to a pointcloud for publishing
   if(this->IsGridEmpty())
   {
     return;
   }
-  openvdb::FloatGrid::ValueOnCIter citer = _grid->cbeginValueOn();
-  for (citer; citer; ++citer)
-  {
-    if (citer.getValue() > _background_value )
-    {
-      openvdb::Vec3d pose_world = _grid->indexToWorld(citer.getCoord());
-      pc->push_back(pcl::PointXYZ(pose_world[0], pose_world[1], pose_world[2]));
-    }
-  }
+  pc = _pc;
+  return;
 }
 
 /*****************************************************************************/
@@ -206,19 +248,19 @@ bool LevelSet::ResetLevelSet(void)
 /*****************************************************************************/
 {
   // clear the voxel grid
-  // _grid->clear();
-  // if (this->IsGridEmpty())
-  // {
-  //   ROS_INFO("Level set has been reset.");
-  //   return true;
-  // }
-  // return false; TODO with mutex
-  return true;
+  scoped_lock l(_grid_lock);
+  _grid->clear();
+  if (this->IsGridEmpty())
+  {
+    ROS_INFO("Level set has been reset.");
+    return true;
+  }
+  return false;
 }
 
 /*****************************************************************************/
 bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
-                const int& value, openvdb::FloatGrid::Accessor& accessor) const
+                const float& value, openvdb::FloatGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
   int curr_value = accessor.getValue(pt);

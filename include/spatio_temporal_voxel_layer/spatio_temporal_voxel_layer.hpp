@@ -100,7 +100,7 @@ public:
   bool GetClearingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
 
   // Functions to interact with maps
-  void UpdateROSCostmap(double min_x, double min_y, double max_x, double max_y);
+  void UpdateROSCostmap(double& min_x, double& min_y, double& max_x, double& max_y);
   bool updateFootprint(double robot_x, double robot_y, double robot_yaw, \
                        double* min_x, double* min_y, double* max_x, double* max_y);
   virtual void resetMaps(void);

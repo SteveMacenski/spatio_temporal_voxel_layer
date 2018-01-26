@@ -1,6 +1,6 @@
 # Spatio-Temporal Voxel Layer
 
-This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/). Much of the documentation below describes features to be added later.
+This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/).
 
 This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C++ library built by Dreamworks "comprising a novel hierarchical data structure and a suite of tools for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids. It is developed and maintained by DreamWorks Animation for use in volumetric applications typically encountered in feature film production."
 
@@ -12,7 +12,7 @@ An example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
 ## -**Temporal**
-The Temporal in this package is the novel concept of `voxel_decay` whereas we have functions that associate to voxels and their information expires over time. In development,  infrasture to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements and remain marked rather than simply clearing them naively or via costly raytracing.
+The Temporal in this package is the novel concept of `voxel_decay` whereas we have configurable functions that expire voxels and their occupation over time. Infrasture was created to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements but should if still in the scene and remain marked. This is done rather than simply clearing them naively or via costly raytracing. The time it takes to clear depends on the configured functions and acceleration factors.
 
 Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.    
 
@@ -97,4 +97,4 @@ Add this plugin to your costmap params file.
 
 `roslaunch [navigation_pkg] move_base.launch`
 
-**This is a highly experimental package under heavy development. Functionality is not guaranteed until the first full release.**
+**This is a highly experimental package under heavy development.**

@@ -400,18 +400,12 @@ void SpatioTemporalVoxelLayer::activate(void)
 
   for (unsigned int i = 0; i < _observation_subscribers.size(); ++i)
   {
-    if (_observation_subscribers[i] != NULL)
-    {
-      _observation_subscribers[i]->subscribe();
-    }
+     _observation_subscribers[i]->subscribe();
   }
 
   for (unsigned int i = 0; i < _observation_buffers.size(); ++i)
   {
-    if (_observation_buffers[i])
-    {
-      _observation_buffers[i]->ResetLastUpdatedTime();
-    }
+    _observation_buffers[i]->ResetLastUpdatedTime();
   }
 }
 
@@ -483,7 +477,7 @@ void SpatioTemporalVoxelLayer::resetMaps(void)
   // takes care of ROS 2D costmap
   Costmap2D::resetMaps();
 
-  // takes care of our layer TODO
+  // takes care of our layer
   if (!_level_set->ResetLevelSet())
  {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
@@ -556,32 +550,29 @@ void SpatioTemporalVoxelLayer::updateBounds( \
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::UpdateROSCostmap(double min_x, double min_y, \
-                                                double max_x, double max_y)
+void SpatioTemporalVoxelLayer::UpdateROSCostmap(double& min_x, double& min_y, \
+                                                double& max_x, double& max_y)
 /*****************************************************************************/
 {
-  // project 3D voxels to 2D, populate costmap_ and touch for updates
-  //TODO instead dont resize but check in updateROSCostmap if it belongs in the bounding box // give it bounds to report
-  std::vector<std::vector<int> > flattened_costmap(size_x_, \
-                                    std::vector<int>(size_y_, 0));
-  _level_set->GetFlattenedCostmap(flattened_costmap, _mark_threshold); //return only incides of meaning TOOD ##
+  // populate costmap_ and touch for updates
+  std::vector<volume_grid::occupany_cell> flattened_costmap;
+  _level_set->GetFlattenedCostmap(flattened_costmap);
+
   Costmap2D::resetMaps();
 
-  for (int i=0; i!= size_x_; i++) // then 1 for loop over useful stuff ##
+  std::vector<volume_grid::occupany_cell>::iterator it;
+  for (it = flattened_costmap.begin(); it!= flattened_costmap.end(); ++it)
   {
-    for (int j=0; j!=size_y_; j++)
-    {
-      if ( flattened_costmap[i][j] > 0 ) //check for mark threahold here ##
-      {
-        openvdb::Coord pose_index(i,j,0);
-        openvdb::Vec3d pose_world(_level_set->IndexToWorld(pose_index));
+    bool in_bounds = min_x <= it->x && max_x >= it->x;
+    in_bounds = in_bounds && min_y <= it->y && max_y >= it->y; 
 
-        unsigned int map_x, map_y;
-        worldToMap(pose_world.x(), pose_world.y(), map_x, map_y);
-        unsigned int index = getIndex(map_x, map_y);
-        costmap_[index] = costmap_2d::LETHAL_OBSTACLE;
-        touch(pose_world.x(), pose_world.x(), &min_x, &min_y, &max_x, &max_y);
-      }
+    if ( it->value >= _mark_threshold && in_bounds)
+    {
+      unsigned int map_x, map_y;
+      worldToMap(it->x, it->y, map_x, map_y);
+      unsigned int index = getIndex(map_x, map_y);
+      costmap_[index] = costmap_2d::LETHAL_OBSTACLE;
+      touch(it->x, it->y, &min_x, &min_y, &max_x, &max_y);
     }
   }
 }

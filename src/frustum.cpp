@@ -82,18 +82,18 @@ void Frustum::ComputePlaneNormals(void)
 
   // rotate going CCW
   Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2., Eigen::Vector3d::UnitX()));
+    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2.,Eigen::Vector3d::UnitX()));
   Eigen::Affine3d ry =
-    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2., Eigen::Vector3d::UnitY()));
+    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2., Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2., Eigen::Vector3d::UnitY()));
+  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd( _hFOV/2., Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd( _hFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
   // get and store CCW 4 corners for each 2 planes at ends
