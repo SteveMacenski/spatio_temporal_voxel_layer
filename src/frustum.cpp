@@ -90,6 +90,8 @@ void Frustum::ComputePlaneNormals(void)
     pt_.push_back(*(it) * _max_d);
   }
 
+  assert(pt_.size() == 8);
+
   // cross each plane and get normals
   // Top plane
   const Eigen::Vector3d v_01(pt_[1][0]-pt_[0][0], \
@@ -139,6 +141,8 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d T_1(v_17.cross(v_75));
   _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[1]));
 
+    assert(_plane_normals.size() == 6);
+
   // flip direction if wrong, they shouldn't be if positive values given
   Eigen::Vector3d test_pt(0., 0., (_max_d + _min_d)/2.);
   for (uint i = 0; i!= _plane_normals.size(); i++)
@@ -151,6 +155,7 @@ void Frustum::ComputePlaneNormals(void)
   }
 
   _valid_frustum = true;
+  _frustum_pts = pt_; //temp
   return;
 }
 
@@ -159,14 +164,43 @@ void Frustum::TransformPlaneNormals(void)
 /*****************************************************************************/
 {
   Eigen::Affine3d T = Eigen::Affine3d::Identity();
-  T.translate(_position);
-  T.rotate(_orientation);
+  T.pretranslate(_position);
+  T.prerotate(_orientation);
 
   std::vector<VectorWithPt3D>::iterator it;
   for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
   {
     it->TransformFrames(T);
   }
+
+
+  //temp, visualize the frustum
+  ros::NodeHandle nh;
+  static ros::Publisher frustumPub = nh.advertise<visualization_msgs::Marker>("/frustum",1);
+  visualization_msgs::Marker msg;
+  msg.header.frame_id = std::string("map");
+  msg.type = visualization_msgs::Marker::SPHERE_LIST;
+  msg.action = visualization_msgs::Marker::ADD;
+  msg.scale.x = 0.5;
+  msg.scale.y = 0.5;
+  msg.scale.z = 0.5;
+  msg.pose.orientation.w = 1.0;
+  msg.header.stamp = ros::Time::now();
+  msg.ns = "frustum_pts";
+  msg.color.g = 1.0f;
+  msg.color.a = 1.0;
+  for (uint i=0; i!=_frustum_pts.size(); i++)
+  {
+    //1 no transform to make sure shape is good
+    // 2 with transform to make sure T is good
+    geometry_msgs::Point pnt;
+    pnt.x = _frustum_pts.at(i)[0];
+    pnt.y = _frustum_pts.at(i)[1];
+    pnt.z = _frustum_pts.at(i)[2];
+    msg.points.push_back(pnt);
+  }
+  frustumPub.publish(msg);
+  ROS_INFO("published pts");
 }
 
 /*****************************************************************************/

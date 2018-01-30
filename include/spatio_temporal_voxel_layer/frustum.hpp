@@ -44,11 +44,15 @@
 #include <Eigen/Geometry>
 // STL
 #include <vector>
+#include <cassert>
 // OpenVDB
 #include <openvdb/openvdb.h>
 // msgs
 #include <geometry_msgs/Point.h>
+#include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Quaternion.h>
+// ROS
+#include <ros/ros.h>
 
 namespace geometry
 {
@@ -100,6 +104,8 @@ private:
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
+  std::vector<Eigen::Vector3d> _frustum_pts; //temp
+
 };
 
 } // end namespace
