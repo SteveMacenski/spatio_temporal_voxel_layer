@@ -47,6 +47,9 @@
 #include <ros/ros.h>
 // STL
 #include <math.h>
+#include <unordered_map>
+#include <ctime>
+#include <iostream>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
@@ -70,13 +73,17 @@ typedef boost::interprocess::scoped_lock<boost::mutex> scoped_lock;
 
 struct occupany_cell
 {
-  occupany_cell(const double& _x, const double& _y, const int& i) :
-    x(_x), y(_y), value(i)
+  occupany_cell(const double& _x, const double& _y) :
+    x(_x), y(_y)
   {
   }
 
+  bool operator==(const occupany_cell& other) const
+  {
+    return x==other.x && y==other.y;
+  }
+
   double x, y;
-  int value;
 };
 
 class LevelSet
@@ -85,7 +92,8 @@ public:
   typedef openvdb::math::Ray<openvdb::Real> GridRay;
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
-  LevelSet(const float& voxel_size, const int& background_value);
+  LevelSet(const float& voxel_size, const int& background_value, const int& decay_model, \
+                            const double& voxel_decay);
   ~LevelSet();
 
   void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
@@ -93,27 +101,40 @@ public:
   void ParallelizeClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
-  void GetFlattenedCostmap(std::vector<occupany_cell>& costmap_cells);
+  void GetFlattenedCostmap(std::unordered_map<occupany_cell, uint>& cell_map);
 
   bool ResetLevelSet(void);
 
 protected:
   void InitializeGrid();
-  bool MarkLevelSetPoint(const openvdb::Coord& pt, const float& value, openvdb::FloatGrid::Accessor& accessor) const;
-  bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::FloatGrid::Accessor& accessor) const;
+  bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value, openvdb::DoubleGrid::Accessor& accessor) const;
+  bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::DoubleGrid::Accessor& accessor) const;
   bool IsGridEmpty() const;
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
-  mutable openvdb::FloatGrid::Ptr _grid;
-  int                             _background_value;
-  double                          _voxel_size;
+  mutable openvdb::DoubleGrid::Ptr _grid;
+  int                             _background_value, _decay_model;
+  double                          _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
   pcl::PointCloud<pcl::PointXYZ>::Ptr _pc;
   boost::mutex                    _grid_lock;
-
 };
 
+} // end volume_grid namespace
+
+// hash function for unordered_map of occupancy_cells
+namespace std {
+template <>
+struct hash<volume_grid::occupany_cell>
+{
+  std::size_t operator()(const volume_grid::occupany_cell& k) const
+  {
+    return ((std::hash<double>()(k.x) ^ (std::hash<double>()(k.y) << 1)) >> 1);
+  }
 };
+
+} // end std namespace
+
 #endif

@@ -1,18 +1,17 @@
-
 rgbd_obstacle_layer:
   enabled:               true
-  voxel_decay:           20 #seconds
-  voxel_decay_static:    1.
-  decay_model:           0
-  voxel_size:            0.05
-  track_unknown_space:   true
-  observation_persistence: 0.0
-  max_obstacle_height:   2.0
-  unknown_threshold:     15
-  mark_threshold:        0
-  combination_method:    1
-  obstacle_range:        3.0
-  origin_z:              0.0
+  voxel_decay:           20     #seconds if linear, e^n if exponential
+  decay_model:           0      #0=linear, 1=exponential, -1=persistent
+  voxel_size:            0.05   #meters
+  track_unknown_space:   true   #default space is unknown
+  observation_persistence: 0.0  #seconds
+  max_obstacle_height:   2.0    #meters
+  unknown_threshold:     15     #voxel height
+  mark_threshold:        0      #voxel height
+  update_footprint_enabled: true
+  combination_method:    1      #1=max, 0=override
+  obstacle_range:        3.0    #meters
+  origin_z:              0.0    #meters
   publish_voxel_map:     true
   observation_sources: rgbd1_clear rgbd1_mark
   rgbd1_mark:
@@ -27,8 +26,8 @@ rgbd_obstacle_layer:
     topic: camera1/depth/points
     marking: false
     clearing: true
-    min_z: 0.1
-    max_z: 7.0
-    vertical_fov_angle: 0.7
-    horizontal_fov_angle: 1.04
-    decay_acceleration: 1.
+    min_z: 0.1                 #meters
+    max_z: 7.0                 #meters
+    vertical_fov_angle: 0.7    #radians
+    horizontal_fov_angle: 1.04 #radians
+    decay_acceleration: 1.     #1/s^2

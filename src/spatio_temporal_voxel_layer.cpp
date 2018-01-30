@@ -62,22 +62,19 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // initialize parameters, grid, and sub/pubs
   ros::NodeHandle nh("~/" + name_), g_nh, prefix_nh;
 
-  _rolling_window = layered_costmap_->isRolling();
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
 
   bool track_unknown_space;
-  double transform_tolerance, _voxel_decay, _voxel_decay_static;
-  int background, decay_model;
+  double transform_tolerance, voxel_decay;
   std::string topics_string;
+  int decay_model;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
-  // nominal value, should be less than current float unix time
-  nh.param("background_value", background, 0);
   // timeout in seconds for transforms 
   nh.param("transform_tolerance", transform_tolerance, 0.2);
   // whether to default on
   nh.param("enabled", _enabled, true);
-  enabled_ = _enabled; // b/c costmap_2d for some reason likes globals.
+  enabled_ = _enabled; // costmap_2d for some unexplicable reason uses globals
   // publish the voxel grid to visualize
   nh.param("publish_voxel_map", _publish_voxels, true);
   // size of each voxel in meters
@@ -91,14 +88,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // keep tabs on unknown space
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
-  // decay model for voxels to follow 0 is linear, 1 is exponential
   nh.param("decay_model", decay_model, 0);
-  //temporal -1 means keep forever. 0. means most recent only in s
-  // seconds if model is linear, e^n if exponential
-  nh.param("voxel_decay", _voxel_decay, -1.);
-  // decay when voxel is part of a connected component of static map
-  // seconds if model is linear, e^n if exponential
-  nh.param("voxel_decay_static", _voxel_decay_static, -1.);
+  nh.param("voxel_decay", voxel_decay, -1.);
 
   if (track_unknown_space)
   {
@@ -112,7 +103,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
   }
 
-  _level_set = new volume_grid::LevelSet(_voxel_size, background);
+  _level_set = new volume_grid::LevelSet(_voxel_size, 0., decay_model, \
+                                         voxel_decay);
   matchSize();
   current_ = true;
 
@@ -147,8 +139,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("vertical_fov_angle", vFOV, 0.7);
     // horizontal FOV angle in rad
     source_node.param("horizontal_fov_angle", hFOV, 1.04);
-    // acceleration value scales the model's decay in presence of readings
-    source_node.param("decay_acceleration", decay_acceleration, 1.);
+    // acceleration scales the model's decay in presence of readings
+    source_node.param("decay_acceleration", decay_acceleration, 1.); //todo add to buffer for when seen
 
     if (!sensor_frame.empty())
     {
@@ -234,7 +226,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
-    } 
+    }
 
     if (sensor_frame != "")
     {
@@ -491,7 +483,7 @@ void SpatioTemporalVoxelLayer::updateCosts( \
                                     int min_i, int min_j, int max_i, int max_j)
 /*****************************************************************************/
 {
-  // update costs in master_grid with local costmap_ values updated from grid
+  // update costs in master_grid with costmap_
   if(!_enabled)
   {
     return;
@@ -519,18 +511,21 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
 {
+  // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
-  std::vector<volume_grid::occupany_cell> flattened_costmap;
-  _level_set->GetFlattenedCostmap(flattened_costmap);
-  std::vector<volume_grid::occupany_cell>::iterator it;
-  for (it = flattened_costmap.begin(); it!= flattened_costmap.end(); ++it)
+  std::unordered_map<volume_grid::occupany_cell, uint> cell_map;
+  _level_set->GetFlattenedCostmap(cell_map);
+
+  std::unordered_map<volume_grid::occupany_cell, uint>::iterator it;
+  for (it = cell_map.begin(); it != cell_map.end(); ++it)
   {
     uint map_x, map_y;
-    if ( it->value >= _mark_threshold && worldToMap(it->x,it->y,map_x,map_y))
+    if ( it->second >= _mark_threshold && \
+         worldToMap(it->first.x, it->first.y, map_x, map_y))
     {
       setCost(map_x, map_y, costmap_2d::LETHAL_OBSTACLE);
-      touch(it->x, it->y, min_x, min_y, max_x, max_y);
+      touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
 }
@@ -541,10 +536,6 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  if (_rolling_window)
-  {
-    updateOrigin(robot_x-getSizeInMetersX()/2.,robot_y-getSizeInMetersY()/2.);
-  }
   if (!_enabled)
   {
     return;

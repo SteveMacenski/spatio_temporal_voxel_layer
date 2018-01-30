@@ -127,8 +127,7 @@ private:
   bool                                 _publish_voxels;
   ros::Publisher                       _voxel_pub;
   std::string                          _global_frame;
-  double                               _voxel_size, _voxel_decay;
-  bool                                 _rolling_window;
+  double                               _voxel_size;
   int                                  _combination_method, _mark_threshold;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
