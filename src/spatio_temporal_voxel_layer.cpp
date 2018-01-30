@@ -140,7 +140,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // horizontal FOV angle in rad
     source_node.param("horizontal_fov_angle", hFOV, 1.04);
     // acceleration scales the model's decay in presence of readings
-    source_node.param("decay_acceleration", decay_acceleration, 1.); //todo add to buffer for when seen
+    source_node.param("decay_acceleration", decay_acceleration, 0.);
 
     if (!sensor_frame.empty())
     {
@@ -167,7 +167,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         expected_update_rate, min_obstacle_height, max_obstacle_height,  \
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
-        hFOV, marking, clearing)));
+        hFOV, decay_acceleration, marking, clearing)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -536,6 +536,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
+  // grabs new max bounds for the costmap
   if (!_enabled)
   {
     return;

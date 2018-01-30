@@ -82,6 +82,7 @@ public:
                     const double& max_d,                 \
                     const double& vFOV,                  \
                     const double& hFOV,                  \
+                    const double& decay_acceleration,    \
                     const bool& marking,                 \
                     const bool& clearing);
 
@@ -108,7 +109,7 @@ private:
   std::string _global_frame, _topic_name, _sensor_frame;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
-  double _min_z, _max_z, _vertical_fov, _horizontal_fov;
+  double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
   bool _marking, _clearing;
 };
 

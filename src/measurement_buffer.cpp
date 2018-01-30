@@ -55,6 +55,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
                                      const double& max_d, \
                                      const double& vFOV, \
                                      const double& hFOV, \
+                                     const double& decay_acceleration, \
                                      const bool& marking, \
                                      const bool& clearing) :
 /*****************************************************************************/
@@ -64,8 +65,9 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _horizontal_fov(hFOV), 
-    _marking(marking), _clearing(clearing)
+    _vertical_fov(vFOV), _horizontal_fov(hFOV),
+    _decay_acceleration(decay_acceleration), _marking(marking),
+    _clearing(clearing)
 {
 }
 
@@ -130,8 +132,9 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
-    _observation_list.front()._marking = _marking;
+    _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
+    _observation_list.front()._marking = _marking;
 
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 

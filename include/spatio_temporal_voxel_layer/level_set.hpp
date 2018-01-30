@@ -69,8 +69,6 @@
 namespace volume_grid
 {
 
-typedef boost::interprocess::scoped_lock<boost::mutex> scoped_lock;
-
 struct occupany_cell
 {
   occupany_cell(const double& _x, const double& _y) :
@@ -110,6 +108,7 @@ protected:
   bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value, openvdb::DoubleGrid::Accessor& accessor) const;
   bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::DoubleGrid::Accessor& accessor) const;
   bool IsGridEmpty() const;
+  double GetDecayTime();
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;

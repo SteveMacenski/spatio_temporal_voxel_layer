@@ -84,8 +84,7 @@ void LevelSet::ParallelizeClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
-  scoped_lock l(_grid_lock);
-
+  // accelerate the decay of voxels interior to the frustum
   if(this->IsGridEmpty())
   {
     return;
@@ -119,6 +118,7 @@ void LevelSet::ParallelizeClearFrustums(const \
   //     //   }
 
   //     //   // check temporal constraints here and accelerate by chosen model TODO (change timestamp)
+          //  obs._decay_acceleration is the accel factor
   //     //   if(!this->ClearLevelSetPoint(pt_index, accessor))
   //     //   {
   //     //     ROS_WARN_THROTTLE(2.,"Failed to clear point.");
@@ -135,8 +135,7 @@ void LevelSet::ParallelizeMark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
-  scoped_lock l(_grid_lock);
-
+  // mark the grid in parallel
   if (marking_readings.size() > 0) 
   {
     tbb::parallel_do(marking_readings, *this);
@@ -180,8 +179,7 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 void LevelSet::GetFlattenedCostmap( std::unordered_map<occupany_cell, uint>& cell_map)
 /*****************************************************************************/
 {
-  scoped_lock l(_grid_lock);
-
+  // retreive the 2D costmap to project to layered costmaps
   if(this->IsGridEmpty())
   {
     return;
@@ -191,27 +189,13 @@ void LevelSet::GetFlattenedCostmap( std::unordered_map<occupany_cell, uint>& cel
 
   openvdb::DoubleGrid::Accessor accessor = _grid->getAccessor();
   openvdb::DoubleGrid::ValueOnCIter citer = _grid->cbeginValueOn();
-  const double cur_time = ros::WallTime::now().toSec();
 
-  // use configurable model to get desired decay time
-  double decay_time = 0;
-  if (_decay_model == 0) // linear
-  {
-    decay_time = cur_time - _voxel_decay;
-  }
-  else if (_decay_model == 1) // exponential
-  {
-    decay_time =cur_time - std::exp(_voxel_decay);
-  }
-  else // permanent
-  {
-    decay_time = 0.;
-  }
+  const double decay_time = GetDecayTime(); 
 
   for (citer; citer; ++citer)
   {
     double cell_time = citer.getValue();
-    if ( cell_time > decay_time)
+    if ( cell_time > decay_time )
     {
       openvdb::Vec3d pose_world = _grid->indexToWorld(citer.getCoord());
       if (_pub_voxels)
@@ -233,7 +217,6 @@ void LevelSet::GetFlattenedCostmap( std::unordered_map<occupany_cell, uint>& cel
     }
     else
     {
-      ROS_WARN_THROTTLE(1., "Pop! voxel_decay: %f", _voxel_decay);
       if(!this->ClearLevelSetPoint(citer.getCoord(), accessor))
       {
         ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
@@ -245,14 +228,32 @@ void LevelSet::GetFlattenedCostmap( std::unordered_map<occupany_cell, uint>& cel
 }
 
 /*****************************************************************************/
+double LevelSet::GetDecayTime()
+/*****************************************************************************/
+{
+  // use configurable model to get desired decay time
+  const double cur_time = ros::WallTime::now().toSec();
+
+  if (_decay_model == 0) // linear
+  {
+    return cur_time - _voxel_decay;
+  }
+  else if (_decay_model == 1) // exponential
+  {
+    return cur_time*std::exp(_voxel_decay);
+  }
+  return 0.; // permanent
+}
+
+/*****************************************************************************/
 void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 /*****************************************************************************/
 {
+  // return the pointcloud stored
   if(!this->IsGridEmpty())
   {
     pc = _pc;
   }
-  return;
 }
 
 /*****************************************************************************/
@@ -260,8 +261,6 @@ bool LevelSet::ResetLevelSet(void)
 /*****************************************************************************/
 {
   // clear the voxel grid
-  scoped_lock l(_grid_lock);
-
   _grid->clear();
   if (this->IsGridEmpty())
   {
@@ -275,6 +274,7 @@ bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
                 const double& value, openvdb::DoubleGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
+  // marking the OpenVDB set
   openvdb::DoubleGrid::Accessor accessor2 = _grid->getAccessor(); // tmp see if fixes assertion error todo
 
   int curr_value = accessor2.getValue(pt);
@@ -287,6 +287,7 @@ bool LevelSet::ClearLevelSetPoint(const \
               openvdb::Coord& pt, openvdb::DoubleGrid::Accessor& accessor) const
 /*****************************************************************************/
 {
+  // clearing the OpenVDB set
   openvdb::DoubleGrid::Accessor accessor2 = _grid->getAccessor(); // tmp see if fixes assertion error todo
 
   if (accessor2.isValueOn(pt))
