@@ -72,7 +72,7 @@ struct Vector3D
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
   }
 
-  double x, y, z;
+  double x, y, z, d;
 };
 
 class Frustum

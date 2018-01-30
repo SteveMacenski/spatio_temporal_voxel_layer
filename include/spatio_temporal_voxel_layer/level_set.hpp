@@ -92,7 +92,7 @@ public:
 
   LevelSet(const float& voxel_size, const int& background_value, const int& decay_model, \
                             const double& voxel_decay);
-  ~LevelSet();
+  ~LevelSet(void);
 
   void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
   void operator()(const observation::MeasurementReading& obs) const;
@@ -104,11 +104,12 @@ public:
   bool ResetLevelSet(void);
 
 protected:
-  void InitializeGrid();
-  bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value, openvdb::DoubleGrid::Accessor& accessor) const;
-  bool ClearLevelSetPoint(const openvdb::Coord& pt, openvdb::DoubleGrid::Accessor& accessor) const;
-  bool IsGridEmpty() const;
-  double GetDecayTime();
+  void InitializeGrid(void);
+  bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value) const;
+  bool ClearLevelSetPoint(const openvdb::Coord& pt) const;
+  bool IsGridEmpty(void) const;
+  double GetDecayTime(void);
+  double GetAcceleratedDecayTime(const double& acceleration_factor);
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
