@@ -58,21 +58,6 @@ Frustum::~Frustum(void)
 }
 
 /*****************************************************************************/
-void Frustum::TransformPlaneNormals(void)
-/*****************************************************************************/
-{
-  Eigen::Affine3d T = Eigen::Affine3d::Identity();
-  T.translate(_position);
-  T.rotate(_orientation);
-
-  std::vector<Vector3D>::iterator it;
-  for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
-  {
-    it->TransformFrames(T);
-  }
-}
-
-/*****************************************************************************/
 void Frustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
@@ -112,7 +97,7 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_13(pt_[3][0]-pt_[1][0], \
                     pt_[3][1]-pt_[1][1], pt_[3][2]-pt_[1][2]);
   const Eigen::Vector3d T_n(v_01.cross(v_13));
-  _plane_normals.push_back(Vector3D(T_n[0],T_n[1],T_n[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_n[0],T_n[1],T_n[2],pt_[0]));
 
   // left plane
   const Eigen::Vector3d v_23(pt_[3][0]-pt_[2][0], \
@@ -120,7 +105,7 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_35(pt_[5][0]-pt_[3][0], \
                     pt_[5][1]-pt_[3][1], pt_[5][2]-pt_[3][2]);
   const Eigen::Vector3d T_l(v_23.cross(v_35));
-  _plane_normals.push_back(Vector3D(T_l[0],T_l[1],T_l[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_l[0],T_l[1],T_l[2],pt_[2]));
 
   // bottom plane
   const Eigen::Vector3d v_45(pt_[5][0]-pt_[4][0], \
@@ -128,7 +113,7 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_57(pt_[7][0]-pt_[5][0], \
                     pt_[7][1]-pt_[5][1], pt_[7][2]-pt_[5][2]);
   const Eigen::Vector3d T_b(v_45.cross(v_57));
-  _plane_normals.push_back(Vector3D(T_b[0],T_b[1],T_b[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_b[0],T_b[1],T_b[2],pt_[4]));
 
   // right plane
   const Eigen::Vector3d v_67(pt_[7][0]-pt_[6][0], \
@@ -136,7 +121,7 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_71(pt_[1][0]-pt_[7][0], \
                     pt_[1][1]-pt_[7][1], pt_[1][2]-pt_[7][2]);
   const Eigen::Vector3d T_r(v_67.cross(v_71));
-  _plane_normals.push_back(Vector3D(T_r[0],T_r[1],T_r[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_r[0],T_r[1],T_r[2],pt_[6]));
 
   // near plane
   const Eigen::Vector3d v_02(pt_[2][0]-pt_[0][0], \
@@ -144,7 +129,7 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_24(pt_[4][0]-pt_[2][0], \
                     pt_[4][1]-pt_[2][1], pt_[4][2]-pt_[2][2]);
   const Eigen::Vector3d T_0(v_02.cross(v_24));
-  _plane_normals.push_back(Vector3D(T_0[0],T_0[1],T_0[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_0[0],T_0[1],T_0[2],pt_[0]));
 
   // far plane
   const Eigen::Vector3d v_17(pt_[7][0]-pt_[1][0], \
@@ -152,13 +137,13 @@ void Frustum::ComputePlaneNormals(void)
   const Eigen::Vector3d v_75(pt_[5][0]-pt_[7][0], \
                     pt_[5][1]-pt_[7][1], pt_[5][2]-pt_[7][2]);
   const Eigen::Vector3d T_1(v_17.cross(v_75));
-  _plane_normals.push_back(Vector3D(T_1[0],T_1[1],T_1[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[1]));
 
   // flip direction if wrong, they shouldn't be if positive values given
   Eigen::Vector3d test_pt(0., 0., (_max_d + _min_d)/2.);
   for (uint i = 0; i!= _plane_normals.size(); i++)
   {
-    const Vector3D q = _plane_normals.at(i);
+    const VectorWithPt3D q = _plane_normals.at(i);
     if (q.x*test_pt[0]+q.y*test_pt[1]+q.z*test_pt[2] < 0.)
     {
       _plane_normals.at(i) = _plane_normals.at(i) * -1.;
@@ -170,19 +155,38 @@ void Frustum::ComputePlaneNormals(void)
 }
 
 /*****************************************************************************/
+void Frustum::TransformPlaneNormals(void)
+/*****************************************************************************/
+{
+  Eigen::Affine3d T = Eigen::Affine3d::Identity();
+  T.translate(_position);
+  T.rotate(_orientation);
+
+  std::vector<VectorWithPt3D>::iterator it;
+  for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
+  {
+    it->TransformFrames(T);
+  }
+}
+
+/*****************************************************************************/
 bool Frustum::IsInside(const openvdb::Vec3d& pt)
 /*****************************************************************************/
 {
-
+  // TODO 2 options, right side of 6 planes or 
+  // find the azimuth and altitude of it, check in FOV, find dist, check range
   if (!_valid_frustum)
   {
     return false;
   }
 
-  std::vector<Vector3D>::iterator it;
+  std::vector<VectorWithPt3D>::iterator it;
   for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
   {
-    if (Dot(*it, pt) < 0.)
+    const Eigen::Vector3d p_delta(pt[0] - it->initial_point[0], \
+                                  pt[1] - it->initial_point[1], \
+                                  pt[2] - it->initial_point[2]);
+    if (Dot(*it, p_delta)  < 0.)
     {
       return false;
     }
@@ -205,8 +209,16 @@ void Frustum::SetOrientation(const geometry_msgs::Quaternion& quat)
 }
 
 /*****************************************************************************/
-bool Frustum::Dot(const Vector3D& plane_pt, \
+double Frustum::Dot(const VectorWithPt3D& plane_pt, \
                                           const openvdb::Vec3d& query_pt) const
+/*****************************************************************************/
+{
+  return plane_pt.x*query_pt[0]+plane_pt.y*query_pt[1]+plane_pt.z*query_pt[2];
+}
+
+/*****************************************************************************/
+double Frustum::Dot(const VectorWithPt3D& plane_pt, \
+                                         const Eigen::Vector3d& query_pt) const
 /*****************************************************************************/
 {
   return plane_pt.x*query_pt[0]+plane_pt.y*query_pt[1]+plane_pt.z*query_pt[2];

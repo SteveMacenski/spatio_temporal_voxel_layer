@@ -120,14 +120,16 @@ void LevelSet::ParallelizeClearFrustums(const \
           // {
           //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
           // }
+          ROS_WARN_THROTTLE(2., "acceleration!");
+          this->ClearLevelSetPoint(pt_index);
         }
         else
         {
-          // clear this value
-          if(!this->ClearLevelSetPoint(pt_index))
-          {
-            ROS_WARN_THROTTLE(2.,"Failed to clear point.");
-          }
+          // clear this value it's expired by acceleration
+          // if(!this->ClearLevelSetPoint(pt_index))
+          // {
+          //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
+          // }
         }
       }
     }

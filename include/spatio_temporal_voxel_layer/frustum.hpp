@@ -53,26 +53,29 @@
 namespace geometry
 {
 
-struct Vector3D
+struct VectorWithPt3D
 {
-  Vector3D(const double& x_, const double& y_, const double& z_) : x(x_), y(y_), z(z_)
+  VectorWithPt3D(const double& x_, const double& y_, const double& z_, const Eigen::Vector3d& p0) : \
+                                            x(x_), y(y_), z(z_), initial_point(p0)
   {}
   
-  Vector3D(void) : x(), y(), z()
+  VectorWithPt3D(void) : x(0.), y(0.), z(0.)
   {}
 
-  inline Vector3D operator*(double a)
+  inline VectorWithPt3D operator*(double a)
   {
-    return Vector3D(a*x, a*y, a*z);
+    return VectorWithPt3D(a*x, a*y, a*z, initial_point);
   }
 
   void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
-    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
+    const Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
+    initial_point = homogeneous_transform * initial_point;
   }
 
-  double x, y, z, d;
+  double x, y, z;
+  Eigen::Vector3d initial_point;
 };
 
 class Frustum
@@ -89,10 +92,11 @@ public:
 
 private:
   void ComputePlaneNormals(void);
-  bool Dot(const Vector3D&, const openvdb::Vec3d&) const;
+  double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
+  double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
   double _vFOV, _hFOV, _min_d, _max_d;
-  std::vector<Vector3D> _plane_normals;
+  std::vector<VectorWithPt3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
