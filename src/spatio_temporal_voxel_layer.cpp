@@ -69,12 +69,26 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   double transform_tolerance, _voxel_decay, _voxel_decay_static;
   int background, decay_model;
   std::string topics_string;
+  // source names
   nh.param("observation_sources", topics_string, std::string(""));
+  // nominal value, should be less than current float unix time
   nh.param("background_value", background, 0);
+  // timeout in seconds for transforms 
   nh.param("transform_tolerance", transform_tolerance, 0.2);
+  // whether to default on
   nh.param("enabled", _enabled, true);
+  enabled_ = _enabled; // b/c costmap_2d for some reason likes globals.
+  // publish the voxel grid to visualize
   nh.param("publish_voxel_map", _publish_voxels, true);
+  // size of each voxel in meters
   nh.param("voxel_size", _voxel_size, 0.05);
+  // 1=takes highest in layers, 0=takes current layer
+  nh.param("combination_method", _combination_method, 1);
+  // number of voxels per vertical needed to have obstacle
+  nh.param("mark_threshold", _mark_threshold, 0);
+  // clear under robot footprint
+  nh.param("update_footprint_enabled", _update_footprint_enabled, true);
+  // keep tabs on unknown space
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
   // decay model for voxels to follow 0 is linear, 1 is exponential
@@ -362,36 +376,6 @@ bool SpatioTemporalVoxelLayer::updateFootprint(double robot_x, double robot_y, \
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::updateCosts( \
-                                    costmap_2d::Costmap2D& master_grid, \
-                                    int min_i, int min_j, int max_i, int max_j)
-/*****************************************************************************/
-{
-  // update costs in master_grid with local costmap_ values updated from grid
-  if(!_enabled)
-  {
-    return;
-  }
-
-  if (_update_footprint_enabled)
-  {
-    setConvexPolygonCost(_transformed_footprint, costmap_2d::FREE_SPACE);
-  }
-
-  switch (_combination_method)
-  {
-  case 0:
-    updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
-    return;
-  case 1:
-    updateWithMax(master_grid, min_i, min_j, max_i, max_j);
-    return;
-  default:
-    return;
-  }
-}
-
-/*****************************************************************************/
 void SpatioTemporalVoxelLayer::activate(void)
 /*****************************************************************************/
 {
@@ -502,16 +486,65 @@ void SpatioTemporalVoxelLayer::updateOrigin(double new_origin_x, \
 }
 
 /*****************************************************************************/
+void SpatioTemporalVoxelLayer::updateCosts( \
+                                    costmap_2d::Costmap2D& master_grid, \
+                                    int min_i, int min_j, int max_i, int max_j)
+/*****************************************************************************/
+{
+  // update costs in master_grid with local costmap_ values updated from grid
+  if(!_enabled)
+  {
+    return;
+  }
+
+  if (_update_footprint_enabled)
+  {
+    setConvexPolygonCost(_transformed_footprint, costmap_2d::FREE_SPACE);
+  }
+
+  switch (_combination_method)
+  {
+  case 0:
+    updateWithOverwrite(master_grid, min_i, min_j, max_i, max_j);
+  case 1:
+    updateWithMax(master_grid, min_i, min_j, max_i, max_j);
+  default:
+    break;
+  }
+  return;
+}
+
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
+                                                double* max_x, double* max_y)
+/*****************************************************************************/
+{
+  Costmap2D::resetMaps();
+
+  std::vector<volume_grid::occupany_cell> flattened_costmap;
+  _level_set->GetFlattenedCostmap(flattened_costmap);
+  std::vector<volume_grid::occupany_cell>::iterator it;
+  for (it = flattened_costmap.begin(); it!= flattened_costmap.end(); ++it)
+  {
+    uint map_x, map_y;
+    if ( it->value >= _mark_threshold && worldToMap(it->x,it->y,map_x,map_y))
+    {
+      setCost(map_x, map_y, costmap_2d::LETHAL_OBSTACLE);
+      touch(it->x, it->y, min_x, min_y, max_x, max_y);
+    }
+  }
+}
+
+/*****************************************************************************/
 void SpatioTemporalVoxelLayer::updateBounds( \
                     double robot_x, double robot_y, double robot_yaw, \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  // update bounds of costmap update, ray trace freespace, and mark voxels
   if (_rolling_window)
   {
     updateOrigin(robot_x-getSizeInMetersX()/2.,robot_y-getSizeInMetersY()/2.);
-  } 
+  }
   if (!_enabled)
   {
     return;
@@ -531,50 +564,23 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   _level_set->ParallelizeMark(marking_observations);
 
   // update the ROS Layered Costmap
-  UpdateROSCostmap(*min_x, *min_y, *max_x, *max_y);
-
-  // update footprint 
-  updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
+  UpdateROSCostmap(min_x, min_y, max_x, max_y);
 
   // publish point cloud
-  if (_publish_voxels && _voxel_pub.getNumSubscribers() > 0)
+  if (_publish_voxels)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _level_set->GetOccupancyPointCloud(pc);
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
-    pc2.header.frame_id = std::string("map");
+    pc2.header.frame_id = std::string("/map");
     pc2.header.stamp = ros::Time::now();
     _voxel_pub.publish(pc2);
   }
-}
 
-/*****************************************************************************/
-void SpatioTemporalVoxelLayer::UpdateROSCostmap(double& min_x, double& min_y, \
-                                                double& max_x, double& max_y)
-/*****************************************************************************/
-{
-  // populate costmap_ and touch for updates
-  std::vector<volume_grid::occupany_cell> flattened_costmap;
-  _level_set->GetFlattenedCostmap(flattened_costmap);
-
-  Costmap2D::resetMaps();
-
-  std::vector<volume_grid::occupany_cell>::iterator it;
-  for (it = flattened_costmap.begin(); it!= flattened_costmap.end(); ++it)
-  {
-    bool in_bounds = min_x <= it->x && max_x >= it->x;
-    in_bounds = in_bounds && min_y <= it->y && max_y >= it->y; 
-
-    if ( it->value >= _mark_threshold && in_bounds)
-    {
-      unsigned int map_x, map_y;
-      worldToMap(it->x, it->y, map_x, map_y);
-      unsigned int index = getIndex(map_x, map_y);
-      costmap_[index] = costmap_2d::LETHAL_OBSTACLE;
-      touch(it->x, it->y, &min_x, &min_y, &max_x, &max_y);
-    }
-  }
+  // update footprint 
+  updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
+  return;
 }
 
 }; // end namespace

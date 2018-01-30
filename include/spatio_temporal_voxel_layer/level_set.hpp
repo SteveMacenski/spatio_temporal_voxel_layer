@@ -66,7 +66,6 @@
 namespace volume_grid
 {
 
-typedef boost::mutex mutex;
 typedef boost::interprocess::scoped_lock<boost::mutex> scoped_lock;
 
 struct occupany_cell

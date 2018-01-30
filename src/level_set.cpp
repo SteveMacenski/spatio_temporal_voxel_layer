@@ -117,7 +117,7 @@ void LevelSet::ParallelizeClearFrustums(const \
         // check temporal constraints here and accelerate by chosen model TODO
         if(!this->ClearLevelSetPoint(pt_index, accessor))
         {
-          ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
+          ROS_WARN_THROTTLE(2.,"Failed to clear point.");
         }
       }
     }
@@ -164,7 +164,7 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
                                        openvdb::Vec3d(it->x, it->y, it->z)));
       if(!this->MarkLevelSetPoint(openvdb::Coord( \
                  mark_grid[0], mark_grid[1], mark_grid[2]), 255., accessor)) { //TODO embed timestamp here
-        ROS_WARN_THROTTLE(1., "Failed to mark point in levelset coordinates");
+        ROS_WARN_THROTTLE(1., "Failed to mark point.");
       }
     }
   }
@@ -198,9 +198,7 @@ void LevelSet::GetFlattenedCostmap( \
                                      pose_world[2]));
       }
 
-      //hash function this  TODO
-      // projected_list<struct, uint16>, projected_list[struct]++;
-      // store this for return not the vector, check if there first
+      // See ticket #21: Convert to hash table TODO
       bool match = false;
       int costmap_size = flattened_costmap.size(); 
       for (uint i=0; i!=costmap_size; i++)
@@ -210,7 +208,7 @@ void LevelSet::GetFlattenedCostmap( \
         {
           flattened_costmap.at(i).value += 1;
           match = true;
-          continue;
+          break;
         }
       }
       if (!match)
@@ -235,11 +233,10 @@ void LevelSet::GetFlattenedCostmap( \
 void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 /*****************************************************************************/
 {
-  if(this->IsGridEmpty())
+  if(!this->IsGridEmpty())
   {
-    return;
+    pc = _pc;
   }
-  pc = _pc;
   return;
 }
 
@@ -249,10 +246,10 @@ bool LevelSet::ResetLevelSet(void)
 {
   // clear the voxel grid
   scoped_lock l(_grid_lock);
+
   _grid->clear();
   if (this->IsGridEmpty())
   {
-    ROS_INFO("Level set has been reset.");
     return true;
   }
   return false;
