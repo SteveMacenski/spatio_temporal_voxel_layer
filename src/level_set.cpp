@@ -81,7 +81,7 @@ void LevelSet::InitializeGrid(void)
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelizeClearFrustums(const \
+void LevelSet::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
@@ -116,7 +116,8 @@ void LevelSet::ParallelizeClearFrustums(const \
         if ( citer.getValue() < accel_decay_time)
         {
           // accelerate this value by how much? Ticket #23 TODO
-          // if(!this->MarkLevelSetPoint(pt_index, accel_decay_time))
+          // if(!this->MarkLevelSetPoint(pt_index, \
+          //    citer.getValue()-accel_decay_time))
           // {
           //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
           // }

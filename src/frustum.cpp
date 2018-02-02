@@ -181,9 +181,9 @@ void Frustum::TransformPlaneNormals(void)
   msg.header.frame_id = std::string("map");
   msg.type = visualization_msgs::Marker::SPHERE_LIST;
   msg.action = visualization_msgs::Marker::ADD;
-  msg.scale.x = 0.5;
-  msg.scale.y = 0.5;
-  msg.scale.z = 0.5;
+  msg.scale.x = 0.1;
+  msg.scale.y = 0.1;
+  msg.scale.z = 0.1;
   msg.pose.orientation.w = 1.0;
   msg.header.stamp = ros::Time::now();
   msg.ns = "frustum_pts";
@@ -191,16 +191,16 @@ void Frustum::TransformPlaneNormals(void)
   msg.color.a = 1.0;
   for (uint i=0; i!=_frustum_pts.size(); i++)
   {
-    //1 no transform to make sure shape is good
-    // 2 with transform to make sure T is good
+    // 100% a transformation issue - or frames
+    // check sign issue for dot products
+    Eigen::Vector3d T_pt = T * _frustum_pts.at(i);
     geometry_msgs::Point pnt;
-    pnt.x = _frustum_pts.at(i)[0];
-    pnt.y = _frustum_pts.at(i)[1];
-    pnt.z = _frustum_pts.at(i)[2];
+    pnt.x = T_pt[0];
+    pnt.y = T_pt[1];
+    pnt.z = T_pt[2];
     msg.points.push_back(pnt);
   }
   frustumPub.publish(msg);
-  ROS_INFO("published pts");
 }
 
 /*****************************************************************************/

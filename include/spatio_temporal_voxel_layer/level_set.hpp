@@ -96,7 +96,7 @@ public:
 
   void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
   void operator()(const observation::MeasurementReading& obs) const;
-  void ParallelizeClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
+  void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
   void GetFlattenedCostmap(std::unordered_map<occupany_cell, uint>& cell_map);

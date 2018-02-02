@@ -552,7 +552,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current_ = current;
 
   // mark and clear observations
-  _level_set->ParallelizeClearFrustums(clearing_observations);
+  _level_set->ClearFrustums(clearing_observations);
   _level_set->ParallelizeMark(marking_observations);
 
   // update the ROS Layered Costmap
