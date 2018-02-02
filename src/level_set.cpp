@@ -119,9 +119,8 @@ void LevelSet::ClearFrustums(const \
           // if(!this->MarkLevelSetPoint(pt_index, \
           //    citer.getValue()-accel_decay_time))
           // {
-          //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
+          //   std::cout << "Failed to clear point." << std::endl;
           // }
-          ROS_WARN_THROTTLE(2., "acceleration!");
           this->ClearLevelSetPoint(pt_index);
         }
         else
@@ -129,7 +128,7 @@ void LevelSet::ClearFrustums(const \
           // clear this value it's expired by acceleration
           // if(!this->ClearLevelSetPoint(pt_index))
           // {
-          //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
+          //   std::cout << "Failed to clear point." << std::endl;
           // }
         }
       }
@@ -175,7 +174,7 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 
       if(!this->MarkLevelSetPoint(openvdb::Coord( \
             mark_grid[0], mark_grid[1], mark_grid[2]), cur_time)) {
-        ROS_WARN_THROTTLE(1., "Failed to mark point.");
+        std::cout << "Failed to mark point." << std::endl;
       }
     }
   }
@@ -226,7 +225,7 @@ void LevelSet::GetFlattenedCostmap( \
     {
       if(!this->ClearLevelSetPoint(citer.getCoord()))
       {
-        ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
+        std::cout << "Failed to clear point in levelset." << std::endl;
       }
     }
   }
