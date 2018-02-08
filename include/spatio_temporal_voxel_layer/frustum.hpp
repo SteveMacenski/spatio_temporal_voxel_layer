@@ -51,11 +51,14 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 #include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/PointStamped.h>
 // ROS
 #include <ros/ros.h>
 
 namespace geometry
 {
+
+#define VISUALIZE_FRUSTUM 0
 
 struct VectorWithPt3D
 {
@@ -104,8 +107,11 @@ private:
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
-  std::vector<Eigen::Vector3d> _frustum_pts; //temp
 
+  #if VISUALIZE_FRUSTUM
+    std::vector<Eigen::Vector3d> _frustum_pts;
+    ros::Publisher _frustumPub;
+  #endif
 };
 
 } // end namespace

@@ -48,6 +48,11 @@ Frustum::Frustum(const double& vFOV, const double& hFOV,     \
 /*****************************************************************************/
 {
   _valid_frustum = false;
+  ros::NodeHandle nh;
+  #if VISUALIZE_FRUSTUM
+    _frustumPub = nh.advertise<visualization_msgs::Marker>("/frustum", 1);
+  #endif
+
   this->ComputePlaneNormals();
 }
 
@@ -155,7 +160,11 @@ void Frustum::ComputePlaneNormals(void)
   }
 
   _valid_frustum = true;
-  _frustum_pts = pt_; //temp
+
+  #if VISUALIZE_FRUSTUM
+    _frustum_pts = pt_;
+  #endif
+
   return;
 }
 
@@ -164,7 +173,7 @@ void Frustum::TransformPlaneNormals(void)
 /*****************************************************************************/
 {
   Eigen::Affine3d T = Eigen::Affine3d::Identity();
-  T.pretranslate(_position);
+  T.pretranslate(_orientation.inverse()*_position);
   T.prerotate(_orientation);
 
   std::vector<VectorWithPt3D>::iterator it;
@@ -173,42 +182,37 @@ void Frustum::TransformPlaneNormals(void)
     it->TransformFrames(T);
   }
 
-
-  //temp, visualize the frustum
-  ros::NodeHandle nh;
-  static ros::Publisher frustumPub = nh.advertise<visualization_msgs::Marker>("/frustum",1);
-  visualization_msgs::Marker msg;
-  msg.header.frame_id = std::string("map");
-  msg.type = visualization_msgs::Marker::SPHERE_LIST;
-  msg.action = visualization_msgs::Marker::ADD;
-  msg.scale.x = 0.1;
-  msg.scale.y = 0.1;
-  msg.scale.z = 0.1;
-  msg.pose.orientation.w = 1.0;
-  msg.header.stamp = ros::Time::now();
-  msg.ns = "frustum_pts";
-  msg.color.g = 1.0f;
-  msg.color.a = 1.0;
-  for (uint i=0; i!=_frustum_pts.size(); i++)
-  {
-    // 100% a transformation issue - or frames
-    // check sign issue for dot products
-    Eigen::Vector3d T_pt = T * _frustum_pts.at(i);
-    geometry_msgs::Point pnt;
-    pnt.x = T_pt[0];
-    pnt.y = T_pt[1];
-    pnt.z = T_pt[2];
-    msg.points.push_back(pnt);
-  }
-  frustumPub.publish(msg);
+  // visualize the frustum should someone other than me care
+  #if VISUALIZE_FRUSTUM
+    visualization_msgs::Marker msg;
+    msg.header.frame_id = std::string("map");
+    msg.type = visualization_msgs::Marker::SPHERE_LIST;
+    msg.action = visualization_msgs::Marker::ADD;
+    msg.scale.x = 0.17;
+    msg.scale.y = 0.17;
+    msg.scale.z = 0.17;
+    msg.pose.orientation.w = 1.0;
+    msg.header.stamp = ros::Time::now();
+    msg.ns = "frustum_pts";
+    msg.color.g = 1.0f;
+    msg.color.a = 1.0;
+    for (uint i=0; i!=_frustum_pts.size(); i++)
+    {
+      Eigen::Vector3d T_pt = T*_frustum_pts.at(i);
+      geometry_msgs::Point pnt;
+      pnt.x = T_pt[0];
+      pnt.y = T_pt[1];
+      pnt.z = T_pt[2];
+      msg.points.push_back(pnt);
+    }
+    _frustumPub.publish(msg);
+  #endif
 }
 
 /*****************************************************************************/
 bool Frustum::IsInside(const openvdb::Vec3d& pt)
 /*****************************************************************************/
 {
-  // TODO 2 options, right side of 6 planes or 
-  // find the azimuth and altitude of it, check in FOV, find dist, check range
   if (!_valid_frustum)
   {
     return false;
