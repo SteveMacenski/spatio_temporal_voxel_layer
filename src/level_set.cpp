@@ -113,7 +113,7 @@ void LevelSet::ClearFrustums(const \
       {
         const double accel_decay_time = \
                             GetAcceleratedDecayTime(it->_decay_acceleration);
-        if ( citer.getValue() < accel_decay_time)
+        if ( true )//citer.getValue() < accel_decay_time)
         {
           // accelerate this value by how much? Ticket #23 TODO
           // if(!this->MarkLevelSetPoint(pt_index, \

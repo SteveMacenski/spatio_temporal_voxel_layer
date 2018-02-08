@@ -97,3 +97,10 @@ Add this plugin to your costmap params file.
 ### Running
 
 `roslaunch [navigation_pkg] move_base.launch`
+
+
+### Debug and Model Fitting
+
+I have made the frustum transformations available for visualization and debugging. You may enable them by the `VISUALIZE_FRUSTUM` macro, though be aware it takes a substantial decrease on performance since we're creating and destroying a ros publisher at a non-trivial rate.
+
+This can also be used for situations where you do not know your camera's proper frustum FOVs. It is possible to enable it and tweek the FOVs until you get the appropriate coverage of the space your sensor carves out in the global space.

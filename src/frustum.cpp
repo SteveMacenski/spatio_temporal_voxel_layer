@@ -72,18 +72,18 @@ void Frustum::ComputePlaneNormals(void)
 
   // rotate going CCW
   Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2.,Eigen::Vector3d::UnitX()));
+    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2.,Eigen::Vector3d::UnitX()));
   Eigen::Affine3d ry =
-    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2.,Eigen::Vector3d::UnitY()));
+    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2.,Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2.,Eigen::Vector3d::UnitY()));
+  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd( _hFOV/2.,Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd( _vFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
   // get and store CCW 4 corners for each 2 planes at ends
@@ -188,9 +188,9 @@ void Frustum::TransformPlaneNormals(void)
     msg.header.frame_id = std::string("map");
     msg.type = visualization_msgs::Marker::SPHERE_LIST;
     msg.action = visualization_msgs::Marker::ADD;
-    msg.scale.x = 0.17;
-    msg.scale.y = 0.17;
-    msg.scale.z = 0.17;
+    msg.scale.x = 0.15;
+    msg.scale.y = 0.15;
+    msg.scale.z = 0.15;
     msg.pose.orientation.w = 1.0;
     msg.header.stamp = ros::Time::now();
     msg.ns = "frustum_pts";
@@ -224,7 +224,7 @@ bool Frustum::IsInside(const openvdb::Vec3d& pt)
     const Eigen::Vector3d p_delta(pt[0] - it->initial_point[0], \
                                   pt[1] - it->initial_point[1], \
                                   pt[2] - it->initial_point[2]);
-    if (Dot(*it, p_delta)  < 0.)
+    if (Dot(*it, p_delta)  > 0.)
     {
       return false;
     }
