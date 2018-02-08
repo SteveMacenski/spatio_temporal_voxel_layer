@@ -81,7 +81,7 @@ void LevelSet::InitializeGrid(void)
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelizeClearFrustums(const \
+void LevelSet::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
@@ -116,18 +116,20 @@ void LevelSet::ParallelizeClearFrustums(const \
         if ( citer.getValue() < accel_decay_time)
         {
           // accelerate this value by how much? Ticket #23 TODO
-          // if(!this->MarkLevelSetPoint(pt_index, accel_decay_time))
+          // if(!this->MarkLevelSetPoint(pt_index, \
+          //    citer.getValue()-accel_decay_time))
           // {
-          //   ROS_WARN_THROTTLE(2.,"Failed to clear point.");
+          //   std::cout << "Failed to clear point." << std::endl;
           // }
+          this->ClearLevelSetPoint(pt_index);
         }
         else
         {
-          // clear this value
-          if(!this->ClearLevelSetPoint(pt_index))
-          {
-            ROS_WARN_THROTTLE(2.,"Failed to clear point.");
-          }
+          // clear this value it's expired by acceleration
+          // if(!this->ClearLevelSetPoint(pt_index))
+          // {
+          //   std::cout << "Failed to clear point." << std::endl;
+          // }
         }
       }
     }
@@ -172,7 +174,7 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 
       if(!this->MarkLevelSetPoint(openvdb::Coord( \
             mark_grid[0], mark_grid[1], mark_grid[2]), cur_time)) {
-        ROS_WARN_THROTTLE(1., "Failed to mark point.");
+        std::cout << "Failed to mark point." << std::endl;
       }
     }
   }
@@ -223,7 +225,7 @@ void LevelSet::GetFlattenedCostmap( \
     {
       if(!this->ClearLevelSetPoint(citer.getCoord()))
       {
-        ROS_WARN_THROTTLE(2.,"Failed to clear point in levelset.");
+        std::cout << "Failed to clear point in levelset." << std::endl;
       }
     }
   }

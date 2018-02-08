@@ -97,5 +97,3 @@ Add this plugin to your costmap params file.
 ### Running
 
 `roslaunch [navigation_pkg] move_base.launch`
-
-**This is a highly experimental package under heavy development.**
