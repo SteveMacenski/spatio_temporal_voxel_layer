@@ -187,6 +187,8 @@ void LevelSet::GetFlattenedCostmap( \
 /*****************************************************************************/
 {
   // retreive the 2D costmap to project to layered costmaps
+
+  // TODO do decay in clearing, then do the PC in the separate thing. That way only 1 iteration of grid unless you're an idiot and want 2
   if(this->IsGridEmpty())
   {
     return;
