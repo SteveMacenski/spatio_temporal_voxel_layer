@@ -151,26 +151,9 @@ void Frustum::ComputePlaneNormals(void)
 void Frustum::TransformPlaneNormals(void)
 /*****************************************************************************/
 {
-
-  //TODO transforming the vectors is wrong
-
-  //near plane seems odd in Z reflection
-  // add vector from map->robot location
-
-
   Eigen::Affine3d T = Eigen::Affine3d::Identity();
-  T.pretranslate(_position); // *_orientation.inverse()
-  T.prerotate(_orientation); 
-
-  // stored vectors are: v_plane^frustum
-
-  //_orietation is: R_camera^map
-
-  // where's R_camera^frutum
-
-  // try: multiplying by R for map->robot, inverse, and opposite
-
-  // also could be translation issues since they're tied
+  T.pretranslate(_orientation.inverse()*_position);
+  T.prerotate(_orientation);
 
   std::vector<VectorWithPt3D>::iterator it;
   for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)

@@ -60,7 +60,7 @@
 namespace geometry
 {
 
-#define VISUALIZE_FRUSTUM 1   // visualize the frustum should someone other than me care
+#define VISUALIZE_FRUSTUM 0 // visualize the frustum should someone other than me care
 
 struct VectorWithPt3D
 {
@@ -80,7 +80,7 @@ struct VectorWithPt3D
 
   void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
-    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
+    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z) - homogeneous_transform.translation();
     vec_t.normalize();
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
     initial_point = homogeneous_transform * initial_point;
