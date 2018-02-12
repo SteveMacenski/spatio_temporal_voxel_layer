@@ -113,7 +113,7 @@ void LevelSet::ClearFrustums(const \
       {
         const double accel_decay_time = \
                             GetAcceleratedDecayTime(it->_decay_acceleration);
-        if ( citer.getValue() < accel_decay_time)
+        if ( true )//citer.getValue() < accel_decay_time)
         {
           // accelerate this value by how much? Ticket #23 TODO
           // if(!this->MarkLevelSetPoint(pt_index, \
@@ -187,6 +187,8 @@ void LevelSet::GetFlattenedCostmap( \
 /*****************************************************************************/
 {
   // retreive the 2D costmap to project to layered costmaps
+
+  // TODO do decay in clearing, then do the PC in the separate thing. That way only 1 iteration of grid unless you're an idiot and want 2
   if(this->IsGridEmpty())
   {
     return;

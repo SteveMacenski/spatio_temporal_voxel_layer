@@ -50,24 +50,28 @@
 // msgs
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Pose.h>
 // ROS
 #include <ros/ros.h>
 
 namespace geometry
 {
 
-#define VISUALIZE_FRUSTUM 0
+#define VISUALIZE_FRUSTUM 0 // visualize the frustum should someone other than me care
 
 struct VectorWithPt3D
 {
   VectorWithPt3D(const double& x_, const double& y_, const double& z_, const Eigen::Vector3d& p0) : \
                                             x(x_), y(y_), z(z_), initial_point(p0)
-  {}
+  {
+  }
   
   VectorWithPt3D(void) : x(0.), y(0.), z(0.)
-  {}
+  {
+  }
 
   inline VectorWithPt3D operator*(double a)
   {
@@ -76,9 +80,11 @@ struct VectorWithPt3D
 
   void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
-    const Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z);
+    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z) - homogeneous_transform.translation();
+    vec_t.normalize();
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
     initial_point = homogeneous_transform * initial_point;
+    return;
   }
 
   double x, y, z;
