@@ -91,8 +91,6 @@ void LevelSet::ClearFrustums(const \
     return;
   }
 
-  openvdb::DoubleGrid::Accessor accessor = _grid->getAccessor();
-
   std::vector<observation::MeasurementReading>::const_iterator it = \
                                                   clearing_readings.begin();
   for (it; it != clearing_readings.end(); ++it) // parallelize: ticket 18 TODO
