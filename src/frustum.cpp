@@ -102,33 +102,33 @@ void Frustum::ComputePlaneNormals(void)
                     pt_[1][1]-pt_[0][1], pt_[1][2]-pt_[0][2]);
   const Eigen::Vector3d v_13(pt_[3][0]-pt_[1][0], \
                     pt_[3][1]-pt_[1][1], pt_[3][2]-pt_[1][2]);
-  Eigen::Vector3d T_n(v_01.cross(v_13));
+  Eigen::Vector3d T_n(v_13.cross(v_01));
   T_n.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_n[0],T_n[1],T_n[2],pt_[0]) * -1.);
+  _plane_normals.push_back(VectorWithPt3D(T_n[0],T_n[1],T_n[2],pt_[0]));
 
   const Eigen::Vector3d v_23(pt_[3][0]-pt_[2][0], \
                     pt_[3][1]-pt_[2][1], pt_[3][2]-pt_[2][2]);
   const Eigen::Vector3d v_35(pt_[5][0]-pt_[3][0], \
                     pt_[5][1]-pt_[3][1], pt_[5][2]-pt_[3][2]);
-  Eigen::Vector3d T_l(v_23.cross(v_35));
+  Eigen::Vector3d T_l(v_35.cross(v_23));
   T_l.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_l[0],T_l[1],T_l[2],pt_[2]) * -1.);
+  _plane_normals.push_back(VectorWithPt3D(T_l[0],T_l[1],T_l[2],pt_[2]));
 
   const Eigen::Vector3d v_45(pt_[5][0]-pt_[4][0], \
                     pt_[5][1]-pt_[4][1], pt_[5][2]-pt_[4][2]);
   const Eigen::Vector3d v_57(pt_[7][0]-pt_[5][0], \
                     pt_[7][1]-pt_[5][1], pt_[7][2]-pt_[5][2]);
-  Eigen::Vector3d T_b(v_45.cross(v_57));
+  Eigen::Vector3d T_b(v_57.cross(v_45));
   T_b.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_b[0],T_b[1],T_b[2],pt_[4]) * -1.);
+  _plane_normals.push_back(VectorWithPt3D(T_b[0],T_b[1],T_b[2],pt_[4]));
 
   const Eigen::Vector3d v_67(pt_[7][0]-pt_[6][0], \
                     pt_[7][1]-pt_[6][1], pt_[7][2]-pt_[6][2]);
   const Eigen::Vector3d v_71(pt_[1][0]-pt_[7][0], \
                     pt_[1][1]-pt_[7][1], pt_[1][2]-pt_[7][2]);
-  Eigen::Vector3d T_r(v_67.cross(v_71));
+  Eigen::Vector3d T_r(v_71.cross(v_67));
   T_r.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_r[0],T_r[1],T_r[2],pt_[6]) * -1.);
+  _plane_normals.push_back(VectorWithPt3D(T_r[0],T_r[1],T_r[2],pt_[6]));
 
   // far plane
   Eigen::Vector3d T_1(v_57.cross(v_71));
@@ -136,7 +136,7 @@ void Frustum::ComputePlaneNormals(void)
   _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[7]));
 
   // near plane
-  _plane_normals.push_back(VectorWithPt3D(-T_1[0],-T_1[1],-T_1[2],pt_[2]));
+  _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[2]) * -1);
 
   #if VISUALIZE_FRUSTUM
     _frustum_pts = pt_;
@@ -198,7 +198,7 @@ void Frustum::TransformPlaneNormals(void)
     for (uint i = 0; i != _plane_normals.size(); i++)
     {
       // normal vectors
-      msg.pose.position.z-=0.15;
+      msg.pose.position.z -= 0.15;
       msg.type = visualization_msgs::Marker::ARROW;
       msg.ns = "normal_"  + std::to_string(i);
       msg.scale.y = 0.07;

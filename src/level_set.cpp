@@ -287,12 +287,20 @@ bool LevelSet::ResetLevelSet(void)
 /*****************************************************************************/
 {
   // clear the voxel grid
-  _grid->clear();
-  if (this->IsGridEmpty())
+  try
   {
-    return true;
+    _grid->clear();
+    if (this->IsGridEmpty())
+    {
+      return true;
+    }
+    return false;
   }
-  return false;
+  catch (...)
+  {
+    std::cout << "Failed to reset costmap, please try again." << std::endl;
+    return false;
+  }
 }
 
 /*****************************************************************************/
