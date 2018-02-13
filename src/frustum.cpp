@@ -66,6 +66,13 @@ Frustum::~Frustum(void)
 void Frustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
+  // give ability to construct with bogus values
+  if (_vFOV == 0 && _hFOV == 0)
+  {
+    _valid_frustum = false;
+    return;
+  }
+
   // Z vector and deflected vector capture
   std::vector<Eigen::Vector3d> deflected_vecs;
   Eigen::Vector3d Z = Eigen::Vector3d::UnitZ();
@@ -151,6 +158,11 @@ void Frustum::ComputePlaneNormals(void)
 void Frustum::TransformPlaneNormals(void)
 /*****************************************************************************/
 {
+  if (!_valid_frustum)
+  {
+    return;
+  }
+
   Eigen::Affine3d T = Eigen::Affine3d::Identity();
   T.pretranslate(_orientation.inverse()*_position);
   T.prerotate(_orientation);

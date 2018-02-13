@@ -85,12 +85,24 @@ void LevelSet::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
-  // accelerate the decay of voxels interior to the frustum
+  // accelerate the decay of voxels interior to the frustum TODO
   if(this->IsGridEmpty())
   {
     return;
   }
 
+  _pc->clear();
+  _cost_map->clear();
+
+  if(clearing_readings.size() == 0)
+  {
+    std::vector<geometry::Frustum> empty_obs{geometry::Frustum(0.,0.,0.,0.)};
+    TemporalClearAndGenerateCostmap(empty_obs, 0.);
+    return;
+  }
+
+
+  // channnnnnnnnnnnnnnge
   std::vector<observation::MeasurementReading>::const_iterator it = \
                                                   clearing_readings.begin();
   for (it; it != clearing_readings.end(); ++it) // parallelize: ticket 18 TODO
@@ -102,20 +114,40 @@ void LevelSet::ClearFrustums(const \
     frustum.SetPosition(it->_origin);
     frustum.SetOrientation(it->_orientation);
     frustum.TransformPlaneNormals();
+  }
 
-    openvdb::DoubleGrid::ValueOnCIter citer = _grid->cbeginValueOn();
-    for (citer; citer; ++citer) 
+  // make vec of frustums
+
+  // TemporalClearAndGenerateCostmap(empty_obs, 0.);
+
+  return;
+}
+
+/*****************************************************************************/
+void LevelSet::TemporalClearAndGenerateCostmap(const \
+                                      std::vector<geometry::Frustum>& frustums)
+/*****************************************************************************/
+{ //TODO
+
+  openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
+  for (cit_grid; cit_grid; ++cit_grid) 
+  {
+    const openvdb::Coord pt_index(cit_grid.getCoord());
+
+    std::vector<geometry::Frustum>::const_iterator frustum_it = \
+                                                             frustums.begin();
+    for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
-      const openvdb::Coord pt_index(citer.getCoord());
-      if ( frustum.IsInside(this->IndexToWorld(pt_index)) )
+      int frustum_cycle = 0;
+      if ( frustum_it->IsInside(this->IndexToWorld(pt_index)) )
       {
         const double accel_decay_time = \
                             GetAcceleratedDecayTime(it->_decay_acceleration);
-        if ( true )//citer.getValue() < accel_decay_time)
+        if ( true )//cit_grid.getValue() < accel_decay_time)
         {
           // accelerate this value by how much? Ticket #23 TODO
           // if(!this->MarkLevelSetPoint(pt_index, \
-          //    citer.getValue()-accel_decay_time))
+          //    cit_grid.getValue()-accel_decay_time))
           // {
           //   std::cout << "Failed to clear point." << std::endl;
           // }
@@ -128,11 +160,48 @@ void LevelSet::ClearFrustums(const \
           // {
           //   std::cout << "Failed to clear point." << std::endl;
           // }
+          break;
         }
       }
+      else
+      {
+        // check first and then chekci f timed out, frustum_cycle
+        //  const double decay_time = GetDecayTime(); 
+        //double cell_time = citer.getValue();   if ( cell_time > decay_time 
+        // if timed out, break
+      }
+      frustum_cycle++;
     }
+
+    // if here, we can add to costmap and PC2
+    PopulateCostmapAndPointcloud(pt_index);
   }
-  return;
+}
+
+/*****************************************************************************/
+void LevelSet::PopulateCostmapAndPointcloud(const openvdb::Coord& pt)
+/*****************************************************************************/
+{
+  // add pt to the pointcloud and costmap TODO
+  openvdb::Vec3d pose_world = _grid->indexToWorld(pt);
+  if (_pub_voxels)
+  {
+    _pc->push_back(pcl::PointXYZ(pose_world[0], pose_world[1], \
+                                 pose_world[2]));
+  }
+
+  std::unordered_map<occupany_cell, uint>::iterator cell;
+  cell = cell_map.find(
+    (pose_world[0], pose_world[1]));
+  if (cell != cell_map.end())
+  {
+    cell->second += 1;
+  }
+  else
+  {
+    cell_map[occupany_cell(pose_world[0], pose_world[1])] = 1;
+  }
+
 }
 
 /*****************************************************************************/
@@ -185,50 +254,12 @@ void LevelSet::GetFlattenedCostmap( \
 /*****************************************************************************/
 {
   // retreive the 2D costmap to project to layered costmaps
-
-  // TODO do decay in clearing, then do the PC in the separate thing. That way only 1 iteration of grid unless you're an idiot and want 2
   if(this->IsGridEmpty())
   {
     return;
   }
 
-  _pc->clear();
-
-  openvdb::DoubleGrid::ValueOnCIter citer = _grid->cbeginValueOn();
-
-  const double decay_time = GetDecayTime(); 
-
-  for (citer; citer; ++citer)
-  {
-    double cell_time = citer.getValue();
-    if ( cell_time > decay_time )
-    {
-      openvdb::Vec3d pose_world = _grid->indexToWorld(citer.getCoord());
-      if (_pub_voxels)
-      {
-        _pc->push_back(pcl::PointXYZ(pose_world[0], pose_world[1], \
-                                     pose_world[2]));
-      }
-
-      std::unordered_map<occupany_cell, uint>::iterator cell;
-      cell = cell_map.find(occupany_cell(pose_world[0], pose_world[1]));
-      if (cell != cell_map.end())
-      {
-        cell->second += 1;
-      }
-      else
-      {
-        cell_map[occupany_cell(pose_world[0], pose_world[1])] = 1;
-      }
-    }
-    else
-    {
-      if(!this->ClearLevelSetPoint(citer.getCoord()))
-      {
-        std::cout << "Failed to clear point in levelset." << std::endl;
-      }
-    }
-  }
+  cell_map = _cost_map;
   return;
 }
 

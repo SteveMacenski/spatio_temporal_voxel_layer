@@ -110,6 +110,7 @@ protected:
   bool IsGridEmpty(void) const;
   double GetDecayTime(void);
   double GetAcceleratedDecayTime(const double& acceleration_factor);
+  void TemporalClearAndGenerateCostmap(const std::vector<geometry::Frustum>& frustums);
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
@@ -118,8 +119,9 @@ protected:
   int                             _background_value, _decay_model;
   double                          _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr _pc;
-  boost::mutex                    _grid_lock;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr     _pc;
+  std::unordered_map<occupany_cell, uint> _cost_map;
+  boost::mutex                            _grid_lock;
 };
 
 } // end volume_grid namespace
