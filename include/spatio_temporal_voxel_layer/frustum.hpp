@@ -80,7 +80,7 @@ struct VectorWithPt3D
 
   void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
   {
-    Eigen::Vector3d vec_t = homogeneous_transform * Eigen::Vector3d(x,y,z) - homogeneous_transform.translation();
+    Eigen::Vector3d vec_t = homogeneous_transform.rotation() * Eigen::Vector3d(x,y,z);
     vec_t.normalize();
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
     initial_point = homogeneous_transform * initial_point;
