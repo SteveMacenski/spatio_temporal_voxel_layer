@@ -140,19 +140,19 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
         frustum_cycle = true;
         const double accel_decay_time = \
                             GetAcceleratedDecayTime(frustum_it->accel_factor);
-        if ( true )//cit_grid.getValue() < accel_decay_time)
+        if (true) //cit_grid.getValue() < accel_decay_time)
         {
-          // accelerate this value by how much? Ticket #23 TODO
+          // accelerate the values stored. Ticket #23 TODO
           // if(!this->MarkLevelSetPoint(pt_index, \
           //    cit_grid.getValue()-accel_decay_time))
           // {
           //   std::cout << "Failed to clear point." << std::endl;
           // }
-          this->ClearLevelSetPoint(pt_index);
+          this->ClearLevelSetPoint(pt_index); // temp for testing
         }
         else
         {
-          // clear this value it's expired by acceleration
+          // expired by acceleration
           // if(!this->ClearLevelSetPoint(pt_index))
           // {
           //   std::cout << "Failed to clear point." << std::endl;
