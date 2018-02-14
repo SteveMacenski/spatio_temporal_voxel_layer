@@ -56,7 +56,7 @@ LevelSet::LevelSet(const float& voxel_size, const int& background_value,\
 /*****************************************************************************/
 LevelSet::~LevelSet(void)
 /*****************************************************************************/
-{
+{ // pcl pointclouds free themselves
 }
 
 /*****************************************************************************/
@@ -92,7 +92,7 @@ void LevelSet::ClearFrustums(const \
   }
 
   _pc->clear();
-  _cost_map->clear(); // cache this and only update on clearing instead of regenerating TODO
+  _cost_map->clear();
 
   std::vector<frustum_model> obs_frustums;
   if(clearing_readings.size() == 0)
