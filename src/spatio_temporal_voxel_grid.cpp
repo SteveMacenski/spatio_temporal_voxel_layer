@@ -296,18 +296,18 @@ double LevelSet::GetAcceleratedDecayShift(const double time_delta, \
 /*****************************************************************************/
 {
   // use configurable model to get a scalar shift to the desired decay time
-  double accel_decay_shift = -time_delta + _voxel_decay
+  double accel_decay_shift = -time_delta + _voxel_decay;
   if (_decay_model == 0) // linear
   {
     double acceleration = -1. / 6. * \
-      *acceleration_factor * std::pow(time_delta, 3);
+      acceleration_factor * std::pow(time_delta, 3);
     return accel_decay_shift - acceleration;
   }
   else if (_decay_model == 1) // exponential
   {
-    double acceleration = -1. / std::pow(*acceleration_factor, 2) * \
-      std::exp(*acceleration_factor * time_delta);
-    return accel_decay_shift - acceleration
+    double acceleration = -1. / std::pow(acceleration_factor, 2) * \
+      std::exp(acceleration_factor * time_delta);
+    return accel_decay_shift - acceleration;
   }
   else
   {
