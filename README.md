@@ -63,7 +63,7 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 ### OpenVDB
 
-`sudo apt-get install libopenvdb3.1 libopenvdb-doc libopenvdb-dev libopenvdb-tools`
+`sudo apt-get install libopenvdb3.1 libopenvdb-doc libopenvdb-dev libopenvdb-tools`libopenexr22 libopenexr-dev
 
 ### TBB
 
