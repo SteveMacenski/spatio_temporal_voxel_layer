@@ -275,7 +275,7 @@ std::unordered_map<occupany_cell, uint>*
 }
 
 /*****************************************************************************/
-double LevelSet::GetDecayTime(const double cur_time)
+double LevelSet::GetDecayTime(const double& cur_time)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
@@ -291,21 +291,22 @@ double LevelSet::GetDecayTime(const double cur_time)
 }
 
 /*****************************************************************************/
-double LevelSet::GetAcceleratedDecayShift(const double time_delta, \
+double LevelSet::GetAcceleratedDecayShift(const double& time_delta, \
                                           const double& acceleration_factor)
 /*****************************************************************************/
 {
   // use configurable model to get a scalar shift to the desired decay time
-  double accel_decay_shift = -time_delta + _voxel_decay;
+  const double accel_decay_shift = -time_delta + _voxel_decay;
   if (_decay_model == 0) // linear
   {
-    double acceleration = -1. / 6. * \
-      acceleration_factor * std::pow(time_delta, 3);
+    const double acceleration = -1. / 6. * \
+      acceleration_factor * (time_delta * time_delta * time_delta);
     return accel_decay_shift - acceleration;
   }
   else if (_decay_model == 1) // exponential
   {
-    double acceleration = -1. / std::pow(acceleration_factor, 2) * \
+    const double acceleration = -1. / \
+      (acceleration_factor * acceleration_factor) * \
       std::exp(acceleration_factor * time_delta);
     return accel_decay_shift - acceleration;
   }
