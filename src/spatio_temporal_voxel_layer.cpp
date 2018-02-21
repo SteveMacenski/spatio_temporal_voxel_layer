@@ -230,7 +230,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     if (sensor_frame != "")
     {
-      std::vector < std::string > target_frames;
+      std::vector<std::string> target_frames;
+      target_frames.reserve(2);
       target_frames.push_back(_global_frame);
       target_frames.push_back(sensor_frame);
       _observation_notifiers.back()->setTargetFrames(target_frames);

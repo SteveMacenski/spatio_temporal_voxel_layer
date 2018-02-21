@@ -95,12 +95,15 @@ void LevelSet::ClearFrustums(const \
   _cost_map->clear();
 
   std::vector<frustum_model> obs_frustums;
+
   if(clearing_readings.size() == 0)
   {
     obs_frustums.push_back(frustum_model(geometry::Frustum(0.,0.,0.,0.), 0.));
     TemporalClearAndGenerateCostmap(obs_frustums);
     return;
   }
+
+  obs_frustums.reserve(clearing_readings.size());
 
   std::vector<observation::MeasurementReading>::const_iterator it = \
                                                   clearing_readings.begin();
@@ -113,7 +116,7 @@ void LevelSet::ClearFrustums(const \
     frustum.SetPosition(it->_origin);
     frustum.SetOrientation(it->_orientation);
     frustum.TransformPlaneNormals();
-    obs_frustums.push_back(frustum_model(frustum, it->_decay_acceleration));
+    obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
   TemporalClearAndGenerateCostmap(obs_frustums);
   return;
@@ -166,7 +169,7 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
     if(!frustum_cycle)  
     {
       const double decay_time = GetDecayTime();
-      if(cit_grid.getValue() > decay_time)
+      if(cit_grid.getValue() < decay_time)
       {
         if(!this->ClearLevelSetPoint(pt_index))
         {
