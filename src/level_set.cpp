@@ -143,7 +143,11 @@ void LevelSet::ParallelizeMark(const \
   // mark the grid in parallel
   if (marking_readings.size() > 0) 
   {
-    tbb::parallel_do(marking_readings, *this);
+    //tbb::parallel_do(marking_readings, *this);
+    for (int i=0; i!= marking_readings.size(); i++)
+    {
+      (*this)(marking_readings.at(i));
+    }
   }
   return;
 }
