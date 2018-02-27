@@ -328,13 +328,12 @@ bool LevelSet::ResetLevelSet(void)
     {
       return true;
     }
-    return false;
   }
   catch (...)
   {
     std::cout << "Failed to reset costmap, please try again." << std::endl;
-    return false;
   }
+  return false;
 }
 
 /*****************************************************************************/
@@ -345,7 +344,6 @@ bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
   // marking the OpenVDB set
   openvdb::DoubleGrid::Accessor accessor = _grid->getAccessor();
 
-  int curr_value = accessor.getValue(pt);
   accessor.setValueOn(pt, value);
   return accessor.getValue(pt) == value;
 }
