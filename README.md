@@ -6,7 +6,7 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
-An example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be).
+An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be), another more complex example can be seen [here](https://youtu.be/hpWxa6M1AR8) with global decay and frustum decay while moving with dynamic objects.
 
 ## **Spatio**-
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
