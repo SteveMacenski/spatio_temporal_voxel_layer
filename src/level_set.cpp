@@ -47,7 +47,8 @@ LevelSet::LevelSet(const float& voxel_size, const int& background_value,\
                             _voxel_size( voxel_size ),               \
                             _decay_model(decay_model),               \
                             _voxel_decay(voxel_decay),               \
-                            _pc(new pcl::PointCloud<pcl::PointXYZ>)
+                            _pc(new pcl::PointCloud<pcl::PointXYZ>), \
+                         _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
 {
   this->InitializeGrid();
@@ -56,7 +57,9 @@ LevelSet::LevelSet(const float& voxel_size, const int& background_value,\
 /*****************************************************************************/
 LevelSet::~LevelSet(void)
 /*****************************************************************************/
-{ // pcl pointclouds free themselves
+{ 
+  // pcl pointclouds free themselves
+  delete _cost_map;
 }
 
 /*****************************************************************************/
