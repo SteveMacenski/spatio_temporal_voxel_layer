@@ -181,7 +181,6 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
         break;
       }
     }
-
     // if here, we can add to costmap and PC2
     PopulateCostmapAndPointcloud(pt_index);
   }
@@ -261,18 +260,10 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 }
 
 /*****************************************************************************/
-void LevelSet::GetFlattenedCostmap( \
-                             std::unordered_map<occupany_cell, uint>& cell_map)
+std::unordered_map<occupany_cell, uint>* LevelSet::GetFlattenedCostmap()
 /*****************************************************************************/
 {
-  // retreive the 2D costmap to project to layered costmaps
-  if(this->IsGridEmpty())
-  {
-    return;
-  }
-
-  cell_map = *_cost_map;
-  return;
+  return _cost_map;
 }
 
 /*****************************************************************************/

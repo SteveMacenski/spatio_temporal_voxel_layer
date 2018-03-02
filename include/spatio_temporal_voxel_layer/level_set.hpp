@@ -110,7 +110,7 @@ public:
   void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
-  void GetFlattenedCostmap(std::unordered_map<occupany_cell, uint>& cell_map);
+  std::unordered_map<occupany_cell, uint>* GetFlattenedCostmap();
 
   bool ResetLevelSet(void);
 

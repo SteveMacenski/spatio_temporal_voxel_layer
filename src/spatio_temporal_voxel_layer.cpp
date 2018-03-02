@@ -515,11 +515,9 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
-  std::unordered_map<volume_grid::occupany_cell, uint> cell_map;
-  _level_set->GetFlattenedCostmap(cell_map);
-
   std::unordered_map<volume_grid::occupany_cell, uint>::iterator it;
-  for (it = cell_map.begin(); it != cell_map.end(); ++it)
+  for (it = _level_set->GetFlattenedCostmap()->begin();
+       it != _level_set->GetFlattenedCostmap()->end(); ++it)
   {
     uint map_x, map_y;
     if ( it->second >= _mark_threshold && \
