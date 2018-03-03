@@ -67,8 +67,6 @@
 // tf
 #include <tf/message_filter.h>
 #include <tf/exceptions.h>
-// reconfigure
-#include <dynamic_reconfigure/server.h>
 
 namespace spatio_temporal_voxel_layer
 {

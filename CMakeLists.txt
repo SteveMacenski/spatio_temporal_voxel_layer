@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   sensor_msgs
   std_msgs
-  dynamic_reconfigure
   laser_geometry
   message_filters
   pcl_conversions
@@ -39,10 +38,6 @@ include_directories(
 
 add_definitions(${EIGEN3_DEFINITIONS})
 
-generate_dynamic_reconfigure_options(
-  cfg/SpatioTemporalVoxelLayerPlugin.cfg
-)
-
 catkin_package(
     INCLUDE_DIRS
         include
@@ -53,7 +48,6 @@ catkin_package(
         ${TBB_INCLUDE_DIRS}
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
-        dynamic_reconfigure
         geometry_msgs
         laser_geometry
         message_filters
