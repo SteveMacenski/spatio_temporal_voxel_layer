@@ -57,7 +57,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
                                      const double& hFOV, \
                                      const double& decay_acceleration, \
                                      const bool& marking, \
-                                     const bool& clearing) :
+                                     const bool& clearing, \
+                                     const double& voxel_size) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -67,7 +68,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
-    _clearing(clearing)
+    _clearing(clearing), _voxel_size(voxel_size)
 {
 }
 
@@ -110,6 +111,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
   try
   {
+    // transform into global frame
     geometry_msgs::Quaternion orientation;
     tf::Stamped<tf::Pose> local_pose, global_pose;
     local_pose.setOrigin(tf::Vector3(0, 0, 0));
@@ -151,7 +153,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
     pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor1;
     sor1.setInputCloud (cld_no_nan);
-    sor1.setLeafSize ((float)0.05, (float)0.05, (float)0.05); //TODO parameterize
+    sor1.setLeafSize ((float)_voxel_size, (float)_voxel_size, (float)_voxel_size);
     sor1.filter (*cld_voxel_grid);
 
     // remove points that are below or above our height restrictions

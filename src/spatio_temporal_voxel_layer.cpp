@@ -167,7 +167,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         expected_update_rate, min_obstacle_height, max_obstacle_height,  \
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
-        hFOV, decay_acceleration, marking, clearing)));
+        hFOV, decay_acceleration, marking, clearing, _voxel_size)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
