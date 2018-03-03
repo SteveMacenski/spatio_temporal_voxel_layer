@@ -43,6 +43,7 @@
 #include <spatio_temporal_voxel_layer/measurement_reading.h>
 // PCL
 #include <pcl_ros/transforms.h>
+#include <pcl/filters/approximate_voxel_grid.h>
 // STL
 #include <vector>
 #include <list>

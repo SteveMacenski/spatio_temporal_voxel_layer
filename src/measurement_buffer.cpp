@@ -141,15 +141,28 @@ void MeasurementBuffer::BufferPCLCloud(const \
     pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
     cld_global->header.stamp = cloud.header.stamp;
 
+    // remove nans because they show things down
+    point_cloud_ptr cld_no_nan(new pcl::PointCloud<pcl::PointXYZ>);
+    std::vector<int> indices;
+    pcl::removeNaNFromPointCloud(*cld_global, *cld_no_nan, indices);
+
+    // minimize information needed to process
+    point_cloud_ptr cld_voxel_grid(new pcl::PointCloud<pcl::PointXYZ>);
+
+    pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor1;
+    sor1.setInputCloud (cld_no_nan);
+    sor1.setLeafSize ((float)0.05, (float)0.05, (float)0.05); //TODO parameterize
+    sor1.filter (*cld_voxel_grid);
+
     // remove points that are below or above our height restrictions
     pcl::PointCloud<pcl::PointXYZ>& obs_cloud = \
                                 *(_observation_list.front()._cloud);
-    unsigned int cloud_size = cld_global->points.size();
+    unsigned int cloud_size = cld_voxel_grid->points.size();
 
     obs_cloud.points.resize(cloud_size);
     unsigned int point_count = 0;
     pcl::PointCloud<pcl::PointXYZ>::iterator it;
-    for (it = cld_global->begin(); it != cld_global->end(); ++it)
+    for (it = cld_global->begin(); it != cld_voxel_grid->end(); ++it)
     {
       if (it->z <= _max_obstacle_height && it->z >= _min_obstacle_height)
       {
