@@ -34,7 +34,11 @@ This package utilizes all of the information coming in from the robot before the
 It is the user's responsibility to chose a decay time that makes sense for your robot's local planner. 5-15 seconds I have found to be nominally good for most open-sourced local planner plugins.
 
 ## Global Costmap
-Similar to the local costmap, the amount of information you want to store due to entropy in your scenes depend on your use-case. It is certainly possible to **not** decay the voxels in the global map at all. However, in practical application, I find a time 1-10 minutes to be a good balance due to things moving in the scene (i.e. store, warehouse, construction zone, office, etc). Permanent voxels set decay to -1.
+Similar to the local costmap, the amount of information you want to store due to entropy in your scenes depend on your use-case. It is certainly possible to **not** decay the voxels in the global map at all. However, in practical application, I find a time 15-45 seconds to be a good balance due to things moving in the scene (i.e. store, warehouse, construction zone, office, etc). Permanent voxels set decay to -1.
+
+## Mapping
+
+As the images above suggest, you can use this to map an environment in 3D in realtime if you choose. If you disable clearing then it will maintain the entire voxel grid and you can save the map using the services provided. At the moment, I support mapping but there is no probabilistic (yet!) marking framework, so what the sensor sees is what the map gets. This is likely to change in the near to middle term future as 3D localization becomes more interesting to the enterprise robotics community. If you would like to be involved in this work, I would gladly take contributors and coauthors.  
 
 ## Installation
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
@@ -114,7 +118,7 @@ Add this plugin to your costmap params file.
 
 I have made the frustum transformations available for visualization and debugging. You may enable them by the `VISUALIZE_FRUSTUM` macro, though be aware it takes a substantial decrease on performance since we're creating and destroying a ros publisher at a non-trivial rate.
 
-This can also be used for situations where you do not know your camera's proper frustum FOVs. It is possible to enable it and tweek the FOVs until you get the appropriate coverage of the space your sensor carves out in the global space.
+This can also be used for situations where you do not know your camera's proper frustum FOVs. It is possible to enable it and tweek the FOVs until you get the appropriate coverage of the space your sensor carves out in the global space. You should only do this with one sensor at a time or else your frustum in rviz might jitter around. ;-)
 
 ### Interesting side note
 
