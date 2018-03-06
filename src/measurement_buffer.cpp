@@ -58,7 +58,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
                                      const double& decay_acceleration, \
                                      const bool& marking, \
                                      const bool& clearing, \
-                                     const double& voxel_size) :
+                                     const double& voxel_size, \
+                                     const bool& voxel_filter) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -68,7 +69,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name, \
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
-    _clearing(clearing), _voxel_size(voxel_size)
+    _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter)
 {
 }
 
@@ -143,29 +144,33 @@ void MeasurementBuffer::BufferPCLCloud(const \
     pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
     cld_global->header.stamp = cloud.header.stamp;
 
-    // remove nans because they show things down
-    point_cloud_ptr cld_no_nan(new pcl::PointCloud<pcl::PointXYZ>);
-    std::vector<int> indices;
-    pcl::removeNaNFromPointCloud(*cld_global, *cld_no_nan, indices);
+    // if user wants to use a voxel filter
+    if ( _voxel_filter )
+    {
+      // remove nans because they show things down
+      point_cloud_ptr cld_no_nan(new pcl::PointCloud<pcl::PointXYZ>);
+      std::vector<int> indices;
+      pcl::removeNaNFromPointCloud(*cld_global, *cld_no_nan, indices);
 
-    // minimize information needed to process
-    point_cloud_ptr cld_voxel_grid(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor1;
-    sor1.setInputCloud (cld_no_nan);
-    sor1.setLeafSize ((float)_voxel_size,
-                      (float)_voxel_size,
-                      (float)_voxel_size);
-    sor1.filter (*cld_voxel_grid);
+      // minimize information needed to process
+      cld_global->clear();
+      pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor1;
+      sor1.setInputCloud (cld_no_nan);
+      sor1.setLeafSize ((float)_voxel_size,
+                        (float)_voxel_size,
+                        (float)_voxel_size);
+      sor1.filter (*cld_global);
+    }
 
     // remove points that are below or above our height restrictions
     pcl::PointCloud<pcl::PointXYZ>& obs_cloud = \
                                 *(_observation_list.front()._cloud);
-    unsigned int cloud_size = cld_voxel_grid->points.size();
+    unsigned int cloud_size = cld_global->points.size();
 
     obs_cloud.points.resize(cloud_size);
     unsigned int point_count = 0;
     pcl::PointCloud<pcl::PointXYZ>::iterator it;
-    for (it = cld_voxel_grid->begin(); it != cld_voxel_grid->end(); ++it)
+    for (it = cld_global->begin(); it != cld_global->end(); ++it)
     {
       if (it->z <= _max_obstacle_height && it->z >= _min_obstacle_height)
       {
