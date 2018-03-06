@@ -35,27 +35,28 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include <spatio_temporal_voxel_layer/level_set.hpp>
+#include <spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp>
 
 namespace volume_grid
 {
 
 /*****************************************************************************/
-LevelSet::LevelSet(const float& voxel_size, const int& background_value,\
-                   const int& decay_model, const double& voxel_decay) : 
-                            _background_value( background_value ),   \
-                            _voxel_size( voxel_size ),               \
-                            _decay_model(decay_model),               \
-                            _voxel_decay(voxel_decay),               \
-                            _pc(new pcl::PointCloud<pcl::PointXYZ>), \
-                         _cost_map(new std::unordered_map<occupany_cell, uint>)
+SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
+                   const int& background_value, const int& decay_model,   \
+                   const double& voxel_decay) : 
+                   _background_value( background_value ),                 \
+                   _voxel_size( voxel_size ),                             \
+                   _decay_model(decay_model),                             \
+                   _voxel_decay(voxel_decay),                             \
+                   _pc(new pcl::PointCloud<pcl::PointXYZ>),               \
+                   _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
 {
   this->InitializeGrid();
 }
 
 /*****************************************************************************/
-LevelSet::~LevelSet(void)
+SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
 /*****************************************************************************/
 { 
   // pcl pointclouds free themselves
@@ -63,19 +64,22 @@ LevelSet::~LevelSet(void)
 }
 
 /*****************************************************************************/
-void LevelSet::InitializeGrid(void)
+void SpatioTemporalVoxelGrid::InitializeGrid(void)
 /*****************************************************************************/
 {
   // initialize the OpenVDB Grid volume
   openvdb::initialize();
 
+  // make it default to background value
   _grid = openvdb::DoubleGrid::create( _background_value );
 
+  // setup scale and tranform
   openvdb::Mat4d m = openvdb::Mat4d::identity();
   m.preScale(openvdb::Vec3d(_voxel_size, _voxel_size, _voxel_size));
   m.preTranslate(openvdb::Vec3d(0, 0, 0));
   m.preRotate(openvdb::math::Z_AXIS, 0);
 
+  // setup transform and other metadata
   _grid->setTransform(openvdb::math::Transform::createLinearTransform( m ));
   _grid->setName("SpatioTemporalVoxelLayer");
   _grid->insertMeta("Voxel Size", openvdb::FloatMetadata( _voxel_size ));
@@ -84,7 +88,7 @@ void LevelSet::InitializeGrid(void)
 }
 
 /*****************************************************************************/
-void LevelSet::ClearFrustums(const \
+void SpatioTemporalVoxelGrid::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
@@ -110,7 +114,7 @@ void LevelSet::ClearFrustums(const \
 
   std::vector<observation::MeasurementReading>::const_iterator it = \
                                                   clearing_readings.begin();
-  for (it; it != clearing_readings.end(); ++it) // parallelize: ticket 18 TODO
+  for (it; it != clearing_readings.end(); ++it)
   {
     geometry::Frustum frustum(it->_vertical_fov_in_rad,   \
                               it->_horizontal_fov_in_rad, \
@@ -126,7 +130,7 @@ void LevelSet::ClearFrustums(const \
 }
 
 /*****************************************************************************/
-void LevelSet::TemporalClearAndGenerateCostmap(                               \
+void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
                                           std::vector<frustum_model>& frustums)
 /*****************************************************************************/
 {
@@ -149,17 +153,17 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
         if (true) //cit_grid.getValue() < accel_decay_time)
         {
           // accelerate the values stored. Ticket #23 TODO
-          // if(!this->MarkLevelSetPoint(pt_index, \
+          // if(!this->MarkGridPoint(pt_index, \
           //    cit_grid.getValue()-accel_decay_time))
           // {
           //   std::cout << "Failed to clear point." << std::endl;
           // }
-          this->ClearLevelSetPoint(pt_index); // temp for testing
+          this->ClearGridPoint(pt_index); // temp for testing
         }
         else
         {
           // expired by acceleration
-          // if(!this->ClearLevelSetPoint(pt_index))
+          // if(!this->ClearGridPoint(pt_index))
           // {
           //   std::cout << "Failed to clear point." << std::endl;
           // }
@@ -174,7 +178,7 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
       const double decay_time = GetDecayTime();
       if(cit_grid.getValue() < decay_time)
       {
-        if(!this->ClearLevelSetPoint(pt_index))
+        if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
@@ -187,7 +191,8 @@ void LevelSet::TemporalClearAndGenerateCostmap(                               \
 }
 
 /*****************************************************************************/
-void LevelSet::PopulateCostmapAndPointcloud(const openvdb::Coord& pt)
+void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
+                                                            openvdb::Coord& pt)
 /*****************************************************************************/
 {
   // add pt to the pointcloud and costmap
@@ -212,14 +217,14 @@ void LevelSet::PopulateCostmapAndPointcloud(const openvdb::Coord& pt)
 }
 
 /*****************************************************************************/
-void LevelSet::ParallelizeMark(const \
+void SpatioTemporalVoxelGrid::Mark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
-  // mark the grid in parallel
+  // mark the grid 
   if (marking_readings.size() > 0) 
   {
-    //tbb::parallel_do(marking_readings, *this);
+    //tbb::parallel_do(marking_readings, *this); /*must do via merged trees*/
     for (int i=0; i!= marking_readings.size(); i++)
     {
       (*this)(marking_readings.at(i));
@@ -229,7 +234,8 @@ void LevelSet::ParallelizeMark(const \
 }
 
 /*****************************************************************************/
-void LevelSet::operator()(const observation::MeasurementReading& obs) const
+void SpatioTemporalVoxelGrid::operator()(const \
+                                    observation::MeasurementReading& obs) const
 /*****************************************************************************/
 {
   if (obs._marking)
@@ -250,8 +256,9 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
       openvdb::Vec3d mark_grid(this->WorldToIndex( \
                                        openvdb::Vec3d(it->x, it->y, it->z)));
 
-      if(!this->MarkLevelSetPoint(openvdb::Coord( \
-            mark_grid[0], mark_grid[1], mark_grid[2]), cur_time)) {
+      if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
+                                             mark_grid[2]), cur_time))
+      {
         std::cout << "Failed to mark point." << std::endl;
       }
     }
@@ -260,14 +267,15 @@ void LevelSet::operator()(const observation::MeasurementReading& obs) const
 }
 
 /*****************************************************************************/
-std::unordered_map<occupany_cell, uint>* LevelSet::GetFlattenedCostmap()
+std::unordered_map<occupany_cell, uint>* 
+                                 SpatioTemporalVoxelGrid::GetFlattenedCostmap()
 /*****************************************************************************/
 {
   return _cost_map;
 }
 
 /*****************************************************************************/
-double LevelSet::GetDecayTime(void)
+double SpatioTemporalVoxelGrid::GetDecayTime(void)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
@@ -285,7 +293,8 @@ double LevelSet::GetDecayTime(void)
 }
 
 /*****************************************************************************/
-double LevelSet::GetAcceleratedDecayTime(const double& acceleration_factor)
+double SpatioTemporalVoxelGrid::GetAcceleratedDecayTime(const \
+                                                   double& acceleration_factor)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
@@ -303,7 +312,8 @@ double LevelSet::GetAcceleratedDecayTime(const double& acceleration_factor)
 }
 
 /*****************************************************************************/
-void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
+void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
+                                       pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 /*****************************************************************************/
 {
   // return the pointcloud stored
@@ -312,7 +322,7 @@ void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 }
 
 /*****************************************************************************/
-bool LevelSet::ResetLevelSet(void)
+bool SpatioTemporalVoxelGrid::ResetGrid(void)
 /*****************************************************************************/
 {
   // clear the voxel grid
@@ -332,7 +342,7 @@ bool LevelSet::ResetLevelSet(void)
 }
 
 /*****************************************************************************/
-bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
+bool SpatioTemporalVoxelGrid::MarkGridPoint(const openvdb::Coord& pt, \
                                                      const double& value) const
 /*****************************************************************************/
 {
@@ -344,7 +354,7 @@ bool LevelSet::MarkLevelSetPoint(const openvdb::Coord& pt, \
 }
 
 /*****************************************************************************/
-bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt) const
+bool SpatioTemporalVoxelGrid::ClearGridPoint(const openvdb::Coord& pt) const
 /*****************************************************************************/
 {
   // clearing the OpenVDB set
@@ -358,7 +368,8 @@ bool LevelSet::ClearLevelSetPoint(const openvdb::Coord& pt) const
 }
 
 /*****************************************************************************/
-openvdb::Vec3d LevelSet::IndexToWorld(const openvdb::Coord& coord) const
+openvdb::Vec3d SpatioTemporalVoxelGrid::IndexToWorld(const \
+                                                   openvdb::Coord& coord) const
 /*****************************************************************************/
 {
   // Applies tranform stored in getTransform.
@@ -366,7 +377,8 @@ openvdb::Vec3d LevelSet::IndexToWorld(const openvdb::Coord& coord) const
 }
 
 /*****************************************************************************/
-openvdb::Vec3d LevelSet::WorldToIndex(const openvdb::Vec3d& vec) const
+openvdb::Vec3d SpatioTemporalVoxelGrid::WorldToIndex(const \
+                                                     openvdb::Vec3d& vec) const
 /*****************************************************************************/
 {
   // Applies inverse tranform stored in getTransform.
@@ -374,7 +386,7 @@ openvdb::Vec3d LevelSet::WorldToIndex(const openvdb::Vec3d& vec) const
 }
 
 /*****************************************************************************/
-bool LevelSet::IsGridEmpty(void) const
+bool SpatioTemporalVoxelGrid::IsGridEmpty(void) const
 /*****************************************************************************/
 {
   // Returns grid's population status
@@ -382,7 +394,8 @@ bool LevelSet::IsGridEmpty(void) const
 }
 
 /*****************************************************************************/
-bool LevelSet::SaveGrid(const std::string& file_name, double& map_size_bytes)
+bool SpatioTemporalVoxelGrid::SaveGrid(const std::string& file_name, \
+                                                        double& map_size_bytes)
 /*****************************************************************************/
 {
   try

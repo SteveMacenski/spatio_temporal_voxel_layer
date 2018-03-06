@@ -49,7 +49,8 @@ SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
 SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
 {
-  delete _level_set;
+  // I prefer to manage my own memory, I know others like std::unique_ptr
+  delete _voxel_grid;
 }
 
 /*****************************************************************************/
@@ -106,8 +107,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
                                   this);
   
-  _level_set = new volume_grid::LevelSet(_voxel_size, 0., decay_model, \
-                                         voxel_decay);
+  _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, 0., \
+                                                        decay_model, \
+                                                        voxel_decay);
   matchSize();
   current_ = true;
 
@@ -461,7 +463,7 @@ void SpatioTemporalVoxelLayer::resetMaps(void)
   Costmap2D::resetMaps();
 
   // takes care of our layer
-  if (!_level_set->ResetLevelSet())
+  if (!_voxel_grid->ResetGrid())
  {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
   }
@@ -522,8 +524,8 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
   Costmap2D::resetMaps();
 
   std::unordered_map<volume_grid::occupany_cell, uint>::iterator it;
-  for (it = _level_set->GetFlattenedCostmap()->begin();
-       it != _level_set->GetFlattenedCostmap()->end(); ++it)
+  for (it = _voxel_grid->GetFlattenedCostmap()->begin();
+       it != _voxel_grid->GetFlattenedCostmap()->end(); ++it)
   {
     uint map_x, map_y;
     if ( it->second >= _mark_threshold && \
@@ -557,8 +559,8 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current_ = current;
 
   // mark and clear observations
-  _level_set->ClearFrustums(clearing_observations);
-  _level_set->ParallelizeMark(marking_observations);
+  _voxel_grid->ClearFrustums(clearing_observations);
+  _voxel_grid->Mark(marking_observations);
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
@@ -567,7 +569,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   if (_publish_voxels)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
-    _level_set->GetOccupancyPointCloud(pc);
+    _voxel_grid->GetOccupancyPointCloud(pc);
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = std::string("/map");
@@ -587,7 +589,7 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
 /*****************************************************************************/
 {
   double map_size_bytes;
-  if( _level_set->SaveGrid(req.file_name.data, map_size_bytes) )
+  if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
       "SpatioTemporalVoxelGrid: Saved grid! Has memory footprint of %f bytes.",

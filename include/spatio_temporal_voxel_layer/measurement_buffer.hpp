@@ -63,9 +63,11 @@
 namespace buffer
 {
 
+// conveniences for line lengths
 typedef std::list<observation::MeasurementReading>::iterator readings_iter;
 typedef pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr;
 
+// Measurement buffer
 class MeasurementBuffer
 {
 public:
@@ -91,18 +93,23 @@ public:
 
   ~MeasurementBuffer(void);
 
+  // Buffers for different types of pointclouds
   void BufferROSCloud(const sensor_msgs::PointCloud2& cloud);
   void BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 
+  // Get measurements from the buffer
   void GetReadings(std::vector<observation::MeasurementReading>& observations);
 
+  // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
   void ResetLastUpdatedTime(void);
 
+  // Public mutex locks
   void Lock(void);
   void Unlock(void);
 
 private:
+  // Removing old observations from buffer
   void RemoveStaleObservations(void);
 
   tf::TransformListener& _tf;

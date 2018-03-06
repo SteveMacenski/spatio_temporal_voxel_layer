@@ -42,9 +42,10 @@
 #define VOLUME_GRID_LAYER_H_
 
 // voxel grid
-#include <spatio_temporal_voxel_layer/level_set.hpp>
+#include <spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp>
 // ROS
 #include <ros/ros.h>
+#include <message_filters/subscriber.h>
 // costmap
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -61,7 +62,6 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point.h>
-#include <message_filters/subscriber.h>
 #include <spatio_temporal_voxel_layer/SaveGrid.h>
 // projector
 #include <laser_geometry/laser_geometry.h>
@@ -72,6 +72,7 @@
 namespace spatio_temporal_voxel_layer
 {
 
+// Core ROS voxel layer class
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer
 {
 public:
@@ -109,6 +110,7 @@ public:
                         spatio_temporal_voxel_layer::SaveGrid::Response& resp);
 
 private:
+  // Sensor callbacks
   void LaserScanCallback(const sensor_msgs::LaserScanConstPtr& message, \
                          const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
   void LaserScanValidInfCallback(const sensor_msgs::LaserScanConstPtr& raw_message, \
@@ -136,7 +138,7 @@ private:
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
-  volume_grid::LevelSet*               _level_set;
+  volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
 };
 
 }; // end namespace

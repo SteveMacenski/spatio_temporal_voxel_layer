@@ -60,7 +60,7 @@
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/GridTransformer.h>
 #include <openvdb/tools/RayIntersector.h>
-// measurement struct
+// measurement struct and buffer
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
 #include <spatio_temporal_voxel_layer/frustum.hpp>
 // Mutex
@@ -70,6 +70,7 @@
 namespace volume_grid
 {
 
+// Structure for an occupied cell for map
 struct occupany_cell
 {
   occupany_cell(const double& _x, const double& _y) :
@@ -85,6 +86,7 @@ struct occupany_cell
   double x, y;
 };
 
+// Structure for wrapping frustum model and necessary metadata
 struct frustum_model
 {
   frustum_model(geometry::Frustum _frustum, const double& _factor) : 
@@ -95,38 +97,55 @@ struct frustum_model
   const double accel_factor;
 };
 
-class LevelSet
+// Core voxel grid structure and interface
+class SpatioTemporalVoxelGrid
 {
 public:
+  // conveniences for line lengths
   typedef openvdb::math::Ray<openvdb::Real> GridRay;
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
-  LevelSet(const float& voxel_size, const int& background_value, const int& decay_model, \
-                            const double& voxel_decay);
-  ~LevelSet(void);
+  SpatioTemporalVoxelGrid(const float& voxel_size, const int& background_value,
+                          const int& decay_model, const double& voxel_decay);
+  ~SpatioTemporalVoxelGrid(void);
 
-  void ParallelizeMark(const std::vector<observation::MeasurementReading>& marking_observations);
+  // Core making and clearing functions
+  void Mark(const std::vector<observation::MeasurementReading>& marking_observations);
   void operator()(const observation::MeasurementReading& obs) const;
   void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
+  // Get the pointcloud of the underlying occupancy grid
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
   std::unordered_map<occupany_cell, uint>* GetFlattenedCostmap();
 
-  bool ResetLevelSet(void);
+  // Clear the grid
+  bool ResetGrid(void);
 
+  // Save the file to file with size information
   bool SaveGrid(const std::string& file_name, double& map_size_bytes);
 
 protected:
+  // Initialize grid metadata and library
   void InitializeGrid(void);
-  bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value) const;
-  bool ClearLevelSetPoint(const openvdb::Coord& pt) const;
+
+  // grid accessor methods
+  bool MarkGridPoint(const openvdb::Coord& pt, const double& value) const;
+  bool ClearGridPoint(const openvdb::Coord& pt) const;
+
+  // Check occupancy status of the grid
   bool IsGridEmpty(void) const;
+
+  // Get time information for clearing
   double GetDecayTime(void);
   double GetAcceleratedDecayTime(const double& acceleration_factor);
+
+  // Clearing grid operation with frustum models
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
+
+  // Populate the costmap ROS api and pointcloud with a marked point
   void PopulateCostmapAndPointcloud(const openvdb::Coord& pt);
 
-
+  // Utilities for tranformation
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
