@@ -49,12 +49,12 @@
 namespace observation
 {
 
+// Measurement Reading
 struct MeasurementReading
 {
   /*****************************************************************************/
-  MeasurementReading() :
+  MeasurementReading() : _cloud(new pcl::PointCloud<pcl::PointXYZ>)
   /*****************************************************************************/
-    _cloud(new pcl::PointCloud<pcl::PointXYZ>)
   {
   }
 

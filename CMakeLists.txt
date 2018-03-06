@@ -79,7 +79,7 @@ catkin_package(
 
 add_library(${PROJECT_NAME}
             src/spatio_temporal_voxel_layer.cpp
-            src/level_set.cpp
+            src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
             src/frustum.cpp
 )
