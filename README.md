@@ -8,6 +8,8 @@ Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional 
 
 An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be), another more complex example can be seen [here](https://youtu.be/hpWxa6M1AR8) with global decay and frustum decay while moving with dynamic objects.
 
+We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-40%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`.  
+
 ## **Spatio**-
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
