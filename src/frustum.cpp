@@ -51,6 +51,8 @@ Frustum::Frustum(const double& vFOV, const double& hFOV,     \
   ros::NodeHandle nh;
   #if VISUALIZE_FRUSTUM
     _frustumPub = nh.advertise<visualization_msgs::MarkerArray>("/frustum", 1);
+    // give enough time for publisher to register, don't use in production.
+    ros::Duration(0.5).sleep();
   #endif
 
   this->ComputePlaneNormals();

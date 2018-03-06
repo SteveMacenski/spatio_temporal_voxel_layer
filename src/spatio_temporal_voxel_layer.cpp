@@ -77,7 +77,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("enabled", _enabled, true);
   enabled_ = _enabled; // costmap_2d for some unexplicable reason uses globals
   // publish the voxel grid to visualize
-  nh.param("publish_voxel_map", _publish_voxels, true);
+  nh.param("publish_voxel_map", _publish_voxels, false);
   // size of each voxel in meters
   nh.param("voxel_size", _voxel_size, 0.05);
   // 1=takes highest in layers, 0=takes current layer

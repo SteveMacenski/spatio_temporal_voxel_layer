@@ -26,19 +26,23 @@ The Temporal in this package is the novel concept of `voxel_decay` whereas we ha
 
 Voxel acceleration uses given FOV to compute traditional 6-planed cubical frustums. Sensors that cannot be modelled by traditional frustums (i.e. 360 lidars or sensors without flat back planes) the frustum acceleration mathematics breakdown, **do not use frustum acceleration for these class of sensors**. PRs to implement curved frustums are welcome and encouraged.  
 
-Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.    
+Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.
+
+Below is an example of instantaneous decay, where readings in frustum are accelerated and decayed at each iteration. The models provided can be tuned to do this, or persist through linear or exponental equations.
+
+![ezgif com-video-to-gif 1](https://user-images.githubusercontent.com/14944147/37063574-d0923d24-2167-11e8-850c-18b6aed61634.gif)
 
 ## Local Costmap
 This package utilizes all of the information coming in from the robot before the decay time for the local costmap. Rather than having a defined, discrete spatial barrier for the local planner to operate in, it instead relies on the user configuration of the layer to have a short decay time of voxels (1-30 seconds) so that you only plan in relavent space. This was a conscious design requirement since frequently the local planner should operate with more information than other times when the speed is greater or slower. This natively implements dynamic costmap scaling for speed.
 
-It is the user's responsibility to chose a decay time that makes sense for your robot's local planner. 5-15 seconds I have found to be nominally good for most open-sourced local planner plugins.
+It is the user's responsibility to chose a decay time that makes sense for your robot's local planner. 5-15 seconds I have found to be nominally good for most open-sourced local planner plugins. I do not recommend using this for planar lidars, 2D raytracing for professional grade lidars is sufficiently efficient and effective.
 
 ## Global Costmap
-Similar to the local costmap, the amount of information you want to store due to entropy in your scenes depend on your use-case. It is certainly possible to **not** decay the voxels in the global map at all. However, in practical application, I find a time 15-45 seconds to be a good balance due to things moving in the scene (i.e. store, warehouse, construction zone, office, etc). Permanent voxels set decay to -1.
+Similar to the local costmap, the amount of information you want to store due to entropy in your scenes depend on your use-case. It is certainly possible to **not** decay the voxels in the global map at all. However, in practical application, I find a time 15-45 seconds to be a good balance due to things moving in the scene (i.e. store, warehouse, construction zone, office, etc). Permanent voxels set decay to -1. I do not recommend using this for planar lidars, 2D raytracing for professional grade lidars is sufficiently efficient and effective.
 
 ## Mapping
 
-As the images above suggest, you can use this to map an environment in 3D in realtime if you choose. If you disable clearing then it will maintain the entire voxel grid and you can save the map using the services provided. At the moment, I support mapping but there is no probabilistic (yet!) marking framework, so what the sensor sees is what the map gets. This is likely to change in the near to middle term future as 3D localization becomes more interesting to the enterprise robotics community. If you would like to be involved in this work, I would gladly take contributors and coauthors.  
+As the images above suggest, you can use this to map an environment in 3D in realtime if you choose. If you disable clearing then it will maintain the entire voxel grid and you can save the map using the services provided. At the moment, I support mapping but there is no probabilistic (yet!) marking framework, so what the sensor sees is what the map gets. This is likely to change in the near to middle term future as 3D localization becomes more interesting to the enterprise robotics community. If you would like to be involved in this work, I would gladly take contributors and coauthors.
 
 ## Installation
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
@@ -58,6 +62,10 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 ### TBB
 
 `sudo apt-get install libtbb-dev libtbb2 libtbb-doc`
+
+### OpenEXR
+
+`sudo apt-get install openexr openexr-doc openexr-viewers`
 
 ## Configuration and Running
 
@@ -80,26 +88,31 @@ rgbd_obstacle_layer:
   combination_method:    1      #1=max, 0=override
   obstacle_range:        3.0    #meters
   origin_z:              0.0    #meters
-  publish_voxel_map:     true
-  observation_sources: rgbd1_clear rgbd1_mark
+  publish_voxel_map:     true   # default off
+  transform_tolerance:   0.2    # seconds
+  enabled:               true   # default on
+  observation_sources:   rgbd1_clear rgbd1_mark
   rgbd1_mark:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: true
     clearing: false
-    min_obstacle_height: 0.3
-    max_obstacle_height: 2.0
+    min_obstacle_height: 0.3     #default 0, meters
+    max_obstacle_height: 2.0     #defaule 3, meters
+    expected_update_rate: 0.0    #default 0, if not updating at this rate at least, remove from buffer
+    observation_persistence: 0.0 #default 0, use all measurements taken during now-value, 0=latest 
+    inf_is_valid: false          #default false, for laser scans
   rgbd1_clear:
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: false
     clearing: true
-    min_z: 0.1                 #meters
-    max_z: 7.0                 #meters
-    vertical_fov_angle: 0.7    #radians
-    horizontal_fov_angle: 1.04 #radians
-    decay_acceleration: 1.     #1/s^2
-    voxel_filter: true
+    min_z: 0.1                   #default 0, meters
+    max_z: 7.0                   #default 10, meters
+    vertical_fov_angle: 0.7      #default 0.7, radians
+    horizontal_fov_angle: 1.04   #default 1.04, radians
+    decay_acceleration: 1.       #default 0, 1/s^2. If laser scanner MUST be 0
+    voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
 ```
 
 ### local/global_costmap_params.yaml
