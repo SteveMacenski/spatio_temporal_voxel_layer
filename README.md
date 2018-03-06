@@ -6,7 +6,9 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
-An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be), another more complex example can be seen [here](https://youtu.be/hpWxa6M1AR8) with global decay and frustum decay while moving with dynamic objects.
+An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be), another more complex example can be seen [here](https://youtu.be/hpWxa6M1AR8) with global decay and frustum decay while moving with dynamic objects. A short clip from this is shown below.
+
+![ezgif com-video-to-gif](https://user-images.githubusercontent.com/14944147/37010885-b18fe1f8-20bb-11e8-8c28-5b31e65f2844.gif)
 
 We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-40%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`.  
 
@@ -14,6 +16,10 @@ We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran 
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
 In addition, buffered measurement readings have the option to run an approximate voxel grid filter, parameterizable at runtime in the configuration yamls. It is incredibly useful to reduce spikes in `move_base` cpu due to dense measurement readings when getting close to objects (i.e. more points), but does increase the overhead very slightly (1-2%) for nominal operations. It's a trade off but I recommend using it. 
+
+Below is an example a size of map that is **trivial** for the Spatio-Temportal Voxel Grid to maintain and render. This accounts for a 60,000 sq.ft. retail store with 710,765 voxels at a 0.05m resolution, with a size in memory of a mere 6.45MB.  
+
+![full_sore](https://user-images.githubusercontent.com/14944147/37013097-11e4f782-20c6-11e8-8212-6fca6e54331c.png)
 
 ## -**Temporal**
 The Temporal in this package is the novel concept of `voxel_decay` whereas we have configurable functions that expire voxels and their occupation over time. Infrasture was created to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements but should if still in the scene and remain marked. This is done rather than simply clearing them naively or via costly raytracing. The time it takes to clear depends on the configured functions and acceleration factors.
@@ -109,3 +115,12 @@ Add this plugin to your costmap params file.
 I have made the frustum transformations available for visualization and debugging. You may enable them by the `VISUALIZE_FRUSTUM` macro, though be aware it takes a substantial decrease on performance since we're creating and destroying a ros publisher at a non-trivial rate.
 
 This can also be used for situations where you do not know your camera's proper frustum FOVs. It is possible to enable it and tweek the FOVs until you get the appropriate coverage of the space your sensor carves out in the global space.
+
+### Interesting side note
+
+We are able to iterate over very large grids for voxel decay, however there is clearly for every frequency (running at 1, 5, 10, 100hz) an upper limit. In the image below, we don't actually hit the limit of the data structure, but iterating at 2hz, we hit the limit of ROS' ability to publish a sufficiently large point cloud in that  time period, we are still running but you can see the robot at the end of an aisle without occupancy points, but still costmap marking from the underlying grid.
+
+To counter this I include a service to save the grid in the .vdb format for later visualization, and for this reason I do not recommend visualizing the grid during nominal operations unless your decay time is relatively low (0-15 seconds) or else the layer may not meet its frequency requirements due to publishing this massive pointcloud. 
+
+![openvdb2](https://user-images.githubusercontent.com/14944147/37010656-8ce4ff4c-20ba-11e8-9c35-1ce3e3039f77.png)
+
