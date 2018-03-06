@@ -31,3 +31,4 @@ rgbd_obstacle_layer:
     vertical_fov_angle: 0.7    #radians
     horizontal_fov_angle: 1.04 #radians
     decay_acceleration: 1.     #1/s^2
+    voxel_filter: true

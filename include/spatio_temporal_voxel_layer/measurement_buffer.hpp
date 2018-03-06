@@ -43,6 +43,7 @@
 #include <spatio_temporal_voxel_layer/measurement_reading.h>
 // PCL
 #include <pcl_ros/transforms.h>
+#include <pcl/filters/approximate_voxel_grid.h>
 // STL
 #include <vector>
 #include <list>
@@ -84,7 +85,9 @@ public:
                     const double& hFOV,                  \
                     const double& decay_acceleration,    \
                     const bool& marking,                 \
-                    const bool& clearing);
+                    const bool& clearing,                \
+                    const double& voxel_size,
+                    const bool& voxel_filter);
 
   ~MeasurementBuffer(void);
 
@@ -110,7 +113,8 @@ private:
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
-  bool _marking, _clearing;
+  double _voxel_size;
+  bool _marking, _clearing, _voxel_filter;
 };
 
 } // namespace buffer
