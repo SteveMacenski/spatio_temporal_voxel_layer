@@ -586,8 +586,13 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
                          spatio_temporal_voxel_layer::SaveGrid::Response& resp)
 /*****************************************************************************/
 {
-  if( _level_set->SaveGrid(req.file_name.data) )
+  double map_size_bytes;
+  if( _level_set->SaveGrid(req.file_name.data, map_size_bytes) )
   {
+    ROS_INFO( \
+      "SpatioTemporalVoxelGrid: Saved grid! Has memory footprint of %f bytes.",
+      map_size_bytes);
+    resp.map_size_bytes = map_size_bytes;
     resp.status = true;
     return true;
   }

@@ -382,7 +382,7 @@ bool LevelSet::IsGridEmpty(void) const
 }
 
 /*****************************************************************************/
-bool LevelSet::SaveGrid(const std::string& file_name)
+bool LevelSet::SaveGrid(const std::string& file_name, double& map_size_bytes)
 /*****************************************************************************/
 {
   try
@@ -391,10 +391,12 @@ bool LevelSet::SaveGrid(const std::string& file_name)
     openvdb::GridPtrVec grids = { _grid };
     file.write(grids);
     file.close();
+    map_size_bytes = _grid->memUsage();
     return true;
   }
   catch (...)
   {
+    map_size_bytes = 0.;
     return false;
   }
   return false; // best offense is a good defense

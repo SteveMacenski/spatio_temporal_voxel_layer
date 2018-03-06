@@ -114,7 +114,7 @@ public:
 
   bool ResetLevelSet(void);
 
-  bool SaveGrid(const std::string& file_name);
+  bool SaveGrid(const std::string& file_name, double& map_size_bytes);
 
 protected:
   void InitializeGrid(void);
