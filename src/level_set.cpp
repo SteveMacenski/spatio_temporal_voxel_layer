@@ -307,10 +307,7 @@ void LevelSet::GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc)
 /*****************************************************************************/
 {
   // return the pointcloud stored
-  if(!this->IsGridEmpty())
-  {
-    pc = _pc;
-  }
+  pc = _pc;
   return;
 }
 
