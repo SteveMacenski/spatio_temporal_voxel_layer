@@ -109,3 +109,10 @@ Add this plugin to your costmap params file.
 I have made the frustum transformations available for visualization and debugging. You may enable them by the `VISUALIZE_FRUSTUM` macro, though be aware it takes a substantial decrease on performance since we're creating and destroying a ros publisher at a non-trivial rate.
 
 This can also be used for situations where you do not know your camera's proper frustum FOVs. It is possible to enable it and tweek the FOVs until you get the appropriate coverage of the space your sensor carves out in the global space.
+
+### Interesting side note
+
+We are able to iterate over very large grids for voxel decay, however there is clearly for every frequency (running at 1, 5, 10, 100hz) an upper limit. In the image below, we don't actually hit the limit of the data structure, but iterating at 2hz, we hit the limit of ROS' ability to publish a sufficiently large point cloud in that  time period, we are still running but you can see the robot at the end of an aisle without occupancy points, but still costmap marking from the underlying grid.
+
+[openvdb2](https://user-images.githubusercontent.com/14944147/37010656-8ce4ff4c-20ba-11e8-9c35-1ce3e3039f77.png)
+
