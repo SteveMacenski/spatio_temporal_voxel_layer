@@ -19,6 +19,15 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 
+add_service_files(DIRECTORY msgs
+  FILES
+  SaveGrid.srv
+)
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
+
 find_package(PCL REQUIRED)
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
@@ -34,15 +43,6 @@ include_directories(
     ${catkin_INCLUDE_DIRS}
     ${OpenVDB_INCLUDE_DIR}
     ${TBB_INCLUDE_DIRS}
-)
-
-add_service_files(DIRECTORY msgs
-  FILES
-  SaveGrid.srv
-)
-generate_messages(
-   DEPENDENCIES
-   std_msgs
 )
 
 add_definitions(${EIGEN3_DEFINITIONS})
@@ -83,8 +83,6 @@ add_library(${PROJECT_NAME}
             src/measurement_buffer.cpp
             src/frustum.cpp
 )
-
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
