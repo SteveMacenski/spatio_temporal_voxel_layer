@@ -17,6 +17,10 @@ The Spatio in this package is the representation of the environment in a configu
 
 In addition, buffered measurement readings have the option to run an approximate voxel grid filter, parameterizable at runtime in the configuration yamls. It is incredibly useful to reduce spikes in `move_base` cpu due to dense measurement readings when getting close to objects (i.e. more points), but does increase the overhead very slightly (1-2%) for nominal operations. It's a trade off but I recommend using it. 
 
+Below is an example a size of map that is **trivial** for the Spatio-Temportal Voxel Grid to maintain and render. This accounts for a 30,000 sq.ft. retail store with 710,765 voxels at a 0.05m resolution, with a size in memory of a mere 6.45MB.  
+
+![full_sore](https://user-images.githubusercontent.com/14944147/37013097-11e4f782-20c6-11e8-8212-6fca6e54331c.png)
+
 ## -**Temporal**
 The Temporal in this package is the novel concept of `voxel_decay` whereas we have configurable functions that expire voxels and their occupation over time. Infrasture was created to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements but should if still in the scene and remain marked. This is done rather than simply clearing them naively or via costly raytracing. The time it takes to clear depends on the configured functions and acceleration factors.
 
