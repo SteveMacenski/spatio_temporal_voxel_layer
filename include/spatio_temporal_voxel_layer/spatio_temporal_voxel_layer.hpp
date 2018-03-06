@@ -57,6 +57,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <time.h>
 // msgs
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -129,7 +130,7 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
 
-  bool                                 _publish_voxels;
+  bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
   ros::ServiceServer                   _grid_saver;
   std::string                          _global_frame;

@@ -90,7 +90,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
   nh.param("decay_model", decay_model, 0);
+  // decay param
   nh.param("voxel_decay", voxel_decay, -1.);
+  // whether to map or navigate
+  nh.param("mapping_mode", _mapping_mode, false);
 
   if (track_unknown_space)
   {
@@ -559,7 +562,23 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current_ = current;
 
   // mark and clear observations
-  _voxel_grid->ClearFrustums(clearing_observations);
+  if (!_mapping_mode)
+  {
+    _voxel_grid->ClearFrustums(clearing_observations);
+  }
+  else if (true)
+  {
+    time_t rawtime;
+    struct tm* timeinfo;
+    char time_buffer[100];
+    time (&rawtime);
+    timeinfo = localtime (&rawtime);
+    strftime(time_buffer, 100, "%F-%r", timeinfo);
+
+    spatio_temporal_voxel_layer::SaveGrid srv;
+    srv.request.file_name.data = time_buffer;
+    SaveGridCallback(srv.request, srv.response);
+  }
   _voxel_grid->Mark(marking_observations);
 
   // update the ROS Layered Costmap
@@ -592,8 +611,8 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
-      "SpatioTemporalVoxelGrid: Saved grid! Has memory footprint of %f bytes.",
-      map_size_bytes);
+      "SpatioTemporalVoxelGrid: Saved %s grid! Has memory footprint of %f bytes.",
+      req.file_name.data.c_str(), map_size_bytes);
     resp.map_size_bytes = map_size_bytes;
     resp.status = true;
     return true;
