@@ -384,4 +384,23 @@ bool LevelSet::IsGridEmpty(void) const
   return _grid->empty();
 }
 
+/*****************************************************************************/
+bool LevelSet::SaveGrid(const std::string& file_name)
+/*****************************************************************************/
+{
+  try
+  {
+    openvdb::io::File file(file_name + ".vdb");
+    openvdb::GridPtrVec grids = { _grid };
+    file.write(grids);
+    file.close();
+    return true;
+  }
+  catch (...)
+  {
+    return false;
+  }
+  return false; // best offense is a good defense
+}
+
 }; // end namespace

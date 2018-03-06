@@ -102,7 +102,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   {
     _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
   }
-
+  _grid_saver = g_nh.advertiseService("/spatiotemporal_voxel_grid/save_grid", \
+                                 &SpatioTemporalVoxelLayer::SaveGridCallback, \
+                                  this);
+  
   _level_set = new volume_grid::LevelSet(_voxel_size, 0., decay_model, \
                                          voxel_decay);
   matchSize();
@@ -572,6 +575,22 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // update footprint 
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
   return;
+}
+
+/*****************************************************************************/
+bool SpatioTemporalVoxelLayer::SaveGridCallback( \
+                         spatio_temporal_voxel_layer::SaveGrid::Request& req, \
+                         spatio_temporal_voxel_layer::SaveGrid::Response& resp)
+/*****************************************************************************/
+{
+  if( _level_set->SaveGrid(req.file_name.data) )
+  {
+    resp.status = true;
+    return true;
+  }
+  ROS_WARN("SpatioTemporalVoxelGrid: Failed to save grid.");
+  resp.status = false;
+  return false;
 }
 
 }; // end namespace

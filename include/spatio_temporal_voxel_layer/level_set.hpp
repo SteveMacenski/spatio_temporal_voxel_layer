@@ -114,6 +114,8 @@ public:
 
   bool ResetLevelSet(void);
 
+  bool SaveGrid(const std::string& file_name);
+
 protected:
   void InitializeGrid(void);
   bool MarkLevelSetPoint(const openvdb::Coord& pt, const double& value) const;

@@ -36,6 +36,15 @@ include_directories(
     ${TBB_INCLUDE_DIRS}
 )
 
+add_service_files(DIRECTORY msgs
+  FILES
+  SaveGrid.srv
+)
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
+
 add_definitions(${EIGEN3_DEFINITIONS})
 
 catkin_package(

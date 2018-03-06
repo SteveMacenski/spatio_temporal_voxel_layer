@@ -62,6 +62,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point.h>
 #include <message_filters/subscriber.h>
+#include <spatio_temporal_voxel_layer/SaveGrid.h>
 // projector
 #include <laser_geometry/laser_geometry.h>
 // tf
@@ -103,6 +104,10 @@ public:
                        double* min_x, double* min_y, double* max_x, double* max_y);
   virtual void resetMaps(void);
 
+  // Saving grids callback for openVDB
+  bool SaveGridCallback(spatio_temporal_voxel_layer::SaveGrid::Request& req, \
+                        spatio_temporal_voxel_layer::SaveGrid::Response& resp);
+
 private:
   void LaserScanCallback(const sensor_msgs::LaserScanConstPtr& message, \
                          const boost::shared_ptr<buffer::MeasurementBuffer>& buffer);
@@ -124,6 +129,7 @@ private:
 
   bool                                 _publish_voxels;
   ros::Publisher                       _voxel_pub;
+  ros::ServiceServer                   _grid_saver;
   std::string                          _global_frame;
   double                               _voxel_size;
   int                                  _combination_method, _mark_threshold;
