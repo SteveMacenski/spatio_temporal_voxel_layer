@@ -50,6 +50,7 @@
 #include <unordered_map>
 #include <ctime>
 #include <iostream>
+#include <utility>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
@@ -84,6 +85,16 @@ struct occupany_cell
   double x, y;
 };
 
+struct frustum_model
+{
+  frustum_model(geometry::Frustum _frustum, const double& _factor) : 
+    frustum(_frustum), accel_factor(_factor)
+  {
+  }
+  geometry::Frustum frustum;
+  const double accel_factor;
+};
+
 class LevelSet
 {
 public:
@@ -99,7 +110,7 @@ public:
   void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
-  void GetFlattenedCostmap(std::unordered_map<occupany_cell, uint>& cell_map);
+  std::unordered_map<occupany_cell, uint>* GetFlattenedCostmap();
 
   bool ResetLevelSet(void);
 
@@ -110,6 +121,9 @@ protected:
   bool IsGridEmpty(void) const;
   double GetDecayTime(void);
   double GetAcceleratedDecayTime(const double& acceleration_factor);
+  void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
+  void PopulateCostmapAndPointcloud(const openvdb::Coord& pt);
+
 
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
@@ -118,8 +132,9 @@ protected:
   int                             _background_value, _decay_model;
   double                          _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr _pc;
-  boost::mutex                    _grid_lock;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr     _pc;
+  std::unordered_map<occupany_cell, uint>* _cost_map;
+  boost::mutex                            _grid_lock;
 };
 
 } // end volume_grid namespace

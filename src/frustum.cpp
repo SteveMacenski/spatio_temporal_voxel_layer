@@ -66,8 +66,16 @@ Frustum::~Frustum(void)
 void Frustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
+  // give ability to construct with bogus values
+  if (_vFOV == 0 && _hFOV == 0)
+  {
+    _valid_frustum = false;
+    return;
+  }
+
   // Z vector and deflected vector capture
   std::vector<Eigen::Vector3d> deflected_vecs;
+  deflected_vecs.reserve(4);
   Eigen::Vector3d Z = Eigen::Vector3d::UnitZ();
 
   // rotate going CCW
@@ -88,6 +96,7 @@ void Frustum::ComputePlaneNormals(void)
 
   // get and store CCW 4 corners for each 2 planes at ends
   std::vector<Eigen::Vector3d> pt_;
+  pt_.reserve(2*deflected_vecs.size());
   std::vector<Eigen::Vector3d>::iterator it;
   for (it = deflected_vecs.begin(); it != deflected_vecs.end(); ++it)
   {
@@ -151,6 +160,11 @@ void Frustum::ComputePlaneNormals(void)
 void Frustum::TransformPlaneNormals(void)
 /*****************************************************************************/
 {
+  if (!_valid_frustum)
+  {
+    return;
+  }
+
   Eigen::Affine3d T = Eigen::Affine3d::Identity();
   T.pretranslate(_orientation.inverse()*_position);
   T.prerotate(_orientation);
