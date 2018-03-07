@@ -69,7 +69,7 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 ### OpenEXR
 
-`sudo apt-get install openexr openexr-doc openexr-viewers`
+`sudo apt-get install libopenexr22 libopenexr-dev`
 
 ## Configuration and Running
 
