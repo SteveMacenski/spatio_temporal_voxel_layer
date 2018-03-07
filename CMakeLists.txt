@@ -82,6 +82,7 @@ add_library(${PROJECT_NAME}
             src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
             src/frustum.cpp
+            src/vdb2pc.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
