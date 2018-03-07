@@ -49,11 +49,11 @@ namespace utilities
 class VDB2PCLPointCloud
 {
 public:
-	VDB2PCLPointCloud();
-	void SetFile(const std::string& file_name);
-	bool GetCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+  VDB2PCLPointCloud();
+  void SetFile(const std::string& file_name);
+  bool GetCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
 private:
-	std::string _file_name;
+  std::string _file_name;
 };
 
 } // end namespace
