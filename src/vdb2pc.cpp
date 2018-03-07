@@ -86,8 +86,8 @@ bool VDB2PCLPointCloud::GetCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud)
   openvdb::DoubleGrid::ValueOnCIter cit_grid = grid->cbeginValueOn();
   for (cit_grid; cit_grid; ++cit_grid)
   {
-    const openvdb::Coord pt_index(cit_grid.getCoord()); // world or grid?
-	  cloud->push_back(pcl::PointXYZ(pt_index[0], pt_index[1], pt_index[2])); // 0,1,2 x,y,z
+    const openvdb::Vec3d pt = grid->indexToWorld(cit_grid.getCoord());
+	  cloud->push_back(pcl::PointXYZ(pt[0], pt[1], pt[2]));
 	}
 
 	return true;
