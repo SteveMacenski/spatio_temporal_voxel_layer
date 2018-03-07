@@ -15,7 +15,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
+ *   * Neither the name of Simbe Robotics, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -114,7 +114,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   {
     _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
   }
-  _grid_saver = g_nh.advertiseService("/spatiotemporal_voxel_grid/save_grid", \
+  _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
                                   this);
   
@@ -587,17 +587,6 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     spatio_temporal_voxel_layer::SaveGrid srv;
     srv.request.file_name.data = time_buffer;
     SaveGridCallback(srv.request, srv.response);
-
-    if (_publish_voxels)
-    {
-      pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
-      _voxel_grid->GetOccupancyPointCloud(pc);
-      sensor_msgs::PointCloud2 pc2;
-      pcl::toROSMsg(*pc, pc2);
-      pc2.header.frame_id = std::string("/map");
-      pc2.header.stamp = ros::Time::now();
-      _voxel_pub.publish(pc2);
-    }
   }
 
   // mark observations
@@ -611,9 +600,10 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _voxel_grid->GetOccupancyPointCloud(pc);
+    ROS_INFO("Publishing navigation cld of size %i", int(pc->size()));
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
-    pc2.header.frame_id = std::string("/map");
+    pc2.header.frame_id = _global_frame;
     pc2.header.stamp = ros::Time::now();
     _voxel_pub.publish(pc2);
   }

@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
   visualization_msgs
+  message_generation
 )
 
 add_service_files(DIRECTORY msgs
@@ -84,7 +85,7 @@ add_library(${PROJECT_NAME}
             src/frustum.cpp
             src/vdb2pc.cpp
 )
-
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
