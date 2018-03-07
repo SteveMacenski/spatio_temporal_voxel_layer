@@ -569,7 +569,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-  // mark and clear observations
+  // navigation mode: clear observations, mapping mode: save maps and publish 
   if (!_mapping_mode)
   {
     _voxel_grid->ClearFrustums(clearing_observations);
@@ -587,14 +587,27 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     spatio_temporal_voxel_layer::SaveGrid srv;
     srv.request.file_name.data = time_buffer;
     SaveGridCallback(srv.request, srv.response);
+
+    if (_publish_voxels)
+    {
+      pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
+      _voxel_grid->GetOccupancyPointCloud(pc);
+      sensor_msgs::PointCloud2 pc2;
+      pcl::toROSMsg(*pc, pc2);
+      pc2.header.frame_id = std::string("/map");
+      pc2.header.stamp = ros::Time::now();
+      _voxel_pub.publish(pc2);
+    }
   }
+
+  // mark observations
   _voxel_grid->Mark(marking_observations);
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
 
-  // publish point cloud
-  if (_publish_voxels)
+  // publish point cloud in navigation mode
+  if (_publish_voxels && !_mapping_mode)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _voxel_grid->GetOccupancyPointCloud(pc);
