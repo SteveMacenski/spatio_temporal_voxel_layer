@@ -66,7 +66,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
 
   bool track_unknown_space;
-  double transform_tolerance, voxel_decay;
+  double transform_tolerance, voxel_decay, map_save_time;
   std::string topics_string;
   int decay_model;
   // source names
@@ -90,7 +90,18 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
   nh.param("decay_model", decay_model, 0);
+  // decay param
   nh.param("voxel_decay", voxel_decay, -1.);
+  // whether to map or navigate
+  nh.param("mapping_mode", _mapping_mode, false);
+  // if mapping, how often to save a map for safety
+  nh.param("map_save_duration", map_save_time, 60.);
+
+  if (_mapping_mode)
+  {
+    _map_save_duration = ros::Duration(map_save_time);
+    _last_map_save_time = ros::Time::now() - _map_save_duration;
+  }
 
   if (track_unknown_space)
   {
@@ -558,15 +569,45 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-  // mark and clear observations
-  _voxel_grid->ClearFrustums(clearing_observations);
+  // navigation mode: clear observations, mapping mode: save maps and publish 
+  if (!_mapping_mode)
+  {
+    _voxel_grid->ClearFrustums(clearing_observations);
+  }
+  else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
+  {
+    _last_map_save_time = ros::Time::now();
+    time_t rawtime;
+    struct tm* timeinfo;
+    char time_buffer[100];
+    time (&rawtime);
+    timeinfo = localtime (&rawtime);
+    strftime(time_buffer, 100, "%F-%r", timeinfo);
+
+    spatio_temporal_voxel_layer::SaveGrid srv;
+    srv.request.file_name.data = time_buffer;
+    SaveGridCallback(srv.request, srv.response);
+
+    if (_publish_voxels)
+    {
+      pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
+      _voxel_grid->GetOccupancyPointCloud(pc);
+      sensor_msgs::PointCloud2 pc2;
+      pcl::toROSMsg(*pc, pc2);
+      pc2.header.frame_id = std::string("/map");
+      pc2.header.stamp = ros::Time::now();
+      _voxel_pub.publish(pc2);
+    }
+  }
+
+  // mark observations
   _voxel_grid->Mark(marking_observations);
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
 
-  // publish point cloud
-  if (_publish_voxels)
+  // publish point cloud in navigation mode
+  if (_publish_voxels && !_mapping_mode)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _voxel_grid->GetOccupancyPointCloud(pc);
@@ -592,8 +633,8 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
-      "SpatioTemporalVoxelGrid: Saved grid! Has memory footprint of %f bytes.",
-      map_size_bytes);
+      "SpatioTemporalVoxelGrid: Saved %s grid! Has memory footprint of %f bytes.",
+      req.file_name.data.c_str(), map_size_bytes);
     resp.map_size_bytes = map_size_bytes;
     resp.status = true;
     return true;
