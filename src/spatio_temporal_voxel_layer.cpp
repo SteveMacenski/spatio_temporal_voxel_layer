@@ -66,7 +66,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
 
   bool track_unknown_space;
-  double transform_tolerance, voxel_decay;
+  double transform_tolerance, voxel_decay, map_save_time;
   std::string topics_string;
   int decay_model;
   // source names
@@ -94,6 +94,14 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("voxel_decay", voxel_decay, -1.);
   // whether to map or navigate
   nh.param("mapping_mode", _mapping_mode, false);
+  // if mapping, how often to save a map for safety
+  nh.param("map_save_duration", map_save_time, 60.);
+
+  if (_mapping_mode)
+  {
+    _map_save_duration = ros::Duration(map_save_time);
+    _last_map_save_time = ros::Time::now() - _map_save_duration;
+  }
 
   if (track_unknown_space)
   {
@@ -566,8 +574,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   {
     _voxel_grid->ClearFrustums(clearing_observations);
   }
-  else if (true)
+  else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
   {
+    _last_map_save_time = ros::Time::now();
     time_t rawtime;
     struct tm* timeinfo;
     char time_buffer[100];

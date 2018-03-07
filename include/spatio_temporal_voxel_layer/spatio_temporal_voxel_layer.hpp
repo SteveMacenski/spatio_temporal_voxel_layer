@@ -133,6 +133,8 @@ private:
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
   ros::ServiceServer                   _grid_saver;
+  ros::Duration                        _map_save_duration;
+  ros::Time                            _last_map_save_time;
   std::string                          _global_frame;
   double                               _voxel_size;
   int                                  _combination_method, _mark_threshold;

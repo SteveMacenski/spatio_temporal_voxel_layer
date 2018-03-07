@@ -42,7 +42,7 @@ Similar to the local costmap, the amount of information you want to store due to
 
 ## Mapping
 
-As the images above suggest, you can use this to map an environment in 3D in realtime if you choose. If you disable clearing then it will maintain the entire voxel grid and you can save the map using the services provided. At the moment, I support mapping but there is no probabilistic (yet!) marking framework, so what the sensor sees is what the map gets. This is likely to change in the near to middle term future as 3D localization becomes more interesting to the enterprise robotics community. You can run multiple instances of the layer one to map and other to navigate if you want to navigate while mapping the environment. Mapping will also save incremental maps in the launch directory. Maps may be visualized using `vdb_viewer`. The costmap and occupancy point clouds will not generate in this mode.
+As the images above suggest, you can use this to map an environment in 3D in realtime if you choose. If you enable mapping mode, then it will maintain the entire voxel grid and you can save the map using the services provided. At the moment, I support mapping but there is no probabilistic (yet!) marking framework, so what the sensor sees is what the map gets. This is likely to change in the near to middle term future as 3D localization becomes more interesting to the enterprise robotics community. You can run multiple instances of the layer one to map and other to navigate if you want to navigate while mapping the environment. Mapping will also save incremental maps in the launch directory. Maps may be visualized using `vdb_viewer`. The costmap and occupancy point clouds will not generate in this mode from this layer.
 
 If you would like to be involved in this work, I would gladly take contributors and coauthors.
 
@@ -93,6 +93,7 @@ rgbd_obstacle_layer:
   publish_voxel_map:     true   # default off
   transform_tolerance:   0.2    # seconds
   mapping_mode:          false  # default off, saves map not for navigation
+  map_save_duration:     60     #default 60s, how often to autosave
   observation_sources:   rgbd1_clear rgbd1_mark
   rgbd1_mark:
     data_type: PointCloud2
