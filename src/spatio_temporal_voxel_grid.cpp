@@ -192,7 +192,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         {
           std::cout << "Failed to clear point." << std::endl;
         }
-        break;
+        continue;
       }
     }
     // if here, we can add to costmap and PC2
