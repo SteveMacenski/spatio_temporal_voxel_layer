@@ -28,9 +28,11 @@ Voxel acceleration uses given FOV to compute traditional 6-planed cubical frustu
 
 Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.
 
-Below is an example of instantaneous decay, where readings in frustum are accelerated and decayed at each iteration. The models provided can be tuned to do this, or persist through linear or exponental equations.
+Below is an example of instantaneous decay, where readings in frustum are accelerated and decayed at each iteration. The models provided can be tuned to do this, or persist through linear or exponental equations. The second example has the acclerated frustum with tuned decay times and acceleration factors in navigation mode.
 
 ![ezgif com-video-to-gif 1](https://user-images.githubusercontent.com/14944147/37063574-d0923d24-2167-11e8-850c-18b6aed61634.gif)
+
+![ezgif com-video-to-gif 2](https://user-images.githubusercontent.com/14944147/37126915-38e2808a-2241-11e8-8217-a1ee4eba7a87.gif)
 
 ## Local Costmap
 This package utilizes all of the information coming in from the robot before the decay time for the local costmap. Rather than having a defined, discrete spatial barrier for the local planner to operate in, it instead relies on the user configuration of the layer to have a short decay time of voxels (1-30 seconds) so that you only plan in relavent space. This was a conscious design requirement since frequently the local planner should operate with more information than other times when the speed is greater or slower. This natively implements dynamic costmap scaling for speed.
