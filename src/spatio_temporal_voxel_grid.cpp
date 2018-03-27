@@ -147,6 +147,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     bool frustum_cycle = false;
 
     const double time_since_marking = cur_time - cit_grid.getValue();
+    const double decay_shift = GetDecayShift(time_since_marking);
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
@@ -159,6 +160,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         const double accel_decay_shift = \
           GetAcceleratedDecayShift(time_since_marking, \
                                    frustum_it->accel_factor);
+
         if (accel_decay_shift <= 0)
         {
           // expired by acceleration
@@ -169,8 +171,9 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         }
         else
         {
-          const double updated_mark = cur_time - accel_decay_shift;
-          if(!this->MarkLevelSetPoint(pt_index, updated_mark))
+          const double updated_mark = cit_grid.getValue() - \
+            (decay_shift - accel_decay_shift);
+          if(!this->MarkGridPoint(pt_index, updated_mark))
           {
             std::cout << "Failed to update mark." << std::endl;
           }
@@ -184,7 +187,6 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     {
       // decay_shift is the amount of time from the current time until
       // the time a given mark is supposed to be cleared
-      const double decay_shift = GetDecayShift(time_since_marking);
       if (decay_shift <= 0)
       {
         // expired by acceleration
