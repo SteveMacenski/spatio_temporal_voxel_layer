@@ -146,18 +146,20 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     std::vector<frustum_model>::iterator frustum_it = frustums.begin();
     bool frustum_cycle = false;
 
+    const double time_since_marking = cur_time - cit_grid.getValue();
+
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
       if ( frustum_it->frustum.IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
-        const double time_since_marking = cur_time - cit_grid.getValue();
+
+        // accel_decay_shift is the amount of time from the current time until
+        // the time a given mark is supposed to be cleared
         const double accel_decay_shift = \
           GetAcceleratedDecayShift(time_since_marking, \
                                    frustum_it->accel_factor);
-        // accel_decay_shift is the amount of time from the current time until
-        // the time a given mark is supposed to be cleared
-        if (accel_decay_shift < 0)
+        if (accel_decay_shift <= 0)
         {
           // expired by acceleration
           if(!this->ClearLevelSetPoint(pt_index))
@@ -167,6 +169,11 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         }
         else
         {
+          const double updated_mark = cur_time - accel_decay_shift;
+          if(!this->MarkLevelSetPoint(pt_index, updated_mark))
+          {
+            std::cout << "Failed to update mark." << std::endl;
+          }
           break;
         }
       }
@@ -175,9 +182,12 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     // if not inside any, check against nominal decay model
     if(!frustum_cycle)
     {
-      const double decay_time = GetDecayTime(cur_time);
-      if(cit_grid.getValue() < decay_time)
+      // decay_shift is the amount of time from the current time until
+      // the time a given mark is supposed to be cleared
+      const double decay_shift = GetDecayShift(time_since_marking);
+      if (decay_shift <= 0)
       {
+        // expired by acceleration
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
@@ -275,17 +285,17 @@ std::unordered_map<occupany_cell, uint>*
 }
 
 /*****************************************************************************/
-double LevelSet::GetDecayTime(const double& cur_time)
+double LevelSet::GetDecayShift(const double& time_delta)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
   if (_decay_model == 0) // linear
   {
-    return cur_time - _voxel_decay;
+    return _voxel_decay - time_delta;
   }
   else if (_decay_model == 1) // exponential
   {
-    return cur_time * std::exp(cur_time * _voxel_decay);
+    return _voxel_decay * std::exp(-time_delta);
   }
   return 0.; // permanent
 }
@@ -299,13 +309,13 @@ double LevelSet::GetAcceleratedDecayShift(const double& time_delta, \
   const double accel_decay_shift = -time_delta + _voxel_decay;
   if (_decay_model == 0) // linear
   {
-    const double acceleration = -1. / 6. * \
+    const double acceleration = 1. / 6. * \
       acceleration_factor * (time_delta * time_delta * time_delta);
     return accel_decay_shift - acceleration;
   }
   else if (_decay_model == 1) // exponential
   {
-    const double acceleration = -1. / \
+    const double acceleration = 1. / \
       (acceleration_factor * acceleration_factor) * \
       std::exp(acceleration_factor * time_delta);
     return accel_decay_shift - acceleration;

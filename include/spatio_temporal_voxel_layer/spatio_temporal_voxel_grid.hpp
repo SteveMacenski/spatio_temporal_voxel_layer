@@ -134,7 +134,7 @@ protected:
 
   // Check occupancy status of the grid
   bool IsGridEmpty(void) const;
-  double GetDecayTime(const double& cur_time);
+  double GetDecayShift(const double& time_delta);
   double GetAcceleratedDecayShift(const double& time_delta, \
                                   const double& acceleration_factor);
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
