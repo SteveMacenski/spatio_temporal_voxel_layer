@@ -134,12 +134,9 @@ protected:
 
   // Check occupancy status of the grid
   bool IsGridEmpty(void) const;
-
-  // Get time information for clearing
-  double GetDecayTime(void);
-  double GetAcceleratedDecayTime(const double& acceleration_factor);
-
-  // Clearing grid operation with frustum models
+  double GetDecayTime(const double cur_time);
+  double GetAcceleratedDecayShift(const double time_delta, \
+                                  const double& acceleration_factor);
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
 
   // Populate the costmap ROS api and pointcloud with a marked point
