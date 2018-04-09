@@ -164,7 +164,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         if (accel_decay_shift <= 0)
         {
           // expired by acceleration
-          if(!this->ClearLevelSetPoint(pt_index))
+          if(!this->ClearGridPoint(pt_index))
           {
             std::cout << "Failed to clear point." << std::endl;
           }
@@ -287,7 +287,7 @@ std::unordered_map<occupany_cell, uint>*
 }
 
 /*****************************************************************************/
-double LevelSet::GetDecayShift(const double& time_delta)
+double SpatioTemporalVoxelGrid::GetDecayShift(const double& time_delta)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
@@ -303,7 +303,7 @@ double LevelSet::GetDecayShift(const double& time_delta)
 }
 
 /*****************************************************************************/
-double LevelSet::GetAcceleratedDecayShift(const double& time_delta, \
+double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift(const double& time_delta, \
                                           const double& acceleration_factor)
 /*****************************************************************************/
 {

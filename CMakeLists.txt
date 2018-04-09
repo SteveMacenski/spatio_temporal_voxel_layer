@@ -105,3 +105,8 @@ install(TARGETS
 install(FILES costmap_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+catkin_install_python(
+	PROGRAMS scripts/switch_costmap_profile
+	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
