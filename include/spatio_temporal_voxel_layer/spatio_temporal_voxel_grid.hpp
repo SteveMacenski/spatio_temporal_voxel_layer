@@ -106,7 +106,8 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(const float& voxel_size, const int& background_value,
-                          const int& decay_model, const double& voxel_decay);
+                          const int& decay_model, const double& voxel_decay,
+                          const bool& pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
 
   // Core making and clearing functions

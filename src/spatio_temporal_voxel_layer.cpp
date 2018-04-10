@@ -120,7 +120,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   
   _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, 0., \
                                                         decay_model, \
-                                                        voxel_decay);
+                                                        voxel_decay, \
+                                                        _publish_voxels);
   matchSize();
   current_ = true;
 
@@ -426,10 +427,10 @@ void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
   // reset layer
-  deactivate();
-  this->resetMaps();
-  current_ = true;
-  activate();
+  // deactivate();
+  // this->resetMaps();
+  // current_ = true;
+  // activate();
 }
 
 /*****************************************************************************/
