@@ -427,10 +427,12 @@ void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
   // reset layer
-  deactivate();
   this->resetMaps();
   current_ = true;
-  activate();
+  for (unsigned int i = 0; i < _observation_buffers.size(); ++i)
+    {
+      _observation_buffers[i]->ResetLastUpdatedTime();
+    }
 }
 
 /*****************************************************************************/
