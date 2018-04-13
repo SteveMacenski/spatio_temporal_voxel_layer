@@ -426,6 +426,9 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
+  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  std::scoped_lock lock(_grid_lock);
+
   // reset layer
   this->resetMaps();
   current_ = true;
@@ -557,6 +560,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
+  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  std::scoped_lock lock(_grid_lock);
+
   // grabs new max bounds for the costmap
   if (!_enabled)
   {

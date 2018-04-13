@@ -93,7 +93,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
   // accelerate the decay of voxels interior to the frustum
   if(this->IsGridEmpty())
   {
@@ -235,7 +235,7 @@ void SpatioTemporalVoxelGrid::Mark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
   // mark the grid 
   if (marking_readings.size() > 0) 
   {
@@ -345,7 +345,7 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
 bool SpatioTemporalVoxelGrid::ResetGrid(void)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
   // clear the voxel grid
   try
   {

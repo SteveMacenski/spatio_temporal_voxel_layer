@@ -70,6 +70,7 @@
 #include <tf/message_filter.h>
 #include <tf/exceptions.h>
 
+#include <boost/thread/mutex.hpp>
 namespace spatio_temporal_voxel_layer
 {
 
@@ -142,6 +143,7 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
+  boost::mutex                         _grid_lock;
 };
 
 }; // end namespace
