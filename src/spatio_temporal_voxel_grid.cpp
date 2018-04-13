@@ -346,7 +346,7 @@ bool SpatioTemporalVoxelGrid::ResetGrid(void)
   // clear the voxel grid
   try
   {
-    _grid->clear();
+    // _grid->clear();
     if (this->IsGridEmpty())
     {
       return true;
