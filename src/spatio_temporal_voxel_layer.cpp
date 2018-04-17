@@ -474,7 +474,7 @@ void SpatioTemporalVoxelLayer::resetMaps(void)
 /*****************************************************************************/
 {
   if (!_voxel_grid->ResetGrid())
- {
+  {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
   }
 }
