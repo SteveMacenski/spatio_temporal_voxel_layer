@@ -426,8 +426,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
-  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
-  std::scoped_lock lock(_grid_lock);
+  boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
 
   // reset layer
   this->resetMaps();
@@ -476,10 +475,6 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 void SpatioTemporalVoxelLayer::resetMaps(void)
 /*****************************************************************************/
 {
-  // takes care of ROS 2D costmap
-  Costmap2D::resetMaps();
-
-  // takes care of our layer
   if (!_voxel_grid->ResetGrid())
  {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
@@ -560,8 +555,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
-  std::scoped_lock lock(_grid_lock);
+  boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
 
   // grabs new max bounds for the costmap
   if (!_enabled)
