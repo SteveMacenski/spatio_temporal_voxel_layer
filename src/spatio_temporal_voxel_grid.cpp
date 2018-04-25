@@ -93,7 +93,15 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
-  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // std::cout << "ClearFrustums trying" << std::endl;
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  // std::cout << "ClearFrustums acquired" << std::endl;
+  // if (_grid_lock.try_lock()) {
+  //   std::cout << "ClearFrustums obtained mutex ownership!" << std::endl;
+  //   _grid_lock.unlock();
+  // }
+  // else { std::cout << "ClearFrustums failed to obtain mutex ownership" << std::endl; }
+
   // accelerate the decay of voxels interior to the frustum
   if(this->IsGridEmpty())
   {
@@ -235,7 +243,15 @@ void SpatioTemporalVoxelGrid::Mark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
-  // boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // std::cout << "Mark trying" << std::endl;
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  // std::cout << "Mark acquired" << std::endl;
+  // if (_grid_lock.try_lock()) {
+  //   std::cout << "Mark obtained mutex ownership!" << std::endl;
+  //   _grid_lock.unlock();
+  // }
+  // else { std::cout << "Mark failed to obtain mutex ownership" << std::endl; }
+
   // mark the grid 
   if (marking_readings.size() > 0) 
   {
@@ -346,6 +362,9 @@ bool SpatioTemporalVoxelGrid::ResetGrid(void)
 /*****************************************************************************/
 {
   // boost::mutex::scoped_lock scoped_lock(_grid_lock);
+  // std::cout << "ResetGrid trying" << std::endl;
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  // std::cout << "ResetGrid acquired" << std::endl;
   // clear the voxel grid
   try
   {

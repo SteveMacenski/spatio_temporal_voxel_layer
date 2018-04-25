@@ -426,7 +426,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
-  boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
+  // boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
 
   // reset layer
   this->resetMaps();
@@ -555,7 +555,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                     double* min_x, double* min_y, double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
+  // boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(this->getMutex()));
 
   // grabs new max bounds for the costmap
   if (!_enabled)
@@ -603,7 +603,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _voxel_grid->GetOccupancyPointCloud(pc);
-    ROS_INFO("Publishing navigation cld of size %i", int(pc->size()));
+    // ROS_INFO("Publishing navigation cld of size %i", int(pc->size()));
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = _global_frame;
