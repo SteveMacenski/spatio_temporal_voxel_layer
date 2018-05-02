@@ -44,11 +44,11 @@ namespace volume_grid
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
                    const int& background_value, const int& decay_model,   \
                    const double& voxel_decay, const bool& pub_voxels) :
-                   _background_value( background_value ),                 \
-                   _voxel_size( voxel_size ),                             \
+                   _background_value(background_value),                   \
+                   _voxel_size(voxel_size),                               \
                    _decay_model(decay_model),                             \
                    _voxel_decay(voxel_decay),                             \
-                   _pub_voxels(pub_voxels),                             \
+                   _pub_voxels(pub_voxels),                               \
                    _pc(new pcl::PointCloud<pcl::PointXYZ>),               \
                    _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
@@ -59,7 +59,7 @@ SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
 /*****************************************************************************/
-{ 
+{
   // pcl pointclouds free themselves
   delete _cost_map;
 }
@@ -238,8 +238,8 @@ void SpatioTemporalVoxelGrid::Mark(const \
 {
   boost::unique_lock<boost::mutex> lock(_grid_lock);
 
-  // mark the grid 
-  if (marking_readings.size() > 0) 
+  // mark the grid
+  if (marking_readings.size() > 0)
   {
     //tbb::parallel_do(marking_readings, *this); /*must do via merged trees*/
     for (int i=0; i!= marking_readings.size(); i++)
@@ -284,7 +284,7 @@ void SpatioTemporalVoxelGrid::operator()(const \
 }
 
 /*****************************************************************************/
-std::unordered_map<occupany_cell, uint>* 
+std::unordered_map<occupany_cell, uint>*
                                  SpatioTemporalVoxelGrid::GetFlattenedCostmap()
 /*****************************************************************************/
 {
@@ -308,8 +308,9 @@ double SpatioTemporalVoxelGrid::GetDecayShift(const double& time_delta)
 }
 
 /*****************************************************************************/
-double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift(const double& time_delta, \
-                                          const double& acceleration_factor)
+double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift( \
+                                             const double& time_delta, \
+                                             const double& acceleration_factor)
 /*****************************************************************************/
 {
   // use configurable model to get a scalar shift to the desired decay time
@@ -327,10 +328,7 @@ double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift(const double& time_delt
       std::exp(acceleration_factor * time_delta);
     return accel_decay_shift - acceleration;
   }
-  else
-  {
-    return 0.; // permanent
-  }
+  return 0.; // permanent
 }
 
 /*****************************************************************************/

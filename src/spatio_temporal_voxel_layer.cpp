@@ -71,7 +71,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   int decay_model;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
-  // timeout in seconds for transforms 
+  // timeout in seconds for transforms
   nh.param("transform_tolerance", transform_tolerance, 0.2);
   // whether to default on
   nh.param("enabled", _enabled, true);
@@ -117,7 +117,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
                                   this);
-  
+
   _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, 0., \
                                                         decay_model, \
                                                         voxel_decay, \
@@ -149,9 +149,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("clearing", clearing, false);
     source_node.param("marking", marking, true);
     // minimum distance from camera it can see
-    source_node.param("min_z", min_z, 0.); 
+    source_node.param("min_z", min_z, 0.);
     // maximum distance from camera it can see
-    source_node.param("max_z", max_z, 10.); 
+    source_node.param("max_z", max_z, 10.);
     // vertical FOV angle in rad
     source_node.param("vertical_fov_angle", vFOV, 0.7);
     // horizontal FOV angle in rad
@@ -181,7 +181,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     // create an observation buffer
     _observation_buffers.push_back(
-        boost::shared_ptr <buffer::MeasurementBuffer> 
+        boost::shared_ptr <buffer::MeasurementBuffer>
         (new buffer::MeasurementBuffer(topic, observation_keep_time,     \
         expected_update_rate, min_obstacle_height, max_obstacle_height,  \
         obstacle_range, *tf_, _global_frame,                             \
@@ -228,7 +228,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_notifiers.push_back(filter);
 
       _observation_notifiers.back()->setTolerance(ros::Duration(0.05));
-    } 
+    }
 
     else if (data_type == "PointCloud2")
     {
@@ -323,7 +323,7 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
                 const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
-  // buffer the point cloud 
+  // buffer the point cloud
   buffer->Lock();
   buffer->BufferROSCloud(*message);
   buffer->Unlock();
@@ -357,14 +357,14 @@ bool SpatioTemporalVoxelLayer::GetClearingObservations( \
 {
   // get clearing observations
   bool current = true;
-  for (unsigned int i = 0; i < _clearing_buffers.size(); ++i) 
+  for (unsigned int i = 0; i < _clearing_buffers.size(); ++i)
   {
     _clearing_buffers[i]->Lock();
     _clearing_buffers[i]->GetReadings(clearing_observations);
     current = _clearing_buffers[i]->UpdatedAtExpectedRate();
     _clearing_buffers[i]->Unlock();
   }
-return current;
+  return current;
 }
 
 /*****************************************************************************/
@@ -430,9 +430,9 @@ void SpatioTemporalVoxelLayer::reset(void)
   this->resetMaps();
   current_ = true;
   for (unsigned int i = 0; i < _observation_buffers.size(); ++i)
-    {
-      _observation_buffers[i]->ResetLastUpdatedTime();
-    }
+  {
+    _observation_buffers[i]->ResetLastUpdatedTime();
+  }
 }
 
 /*****************************************************************************/
@@ -568,7 +568,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   current = GetClearingObservations(clearing_observations) && current;
   current_ = current;
 
-  // navigation mode: clear observations, mapping mode: save maps and publish 
+  // navigation mode: clear observations, mapping mode: save maps and publish
   if (!_mapping_mode)
   {
     _voxel_grid->ClearFrustums(clearing_observations);
@@ -607,7 +607,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     _voxel_pub.publish(pc2);
   }
 
-  // update footprint 
+  // update footprint
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
   return;
 }

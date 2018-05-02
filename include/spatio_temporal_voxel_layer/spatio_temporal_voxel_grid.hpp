@@ -33,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
- * Purpose: Implement OpenVDB's voxel library with ray tracing for our 
+ * Purpose: Implement OpenVDB's voxel library with ray tracing for our
  *          internal voxel grid layer.
  *********************************************************************/
 
@@ -89,7 +89,7 @@ struct occupany_cell
 // Structure for wrapping frustum model and necessary metadata
 struct frustum_model
 {
-  frustum_model(geometry::Frustum _frustum, const double& _factor) : 
+  frustum_model(geometry::Frustum _frustum, const double& _factor) :
     frustum(_frustum), accel_factor(_factor)
   {
   }

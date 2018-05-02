@@ -34,8 +34,8 @@
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  * Purpose: Replace the ROS voxel grid / obstacle layers using VoxelGrid
- *          with OpenVDB's more efficient and capacble voxel library with 
- *          ray tracing and knn. 
+ *          with OpenVDB's more efficient and capacble voxel library with
+ *          ray tracing and knn.
  *********************************************************************/
 
 #ifndef VOLUME_GRID_LAYER_H_
