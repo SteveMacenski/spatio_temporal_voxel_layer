@@ -470,8 +470,6 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 void SpatioTemporalVoxelLayer::resetMaps(void)
 /*****************************************************************************/
 {
-  // takes care of ROS 2D costmap
-  Costmap2D::resetMaps();
 
   // takes care of our layer
   if (!_voxel_grid->ResetGrid())
