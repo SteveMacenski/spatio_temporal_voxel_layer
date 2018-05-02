@@ -1,4 +1,4 @@
-# Spatio-Temporal Voxel Layer
+# Spatio-Temporal Voxel Layer [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdev__spatio_temporal_voxel_layer__ubuntu_xenial_amd64)](http://build.ros.org/view/Kbin_uX64/job/Kdev__spatio_temporal_voxel_layer__ubuntu_xenial_amd64/)
 
 This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/).
 
@@ -52,6 +52,14 @@ If you would like to be involved in this work, I would gladly take contributors 
 
 ## Installation
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
+
+If you are familiar with ROS, I have setup rosdep to work with all the necessary libraries, no need to install manually. In your workspace:
+
+`sudo rosdep init`
+`rosdep update`
+`rosdep install --from-paths src --ignore-src -r -y`
+
+If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
 
 ### ROS
 

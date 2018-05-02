@@ -22,6 +22,10 @@
   <build_depend>tf</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>libopenvdb-dev</build_depend>
+  <build_depend>libopenvdb</build_depend>
+  <build_depend>tbb</build_depend>
+  <build_depend>libopenexr</build_depend>
   <run_depend>costmap_2d</run_depend>
   <run_depend>laser_geometry</run_depend>
   <run_depend>message_filters</run_depend>
@@ -34,6 +38,10 @@
   <run_depend>roscpp</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <run_depend>libopenvdb-dev</run_depend>
+  <run_depend>libopenvdb</run_depend>
+  <run_depend>tbb</run_depend>
+  <run_depend>libopenexr</run_depend>
 
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />
