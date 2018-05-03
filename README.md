@@ -1,4 +1,4 @@
-# Spatio-Temporal Voxel Layer
+# Spatio-Temporal Voxel Layer [![Build Status](http://build.ros.org/buildStatus/icon?job=Kdev__spatio_temporal_voxel_layer__ubuntu_xenial_amd64)](http://build.ros.org/view/Kbin_uX64/job/Kdev__spatio_temporal_voxel_layer__ubuntu_xenial_amd64/)
 
 This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/).
 
@@ -10,7 +10,7 @@ An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFP
 
 ![ezgif com-video-to-gif](https://user-images.githubusercontent.com/14944147/37010885-b18fe1f8-20bb-11e8-8c28-5b31e65f2844.gif)
 
-We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-40%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`.  
+We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-50%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`.  
 
 ## **Spatio**-
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
@@ -52,6 +52,14 @@ If you would like to be involved in this work, I would gladly take contributors 
 
 ## Installation
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
+
+If you are familiar with ROS, I have setup rosdep to work with all the necessary libraries, no need to install manually. In your workspace:
+
+`sudo rosdep init`
+`rosdep update`
+`rosdep install --from-paths src --ignore-src -r -y`
+
+If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
 
 ### ROS
 
