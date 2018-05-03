@@ -164,7 +164,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
           GetAcceleratedDecayShift(time_since_marking, \
                                    frustum_it->accel_factor);
 
-        if (accel_decay_shift <= 0)
+        if (accel_decay_shift < 0)
         {
           // expired by acceleration
           if(!this->ClearGridPoint(pt_index))
@@ -190,7 +190,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     {
       // decay_shift is the amount of time from the current time until
       // the time a given mark is supposed to be cleared
-      if (decay_shift <= 0)
+      if (decay_shift < 0)
       {
         // expired by acceleration
         if(!this->ClearGridPoint(pt_index))

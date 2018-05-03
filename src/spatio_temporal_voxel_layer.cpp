@@ -395,14 +395,16 @@ void SpatioTemporalVoxelLayer::activate(void)
   // subscribe and place info in buffers from sensor sources
   ROS_INFO("%s was activated.", getName().c_str());
 
-  for (unsigned int i = 0; i < _observation_subscribers.size(); ++i)
+  observation_subscribers_iter sub_it = _observation_subscribers.begin();
+  for (sub_it; sub_it != _observation_subscribers.end(); ++sub_it)
   {
-     _observation_subscribers[i]->subscribe();
+    (*sub_it)->subscribe();
   }
 
-  for (unsigned int i = 0; i < _observation_buffers.size(); ++i)
+  observation_buffers_iter buf_it = _observation_buffers.begin();
+  for (buf_it; buf_it != _observation_buffers.end(); ++buf_it)
   {
-    _observation_buffers[i]->ResetLastUpdatedTime();
+    (*buf_it)->ResetLastUpdatedTime();
   }
 }
 
@@ -413,11 +415,12 @@ void SpatioTemporalVoxelLayer::deactivate(void)
   // unsubscribe from all sensor sources
   ROS_INFO("%s was deactivated.", getName().c_str());
 
-  for (unsigned int i = 0; i < _observation_subscribers.size(); ++i)
+  observation_subscribers_iter sub_it = _observation_subscribers.begin();
+  for (sub_it; sub_it != _observation_subscribers.end(); ++sub_it)
   {
-    if (_observation_subscribers[i] != NULL)
+    if (*sub_it != NULL)
     {
-       _observation_subscribers[i]->unsubscribe();
+      (*sub_it)->unsubscribe();
     }
   }
 }
@@ -429,9 +432,10 @@ void SpatioTemporalVoxelLayer::reset(void)
   // reset layer
   this->resetMaps();
   current_ = true;
-  for (unsigned int i = 0; i < _observation_buffers.size(); ++i)
+  observation_buffers_iter it = _observation_buffers.begin();
+  for (it; it != _observation_buffers.end(); ++it)
   {
-    _observation_buffers[i]->ResetLastUpdatedTime();
+    (*it)->ResetLastUpdatedTime();
   }
 }
 

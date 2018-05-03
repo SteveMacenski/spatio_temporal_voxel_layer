@@ -135,6 +135,8 @@ protected:
 
   // Check occupancy status of the grid
   bool IsGridEmpty(void) const;
+
+  // Get time information for clearing
   double GetDecayShift(const double& time_delta);
   double GetAcceleratedDecayShift(const double& time_delta, \
                                   const double& acceleration_factor);
