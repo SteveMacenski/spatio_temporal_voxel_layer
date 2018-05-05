@@ -1,0 +1,24 @@
+rgbd_obstacle_layer:
+  combination_method: 1
+  decay_model: 0
+  enabled: true
+  map_save_duration: 60
+  mapping_mode: false
+  mark_threshold: 0
+  max_obstacle_height: 2.0
+  observation_persistence: 0.0
+  observation_sources: rgbd1_mark rgbd1_clear
+  obstacle_range: 3.0
+  origin_z: 0.0
+  publish_voxel_map: false
+  rgbd1_clear: {clearing: true, data_type: PointCloud2, decay_acceleration: 1.0, horizontal_fov_angle: 1.048,
+    marking: false, max_z: 7.0, min_z: 0.1, topic: camera1/depth_clamped/points, vertical_fov_angle: 0.8745,
+    voxel_filter: true}
+  rgbd1_mark: {clearing: false, data_type: PointCloud2, marking: true, max_obstacle_height: 2.0,
+    min_obstacle_height: 0.3, topic: camera1/depth_clamped/points}
+  track_unknown_space: true
+  transform_tolerance: 0.2
+  unknown_threshold: 15
+  update_footprint_enabled: true
+  voxel_decay: 15
+  voxel_size: 0.05
