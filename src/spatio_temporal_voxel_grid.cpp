@@ -43,11 +43,12 @@ namespace volume_grid
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
                    const int& background_value, const int& decay_model,   \
-                   const double& voxel_decay) : 
-                   _background_value( background_value ),                 \
-                   _voxel_size( voxel_size ),                             \
+                   const double& voxel_decay, const bool& pub_voxels) :
+                   _background_value(background_value),                   \
+                   _voxel_size(voxel_size),                               \
                    _decay_model(decay_model),                             \
                    _voxel_decay(voxel_decay),                             \
+                   _pub_voxels(pub_voxels),                               \
                    _pc(new pcl::PointCloud<pcl::PointXYZ>),               \
                    _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
@@ -58,7 +59,7 @@ SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
 /*****************************************************************************/
-{ 
+{
   // pcl pointclouds free themselves
   delete _cost_map;
 }
@@ -92,6 +93,8 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
                std::vector<observation::MeasurementReading>& clearing_readings)
 /*****************************************************************************/
 {
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+
   // accelerate the decay of voxels interior to the frustum
   if(this->IsGridEmpty())
   {
@@ -134,6 +137,9 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
                                           std::vector<frustum_model>& frustums)
 /*****************************************************************************/
 {
+  // sample time once for all clearing readings
+  const double cur_time = ros::WallTime::now().toSec();
+
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
   for (cit_grid; cit_grid; ++cit_grid)
@@ -143,46 +149,55 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     std::vector<frustum_model>::iterator frustum_it = frustums.begin();
     bool frustum_cycle = false;
 
+    const double time_since_marking = cur_time - cit_grid.getValue();
+    const double decay_shift = GetDecayShift(time_since_marking);
+
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
       if ( frustum_it->frustum.IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
-        const double accel_decay_time = \
-                            GetAcceleratedDecayTime(frustum_it->accel_factor);
-        if (true) //cit_grid.getValue() < accel_decay_time)
+
+        // accel_decay_shift is the amount of time from the current time until
+        // the time a given mark is supposed to be cleared
+        const double accel_decay_shift = \
+          GetAcceleratedDecayShift(time_since_marking, \
+                                   frustum_it->accel_factor);
+
+        if (accel_decay_shift < 0)
         {
-          // accelerate the values stored. Ticket #23 TODO
-          // if(!this->MarkGridPoint(pt_index, \
-          //    cit_grid.getValue()-accel_decay_time))
-          // {
-          //   std::cout << "Failed to clear point." << std::endl;
-          // }
-          this->ClearGridPoint(pt_index); // temp for testing
+          // expired by acceleration
+          if(!this->ClearGridPoint(pt_index))
+          {
+            std::cout << "Failed to clear point." << std::endl;
+          }
         }
         else
         {
-          // expired by acceleration
-          // if(!this->ClearGridPoint(pt_index))
-          // {
-          //   std::cout << "Failed to clear point." << std::endl;
-          // }
+          const double updated_mark = cit_grid.getValue() - \
+            (decay_shift - accel_decay_shift);
+          if(!this->MarkGridPoint(pt_index, updated_mark))
+          {
+            std::cout << "Failed to update mark." << std::endl;
+          }
           break;
         }
       }
     }
 
     // if not inside any, check against nominal decay model
-    if(!frustum_cycle)  
+    if(!frustum_cycle)
     {
-      const double decay_time = GetDecayTime();
-      if(cit_grid.getValue() < decay_time)
+      // decay_shift is the amount of time from the current time until
+      // the time a given mark is supposed to be cleared
+      if (decay_shift < 0)
       {
+        // expired by acceleration
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
-        break;
+        continue;
       }
     }
     // if here, we can add to costmap and PC2
@@ -221,8 +236,10 @@ void SpatioTemporalVoxelGrid::Mark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
 {
-  // mark the grid 
-  if (marking_readings.size() > 0) 
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+
+  // mark the grid
+  if (marking_readings.size() > 0)
   {
     //tbb::parallel_do(marking_readings, *this); /*must do via merged trees*/
     for (int i=0; i!= marking_readings.size(); i++)
@@ -267,7 +284,7 @@ void SpatioTemporalVoxelGrid::operator()(const \
 }
 
 /*****************************************************************************/
-std::unordered_map<occupany_cell, uint>* 
+std::unordered_map<occupany_cell, uint>*
                                  SpatioTemporalVoxelGrid::GetFlattenedCostmap()
 /*****************************************************************************/
 {
@@ -275,38 +292,41 @@ std::unordered_map<occupany_cell, uint>*
 }
 
 /*****************************************************************************/
-double SpatioTemporalVoxelGrid::GetDecayTime(void)
+double SpatioTemporalVoxelGrid::GetDecayShift(const double& time_delta)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
-  const double cur_time = ros::WallTime::now().toSec();
-
   if (_decay_model == 0) // linear
   {
-    return cur_time - _voxel_decay;
+    return _voxel_decay - time_delta;
   }
   else if (_decay_model == 1) // exponential
   {
-    return cur_time * std::exp(cur_time * _voxel_decay);
+    return _voxel_decay * std::exp(-time_delta);
   }
   return 0.; // permanent
 }
 
 /*****************************************************************************/
-double SpatioTemporalVoxelGrid::GetAcceleratedDecayTime(const \
-                                                   double& acceleration_factor)
+double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift( \
+                                             const double& time_delta, \
+                                             const double& acceleration_factor)
 /*****************************************************************************/
 {
-  // use configurable model to get desired decay time
-  const double cur_time = ros::WallTime::now().toSec();
-
+  // use configurable model to get a scalar shift to the desired decay time
+  const double accel_decay_shift = -time_delta + _voxel_decay;
   if (_decay_model == 0) // linear
   {
-    return cur_time; //TODO Ticket #23
+    const double acceleration = 1. / 6. * \
+      acceleration_factor * (time_delta * time_delta * time_delta);
+    return accel_decay_shift - acceleration;
   }
   else if (_decay_model == 1) // exponential
   {
-    return cur_time; //TODO Ticket #23
+    const double acceleration = 1. / \
+      (acceleration_factor * acceleration_factor) * \
+      std::exp(acceleration_factor * time_delta);
+    return accel_decay_shift - acceleration;
   }
   return 0.; // permanent
 }
@@ -325,6 +345,8 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
 bool SpatioTemporalVoxelGrid::ResetGrid(void)
 /*****************************************************************************/
 {
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+
   // clear the voxel grid
   try
   {

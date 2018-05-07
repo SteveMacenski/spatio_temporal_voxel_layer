@@ -34,8 +34,8 @@
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  * Purpose: Replace the ROS voxel grid / obstacle layers using VoxelGrid
- *          with OpenVDB's more efficient and capacble voxel library with 
- *          ray tracing and knn. 
+ *          with OpenVDB's more efficient and capacble voxel library with
+ *          ray tracing and knn.
  *********************************************************************/
 
 #ifndef VOLUME_GRID_LAYER_H_
@@ -72,6 +72,10 @@
 
 namespace spatio_temporal_voxel_layer
 {
+
+// conveniences for line lengths
+typedef std::vector<boost::shared_ptr<message_filters::SubscriberBase> >::iterator observation_subscribers_iter;
+typedef std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >::iterator observation_buffers_iter;
 
 // Core ROS voxel layer class
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer

@@ -33,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
- * Purpose: Implement OpenVDB's voxel library with ray tracing for our 
+ * Purpose: Implement OpenVDB's voxel library with ray tracing for our
  *          internal voxel grid layer.
  *********************************************************************/
 
@@ -89,7 +89,7 @@ struct occupany_cell
 // Structure for wrapping frustum model and necessary metadata
 struct frustum_model
 {
-  frustum_model(geometry::Frustum _frustum, const double& _factor) : 
+  frustum_model(geometry::Frustum _frustum, const double& _factor) :
     frustum(_frustum), accel_factor(_factor)
   {
   }
@@ -106,7 +106,8 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(const float& voxel_size, const int& background_value,
-                          const int& decay_model, const double& voxel_decay);
+                          const int& decay_model, const double& voxel_decay,
+                          const bool& pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
 
   // Core making and clearing functions
@@ -136,10 +137,9 @@ protected:
   bool IsGridEmpty(void) const;
 
   // Get time information for clearing
-  double GetDecayTime(void);
-  double GetAcceleratedDecayTime(const double& acceleration_factor);
-
-  // Clearing grid operation with frustum models
+  double GetDecayShift(const double& time_delta);
+  double GetAcceleratedDecayShift(const double& time_delta, \
+                                  const double& acceleration_factor);
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
 
   // Populate the costmap ROS api and pointcloud with a marked point

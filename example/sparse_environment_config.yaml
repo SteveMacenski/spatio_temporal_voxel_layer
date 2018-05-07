@@ -1,0 +1,49 @@
+rgbd_obstacle_layer:
+  enabled:                  true
+  voxel_decay:              15    # seconds if linear, e^n if exponential
+  decay_model:              0     # 0=linear, 1=exponential, -1=persistent
+  voxel_size:               0.05  # meters
+  track_unknown_space:      true  # default space is known
+  max_obstacle_height:      2.0   # meters
+  unknown_threshold:        15    # voxel height
+  mark_threshold:           0     # voxel height
+  update_footprint_enabled: true
+  combination_method:       1     # 1=max, 0=override
+  obstacle_range:           3.0   # meters
+  origin_z:                 0.0   # meters
+  publish_voxel_map:        false # default off
+  transform_tolerance:      0.2   # seconds
+  mapping_mode:             false # default off, saves map not for navigation
+  map_save_duration:        60    # default 60s, how often to autosave
+  observation_sources:      rgbd1_mark rgbd1_clear
+  rgbd1_mark:
+    data_type: PointCloud2
+    topic: camera1/depth_clamped/points
+    marking: true
+    clearing: false
+    min_obstacle_height: 0.3     # default 0, meters
+    max_obstacle_height: 2.0     # default 3, meters
+    expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
+    observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
+    inf_is_valid: false          # default false, for laser scans
+  rgbd1_clear:
+    data_type: PointCloud2
+    topic: camera1/depth_clamped/points
+    marking: false
+    clearing: true
+    max_z: 7.0                  # default 0, meters
+    min_z: 0.1                  # default 10, meters
+    vertical_fov_angle: 0.8745  # default 0.7, radians
+    horizontal_fov_angle: 1.048 # default 1.04, radians
+    decay_acceleration: 1.0     # default 0, 1/s^2. If laser scanner MUST be 0
+    voxel_filter: true          # default off, apply voxel filter to sensor, recommend on
+
+inflation_layer:
+  enabled:              true
+  track_unknown_space:  true
+  cost_scaling_factor:  5.0
+  inflation_radius:     0.5
+
+static_layer:
+  track_unknown_space:  true
+enabled: true
