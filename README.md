@@ -55,9 +55,7 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 If you are familiar with ROS, I have setup rosdep to work with all the necessary libraries, no need to install manually. In your workspace:
 
-`sudo rosdep init`
-`rosdep update`
-`rosdep install --from-paths src --ignore-src -r -y`
+`sudo rosdep init && rosdep update && rosdep install --from-paths src --ignore-src -r -y`
 
 If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
 
@@ -71,15 +69,15 @@ If you are not familiar or cannot get rosdep to work, the dependencies and docs 
 
 ### OpenVDB
 
-`sudo apt-get install libopenvdb3.1 libopenvdb-doc libopenvdb-dev libopenvdb-tools`
+`sudo apt-get install libopenvdb3.1 libopenvdb-dev libopenvdb-tools`
 
 ### TBB
 
-`sudo apt-get install libtbb-dev libtbb2 libtbb-doc`
+`sudo apt-get install libtbb-dev libtbb2`
 
 ### OpenEXR
 
-`sudo apt-get install libopenexr22 libopenexr-dev`
+`sudo apt-get install libopenexr-dev`
 
 ## Configuration and Running
 
