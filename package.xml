@@ -6,7 +6,7 @@
 
   <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
 
- <license>Apache License 2.0</license>
+ <license>LGPL v2.1</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>costmap_2d</build_depend>
