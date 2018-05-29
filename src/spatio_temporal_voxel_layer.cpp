@@ -603,7 +603,6 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
     _voxel_grid->GetOccupancyPointCloud(pc);
-    ROS_INFO("Publishing navigation cld of size %i", int(pc->size()));
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = _global_frame;
