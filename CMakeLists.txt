@@ -95,13 +95,28 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-install(TARGETS
-    ${PROJECT_NAME}
+add_executable(minimal_test
+            test/minimal_test.cpp
+)
+target_link_libraries(minimal_test
+  ${Boost_LIBRARIES}
+  ${EIGEN3_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OpenVDB_LIBRARIES}
+  ${TBB_LIBRARIES}
+  ${catkin_LIBRARIES}
+)
+
+install(TARGETS ${PROJECT_NAME} minimal_test
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(FILES costmap_plugins.xml
+install(FILES costmap_plugins.xml test/minimal_test.launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+install(DIRECTORY example
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
