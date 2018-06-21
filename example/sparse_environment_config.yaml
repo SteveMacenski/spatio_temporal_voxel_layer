@@ -37,13 +37,3 @@ rgbd_obstacle_layer:
     horizontal_fov_angle: 1.048 # default 1.04, radians
     decay_acceleration: 1.0     # default 0, 1/s^2. If laser scanner MUST be 0
     voxel_filter: true          # default off, apply voxel filter to sensor, recommend on
-
-inflation_layer:
-  enabled:              true
-  track_unknown_space:  true
-  cost_scaling_factor:  5.0
-  inflation_radius:     0.5
-
-static_layer:
-  track_unknown_space:  true
-enabled: true

@@ -55,8 +55,10 @@ void TransformThread()
   ros::Rate r(20);
   while (ros::ok())
   {
-    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/map", "/base_link"));
-    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "/base_link", "/camera_link"));
+    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
+                                                        "/map", "/base_link"));
+    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
+                                                "/base_link", "/camera_link"));
     r.sleep();
     ros::spinOnce();
   }
@@ -82,8 +84,6 @@ int main(int argc, char **argv)
     ros::spinOnce();
     r.sleep();
   }
-
-
 
   return 1;
 }
