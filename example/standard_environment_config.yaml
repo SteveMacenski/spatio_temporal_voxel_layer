@@ -18,7 +18,7 @@ rgbd_obstacle_layer:
   observation_sources:      rgbd1_mark rgbd1_clear
   rgbd1_mark:
     data_type: PointCloud2
-    topic: camera1/depth/points
+    topic: camera/depth/points
     marking: true
     clearing: false
     min_obstacle_height: 0.3     # default 0, meters
@@ -28,7 +28,7 @@ rgbd_obstacle_layer:
     inf_is_valid: false          # default false, for laser scans
   rgbd1_clear:
     data_type: PointCloud2
-    topic: camera1/depth/points
+    topic: camera/depth/points
     marking: false
     clearing: true
     max_z: 7.0                  # default 0, meters
@@ -37,13 +37,3 @@ rgbd_obstacle_layer:
     horizontal_fov_angle: 1.048 # default 1.04, radians
     decay_acceleration: 5.0     # default 0, 1/s^2. If laser scanner MUST be 0
     voxel_filter: true          # default off, apply voxel filter to sensor, recommend on
-
-inflation_layer:
-  enabled:              true
-  track_unknown_space:  true
-  cost_scaling_factor:  5.0
-  inflation_radius:     0.5
-
-static_layer:
-  track_unknown_space:  true
-enabled: true
