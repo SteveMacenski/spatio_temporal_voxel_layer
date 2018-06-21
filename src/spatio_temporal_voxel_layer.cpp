@@ -545,7 +545,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
     if ( it->second >= _mark_threshold && \
          worldToMap(it->first.x, it->first.y, map_x, map_y))
     {
-      setCost(map_x, map_y, costmap_2d::LETHAL_OBSTACLE);
+      costmap_[getIndex(map_x, map_y)] = costmap_2d::LETHAL_OBSTACLE;
       touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
