@@ -64,6 +64,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   ros::NodeHandle nh("~/" + name_), g_nh, prefix_nh;
 
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
+  ROS_INFO("%s's global frame is %s.", \
+                                    getName().c_str(), _global_frame.c_str());
 
   bool track_unknown_space;
   double transform_tolerance, voxel_decay, map_save_time;
@@ -492,15 +494,6 @@ void SpatioTemporalVoxelLayer::matchSize(void)
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::updateOrigin(double new_origin_x, \
-                                            double new_origin_y)
-/*****************************************************************************/
-{
-  // takes care of 2D ROS costmap
-  Costmap2D::updateOrigin(new_origin_x, new_origin_y);
-}
-
-/*****************************************************************************/
 void SpatioTemporalVoxelLayer::updateCosts( \
                                     costmap_2d::Costmap2D& master_grid, \
                                     int min_i, int min_j, int max_i, int max_j)
@@ -545,7 +538,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
     if ( it->second >= _mark_threshold && \
          worldToMap(it->first.x, it->first.y, map_x, map_y))
     {
-      setCost(map_x, map_y, costmap_2d::LETHAL_OBSTACLE);
+      costmap_[getIndex(map_x, map_y)] = costmap_2d::LETHAL_OBSTACLE;
       touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
@@ -561,6 +554,15 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   if (!_enabled)
   {
     return;
+  }
+
+  // Steve's Note June 22, 2018
+  // I dislike this necessity, I can't remove the master grid's knowledge about
+  // STVL on the fly so I have play games with the API even though this isn't
+  // really a rolling plugin implementation. It works, but isn't ideal.
+  if (layered_costmap_->isRolling())
+  {
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
   }
 
   useExtraBounds(min_x, min_y, max_x, max_y);

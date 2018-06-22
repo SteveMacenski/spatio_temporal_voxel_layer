@@ -92,7 +92,6 @@ public:
                                                                int max_i, int max_j);
 
   // Functions to interact with other layers
-  void updateOrigin(double new_origin_x, double new_origin_y);
   virtual void matchSize(void);
 
   // Functions for layer high level operations
