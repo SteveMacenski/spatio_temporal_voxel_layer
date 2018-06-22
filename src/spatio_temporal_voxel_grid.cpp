@@ -212,6 +212,7 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
 {
   // add pt to the pointcloud and costmap
   openvdb::Vec3d pose_world = _grid->indexToWorld(pt);
+
   if (_pub_voxels)
   {
     _pc->push_back(pcl::PointXYZ(pose_world[0], pose_world[1], \

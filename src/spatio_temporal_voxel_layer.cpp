@@ -494,15 +494,6 @@ void SpatioTemporalVoxelLayer::matchSize(void)
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::updateOrigin(double new_origin_x, \
-                                            double new_origin_y)
-/*****************************************************************************/
-{
-  // takes care of 2D ROS costmap
-  Costmap2D::updateOrigin(new_origin_x, new_origin_y);
-}
-
-/*****************************************************************************/
 void SpatioTemporalVoxelLayer::updateCosts( \
                                     costmap_2d::Costmap2D& master_grid, \
                                     int min_i, int min_j, int max_i, int max_j)
