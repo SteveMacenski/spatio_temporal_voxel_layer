@@ -556,6 +556,15 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     return;
   }
 
+  // Steve's Note June 22, 2018
+  // I dislike this necessity, I can't remove the master grid's knowledge about
+  // STVL on the fly so I have play games with the API even though this isn't
+  // really a rolling plugin implementation. It works, but isn't ideal.
+  if (layered_costmap_->isRolling())
+  {
+    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+  }
+
   useExtraBounds(min_x, min_y, max_x, max_y);
 
   bool current = true;
