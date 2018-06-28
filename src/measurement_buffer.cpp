@@ -139,6 +139,12 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
 
+    if (_clearing && !_marking)
+    {
+      // no need to buffer points
+      return;
+    }
+
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 
     pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
