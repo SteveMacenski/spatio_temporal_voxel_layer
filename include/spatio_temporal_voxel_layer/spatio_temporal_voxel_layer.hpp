@@ -107,7 +107,7 @@ public:
   void UpdateROSCostmap(double* min_x, double* min_y, double* max_x, double* max_y);
   bool updateFootprint(double robot_x, double robot_y, double robot_yaw, \
                        double* min_x, double* min_y, double* max_x, double* max_y);
-  virtual void resetMaps(void);
+  void ResetGrid(void);
 
   // Saving grids callback for openVDB
   bool SaveGridCallback(spatio_temporal_voxel_layer::SaveGrid::Request& req, \
