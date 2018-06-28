@@ -432,7 +432,8 @@ void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
   // reset layer
-  this->resetMaps();
+  Costmap2D::resetMaps();
+  this->ResetGrid();
   current_ = true;
   observation_buffers_iter it = _observation_buffers.begin();
   for (it; it != _observation_buffers.end(); ++it)
@@ -476,7 +477,7 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::resetMaps(void)
+void SpatioTemporalVoxelLayer::ResetGrid(void)
 /*****************************************************************************/
 {
   if (!_voxel_grid->ResetGrid())
@@ -562,7 +563,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // really a rolling plugin implementation. It works, but isn't ideal.
   if (layered_costmap_->isRolling())
   {
-    updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
+    updateOrigin(robot_x-getSizeInMetersX()/2, robot_y-getSizeInMetersY()/2);
   }
 
   useExtraBounds(min_x, min_y, max_x, max_y);
