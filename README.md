@@ -51,6 +51,13 @@ You can run multiple instances of the layer one to map and other to navigate if 
 If you would like to be involved in this work, I would gladly take contributors and coauthors.
 
 ## Installation
+
+As of July 8 it is available via `apt-get`:
+```
+sudo apt-get install ros-kinetic-spatio-temporal-voxel-layer
+```
+
+### Install from source
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 If you are familiar with ROS, I have setup rosdep to work with all the necessary libraries, no need to install manually. In your workspace:
@@ -59,23 +66,23 @@ If you are familiar with ROS, I have setup rosdep to work with all the necessary
 
 If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
 
-### ROS
+#### ROS
 
 [See install instructions here.](http://wiki.ros.org/kinetic/Installation)
 
-### Navigation
+#### Navigation
 
 `sudo apt-get install ros-kinetic-navigation`
 
-### OpenVDB
+#### OpenVDB
 
 `sudo apt-get install libopenvdb3.1 libopenvdb-dev libopenvdb-tools`
 
-### TBB
+#### TBB
 
 `sudo apt-get install libtbb-dev libtbb2`
 
-### OpenEXR
+#### OpenEXR
 
 `sudo apt-get install libopenexr-dev`
 
