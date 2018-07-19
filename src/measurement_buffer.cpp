@@ -215,6 +215,9 @@ void MeasurementBuffer::GetReadings( \
   {
     observations.push_back(*it);
   }
+
+  // clear from buffer so we don't over report
+  observations.clear();
 }
 
 /*****************************************************************************/
