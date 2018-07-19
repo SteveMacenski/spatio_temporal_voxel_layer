@@ -221,7 +221,7 @@ void MeasurementBuffer::GetReadings( \
   // clear from buffer so we don't over report
   if (_clear_buffer_after_reading || _observation_keep_time.toSec() == 0.)
   {
-    observations.clear();
+    _observation_list.clear();
   }
 }
 
