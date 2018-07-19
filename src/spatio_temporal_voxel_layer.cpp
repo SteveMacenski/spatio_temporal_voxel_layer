@@ -163,7 +163,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // performs an approximate voxel filter over the data to reduce
     source_node.param("voxel_filter", voxel_filter, false);
     // clears measurement buffer after reading values from it
-    source_node.param("clear_after_reading", clear_after_reading, true);
+    source_node.param("clear_after_reading", clear_after_reading, false);
 
     if (!sensor_frame.empty())
     {
