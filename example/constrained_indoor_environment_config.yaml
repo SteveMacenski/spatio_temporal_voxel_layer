@@ -26,7 +26,8 @@ rgbd_obstacle_layer:
     expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
     observation_persistence: 0.0 # default 0, use all measurements taken during now-value, 0=latest
     inf_is_valid: false          # default false, for laser scans
-    voxel_filter: false         # default off, apply voxel filter to sensor, recommend on
+    voxel_filter: false          # default off, apply voxel filter to sensor, recommend on
+    clear_after_reading: true
   rgbd1_clear:
     data_type: PointCloud2
     topic: camera1/depth/points
