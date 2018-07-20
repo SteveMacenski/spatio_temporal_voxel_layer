@@ -115,6 +115,8 @@ rgbd_obstacle_layer:
     expected_update_rate: 0.0    #default 0, if not updating at this rate at least, remove from buffer
     observation_persistence: 0.0 #default 0, use all measurements taken during now-value, 0=latest 
     inf_is_valid: false          #default false, for laser scans
+    clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
+    voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
   rgbd1_clear:
     data_type: PointCloud2
     topic: camera1/depth/points
@@ -125,7 +127,6 @@ rgbd_obstacle_layer:
     vertical_fov_angle: 0.7      #default 0.7, radians
     horizontal_fov_angle: 1.04   #default 1.04, radians
     decay_acceleration: 1.       #default 0, 1/s^2. If laser scanner MUST be 0
-    voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
 ```
 
 ### local/global_costmap_params.yaml
