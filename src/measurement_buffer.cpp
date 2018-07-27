@@ -59,7 +59,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const bool& marking,                 \
                                      const bool& clearing,                \
                                      const double& voxel_size,            \
-                                     const bool& voxel_filter) :
+                                     const bool& voxel_filter,            \
+                                     const bool& clear_buffer_after_reading) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -69,7 +70,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
-    _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter)
+    _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
+    _clear_buffer_after_reading(clear_buffer_after_reading)
 {
 }
 
@@ -214,6 +216,12 @@ void MeasurementBuffer::GetReadings( \
                                           it != _observation_list.end(); ++it)
   {
     observations.push_back(*it);
+  }
+
+  // clear from buffer so we don't over report
+  if (_clear_buffer_after_reading || _observation_keep_time.toSec() == 0.)
+  {
+    _observation_list.clear();
   }
 }
 
