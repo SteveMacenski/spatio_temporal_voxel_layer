@@ -246,7 +246,7 @@ void Frustum::TransformPlaneNormals(void)
 
       for (uint j=0; j!= v_t[i].size(); j++)
       {
-        Eigen::Vector3d T_pt = T*_frustum_pts.at(i);
+        Eigen::Vector3d T_pt = T*_frustum_pts.at(v_t[i][j]);
         geometry_msgs::Point point;
         point.x = T_pt[0];
         point.y = T_pt[1];
