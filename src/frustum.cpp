@@ -218,6 +218,9 @@ void Frustum::TransformPlaneNormals(void)
     msg.scale.y = 0.15; /// ?
     msg.scale.z = 0.15; /// ?
     msg.pose.orientation.w = 1.0;
+    msg.pose.position.x = 0;
+    msg.pose.position.y = 0;
+    msg.pose.position.z = 0;
     msg.header.stamp = ros::Time::now();
     msg.color.g = 1.0f;
     msg.color.a = 1.0;
