@@ -137,9 +137,9 @@ protected:
   bool IsGridEmpty(void) const;
 
   // Get time information for clearing
-  double GetBaseDurationToDecay(const double& time_delta);
-  double GetAcceleratedDecayModifier(const double& time_delta, \
-                                  const double& acceleration_factor);
+  double GetTemporalClearingDuration(const double& time_delta);
+  double GetFrustumAcceleration(const double& time_delta, \
+                                const double& acceleration_factor);
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
 
   // Populate the costmap ROS api and pointcloud with a marked point
