@@ -150,7 +150,8 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     bool frustum_cycle = false;
 
     const double time_since_marking = cur_time - cit_grid.getValue();
-    const double decay_shift = GetDecayShift(time_since_marking);
+    const double base_duration_to_decay = GetTemporalClearingDuration( \
+                                                            time_since_marking);
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
@@ -158,13 +159,12 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       {
         frustum_cycle = true;
 
-        // accel_decay_shift is the amount of time from the current time until
-        // the time a given mark is supposed to be cleared
-        const double accel_decay_shift = \
-          GetAcceleratedDecayShift(time_since_marking, \
-                                   frustum_it->accel_factor);
+        const double frustum_acceleration = GetFrustumAcceleration( \
+                                  time_since_marking, frustum_it->accel_factor);
 
-        if (accel_decay_shift < 0)
+        const double time_until_decay = base_duration_to_decay - \
+          frustum_acceleration;
+        if (time_until_decay <= 0)
         {
           // expired by acceleration
           if(!this->ClearGridPoint(pt_index))
@@ -174,8 +174,8 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         }
         else
         {
-          const double updated_mark = cit_grid.getValue() - \
-            (decay_shift - accel_decay_shift);
+          const double updated_mark = cit_grid.getValue() -
+            frustum_acceleration;
           if(!this->MarkGridPoint(pt_index, updated_mark))
           {
             std::cout << "Failed to update mark." << std::endl;
@@ -188,9 +188,8 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     // if not inside any, check against nominal decay model
     if(!frustum_cycle)
     {
-      // decay_shift is the amount of time from the current time until
-      // the time a given mark is supposed to be cleared
-      if (decay_shift < 0)
+      const double time_until_decay = base_duration_to_decay;
+      if (time_until_decay <= 0)
       {
         // expired by acceleration
         if(!this->ClearGridPoint(pt_index))
@@ -293,7 +292,7 @@ std::unordered_map<occupany_cell, uint>*
 }
 
 /*****************************************************************************/
-double SpatioTemporalVoxelGrid::GetDecayShift(const double& time_delta)
+double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(const double& time_delta)
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
@@ -309,7 +308,7 @@ double SpatioTemporalVoxelGrid::GetDecayShift(const double& time_delta)
 }
 
 /*****************************************************************************/
-double SpatioTemporalVoxelGrid::GetAcceleratedDecayShift( \
+double SpatioTemporalVoxelGrid::GetFrustumAcceleration( \
                                              const double& time_delta, \
                                              const double& acceleration_factor)
 /*****************************************************************************/
