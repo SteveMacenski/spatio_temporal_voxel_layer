@@ -137,8 +137,8 @@ protected:
   bool IsGridEmpty(void) const;
 
   // Get time information for clearing
-  double GetDecayShift(const double& time_delta);
-  double GetAcceleratedDecayShift(const double& time_delta, \
+  double GetBaseDurationToDecay(const double& time_delta);
+  double GetAcceleratedDecayModifier(const double& time_delta, \
                                   const double& acceleration_factor);
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
 
