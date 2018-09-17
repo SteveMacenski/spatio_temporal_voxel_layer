@@ -313,20 +313,18 @@ double SpatioTemporalVoxelGrid::GetFrustumAcceleration( \
                                              const double& acceleration_factor)
 /*****************************************************************************/
 {
-  // use configurable model to get a scalar shift to the desired decay time
-  const double accel_decay_shift = -time_delta + _voxel_decay;
   if (_decay_model == 0) // linear
   {
     const double acceleration = 1. / 6. * \
       acceleration_factor * (time_delta * time_delta * time_delta);
-    return accel_decay_shift - acceleration;
+    return acceleration;
   }
   else if (_decay_model == 1) // exponential
   {
     const double acceleration = 1. / \
       (acceleration_factor * acceleration_factor) * \
       std::exp(acceleration_factor * time_delta);
-    return accel_decay_shift - acceleration;
+    return acceleration;
   }
   return 0.; // permanent
 }
