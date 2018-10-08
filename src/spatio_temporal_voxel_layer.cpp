@@ -188,7 +188,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         boost::shared_ptr <buffer::MeasurementBuffer>
         (new buffer::MeasurementBuffer(topic, observation_keep_time,     \
         expected_update_rate, min_obstacle_height, max_obstacle_height,  \
-        obstacle_range, *tf_, _global_frame,                             \
+        obstacle_range, *tf_,  _global_frame,                            \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
         voxel_filter, clear_after_reading)));
@@ -213,9 +213,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                                                    topic, 50));
       _observation_subscribers.push_back(sub);
 
-      boost::shared_ptr < tf::MessageFilter<sensor_msgs::LaserScan>
-          > filter(new tf::MessageFilter<sensor_msgs::LaserScan>(*sub, \
-                                                     *tf_, _global_frame, 50));
+      boost::shared_ptr < tf2_ros::MessageFilter<sensor_msgs::LaserScan>
+          > filter(new tf2_ros::MessageFilter<sensor_msgs::LaserScan>(*sub, \
+                                                     *tf_, _global_frame, 50,0));
 
       if (inf_is_valid)
       {
@@ -241,9 +241,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                                                      topic, 50));
       _observation_subscribers.push_back(sub);
 
-      boost::shared_ptr < tf::MessageFilter<sensor_msgs::PointCloud2>
-          > filter(new tf::MessageFilter<sensor_msgs::PointCloud2>(*sub, \
-                                                  *tf_, _global_frame, 50));
+      boost::shared_ptr < tf2_ros::MessageFilter<sensor_msgs::PointCloud2>
+          > filter(new tf2_ros::MessageFilter<sensor_msgs::PointCloud2>(*sub, \
+                                                  *tf_, _global_frame, 50,0));
       filter->registerCallback(
           boost::bind(&SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1, \
                                                    _observation_buffers.back()));

@@ -70,6 +70,12 @@
 #include <tf/message_filter.h>
 #include <tf/exceptions.h>
 
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/message_filter.h"
+#include "message_filters/subscriber.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2/buffer_core.h>
+
 namespace spatio_temporal_voxel_layer
 {
 
@@ -128,7 +134,7 @@ private:
 
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
-  std::vector<boost::shared_ptr<tf::MessageFilterBase> >           _observation_notifiers;
+  std::vector<boost::shared_ptr<tf2_ros::MessageFilterBase> >           _observation_notifiers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _observation_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;

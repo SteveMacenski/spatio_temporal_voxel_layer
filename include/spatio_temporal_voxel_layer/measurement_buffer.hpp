@@ -1,4 +1,4 @@
-/*********************************************************************
+/********************************************************************
  *
  * Software License Agreement
  *
@@ -60,6 +60,14 @@
 // Mutex
 #include <boost/thread.hpp>
 
+#include <geometry_msgs/PoseStamped.h>
+
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/message_filter.h"
+#include "message_filters/subscriber.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2/buffer_core.h>
+
 namespace buffer
 {
 
@@ -77,7 +85,7 @@ public:
                     const double& min_obstacle_height,   \
                     const double& max_obstacle_height,   \
                     const double& obstacle_range,        \
-                    tf::TransformListener& tf,           \
+                    tf2_ros::Buffer& tf,                 \
                     const std::string& global_frame,     \
                     const std::string& sensor_frame,     \
                     const double& tf_tolerance,          \
@@ -113,7 +121,7 @@ private:
   // Removing old observations from buffer
   void RemoveStaleObservations(void);
 
-  tf::TransformListener& _tf;
+  tf2_ros::Buffer& _buffer;
   const ros::Duration _observation_keep_time, _expected_update_rate;
   boost::recursive_mutex _lock;
   ros::Time _last_updated;

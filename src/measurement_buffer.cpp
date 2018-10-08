@@ -47,7 +47,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const double& min_obstacle_height,   \
                                      const double& max_obstacle_height,   \
                                      const double& obstacle_range,        \
-                                     tf::TransformListener& tf,           \
+                                     tf2_ros::Buffer& tf,                 \
                                      const std::string& global_frame,     \
                                      const std::string& sensor_frame,     \
                                      const double& tf_tolerance,          \
@@ -62,7 +62,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const bool& voxel_filter,            \
                                      const bool& clear_buffer_after_reading) :
 /*****************************************************************************/
-    _tf(tf), _observation_keep_time(observation_keep_time), 
+    _observation_keep_time(observation_keep_time),
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
     _global_frame(global_frame), _sensor_frame(sensor_frame),
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
@@ -71,7 +71,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading)
+    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _buffer(tf)
 {
 }
 
@@ -115,23 +116,21 @@ void MeasurementBuffer::BufferPCLCloud(const \
   try
   {
     // transform into global frame
-    geometry_msgs::Quaternion orientation;
-    tf::Stamped<tf::Pose> local_pose, global_pose;
-    local_pose.setOrigin(tf::Vector3(0, 0, 0));
-    local_pose.setRotation(tf::Quaternion(0, 0, 0, 1));
-    local_pose.stamp_ = pcl_conversions::fromPCL(cloud.header).stamp;
-    local_pose.frame_id_ = origin_frame;
+    geometry_msgs::PoseStamped  local_pose, global_pose;
+    //local_pose.setOrigin(tf::Vector3(0, 0, 0));
+    //local_pose.setRotation(tf::Quaternion(0, 0, 0, 1));
+    local_pose.header.stamp = pcl_conversions::fromPCL(cloud.header).stamp;
+    local_pose.header.frame_id = origin_frame;
 
-    _tf.waitForTransform(_global_frame, local_pose.frame_id_, \
-                         local_pose.stamp_, ros::Duration(0.5));
-    _tf.transformPose(_global_frame, local_pose, global_pose);
+    _buffer.canTransform(_global_frame, local_pose.header.frame_id , \
+                         local_pose.header.stamp, ros::Duration(0.5));
+    _buffer.transform(local_pose, global_pose, _global_frame);
 
-    _observation_list.front()._origin.x = global_pose.getOrigin().getX();
-    _observation_list.front()._origin.y = global_pose.getOrigin().getY();
-    _observation_list.front()._origin.z = global_pose.getOrigin().getZ();
+    _observation_list.front()._origin.x = global_pose.pose.position.x;
+    _observation_list.front()._origin.y = global_pose.pose.position.y;
+    _observation_list.front()._origin.z = global_pose.pose.position.z;
 
-    tf::quaternionTFToMsg(global_pose.getRotation(), orientation);
-    _observation_list.front()._orientation = orientation;
+    _observation_list.front()._orientation = global_pose.pose.orientation;
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
@@ -149,7 +148,8 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 
-    pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
+    //pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
+    _buffer.transform(cloud, *cld_global, _global_frame);
     cld_global->header.stamp = cloud.header.stamp;
 
     // if user wants to use a voxel filter

@@ -16,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   tf
+  tf2
+  tf2_geometry_msgs
+  tf2_ros
+  tf2_sensor_msgs
   visualization_msgs
   message_generation
 )

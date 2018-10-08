@@ -42,6 +42,11 @@
 #include <tf/transform_broadcaster.h>
 #include <thread>
 
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/message_filter.h"
+#include "message_filters/subscriber.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
 
 /*****************************************************************************/
 void TransformThread()
@@ -56,9 +61,9 @@ void TransformThread()
   while (ros::ok())
   {
     tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
-                                                        "/map", "/base_link"));
+                                                        "map", "base_link"));
     tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
-                                                "/base_link", "/camera_link"));
+                                                "base_link", "camera_link"));
     r.sleep();
     ros::spinOnce();
   }
@@ -70,11 +75,11 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "STVL_minimal_test");
 
-  tf::TransformListener tf;
-
+  tf2_ros::Buffer tf_buffer;
+  tf2_ros::TransformListener _tf2(tf_buffer);
   std::thread t(TransformThread);
 
-  costmap_2d::Costmap2DROS costmap("global_costmap", tf);
+  costmap_2d::Costmap2DROS costmap("global_costmap", tf_buffer);
   costmap.start();
 
   ros::Rate r(10);
