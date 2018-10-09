@@ -42,7 +42,7 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
-                   const int& background_value, const int& decay_model,   \
+                   const double& background_value, const int& decay_model,\
                    const double& voxel_decay, const bool& pub_voxels) :
                    _background_value(background_value),                   \
                    _voxel_size(voxel_size),                               \
