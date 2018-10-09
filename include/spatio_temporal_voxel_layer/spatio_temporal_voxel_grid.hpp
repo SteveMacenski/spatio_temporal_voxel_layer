@@ -105,7 +105,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real> GridRay;
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
-  SpatioTemporalVoxelGrid(const float& voxel_size, const int& background_value,
+  SpatioTemporalVoxelGrid(const float& voxel_size, const double& background_value,
                           const int& decay_model, const double& voxel_decay,
                           const bool& pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
@@ -150,8 +150,8 @@ protected:
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
   mutable openvdb::DoubleGrid::Ptr _grid;
-  int                             _background_value, _decay_model;
-  double                          _voxel_size, _voxel_decay;
+  int                             _decay_model;
+  double                          _background_value, _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
   pcl::PointCloud<pcl::PointXYZ>::Ptr     _pc;
   std::unordered_map<occupany_cell, uint>* _cost_map;

@@ -120,7 +120,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
                                   this);
 
-  _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, 0., \
+  _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
+                                                        (double)default_value_, \
                                                         decay_model, \
                                                         voxel_decay, \
                                                         _publish_voxels);
