@@ -116,7 +116,13 @@ void MeasurementBuffer::BufferPCLCloud(const \
   {
     // transform into global frame
     geometry_msgs::PoseStamped  local_pose, global_pose;
-
+    local_pose.pose.position.x=0;
+    local_pose.pose.position.y=0;
+    local_pose.pose.position.z=0;
+    local_pose.pose.orientation.x=0;
+    local_pose.pose.orientation.y=0;
+    local_pose.pose.orientation.z=0;
+    local_pose.pose.orientation.w=1;
     local_pose.header.stamp = pcl_conversions::fromPCL(cloud.header).stamp;
     local_pose.header.frame_id = origin_frame;
 
