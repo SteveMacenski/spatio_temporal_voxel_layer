@@ -15,7 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   pcl_ros
   roscpp
-  tf
+  tf2
+  tf2_geometry_msgs
+  tf2_ros
+  tf2_sensor_msgs
   visualization_msgs
   message_generation
 )
@@ -68,7 +71,7 @@ catkin_package(
         sensor_msgs
         std_msgs
         costmap_2d
-        tf
+        tf2
         visualization_msgs
     DEPENDS
         TBB
