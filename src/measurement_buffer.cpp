@@ -62,7 +62,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const bool& voxel_filter,            \
                                      const bool& clear_buffer_after_reading) :
 /*****************************************************************************/
-    _observation_keep_time(observation_keep_time),
+    _buffer(tf), _observation_keep_time(observation_keep_time),
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
     _global_frame(global_frame), _sensor_frame(sensor_frame),
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
@@ -71,8 +71,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
-    _buffer(tf)
+    _clear_buffer_after_reading(clear_buffer_after_reading)
 {
 }
 
@@ -117,8 +116,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
   {
     // transform into global frame
     geometry_msgs::PoseStamped  local_pose, global_pose;
-    //local_pose.setOrigin(tf::Vector3(0, 0, 0));
-    //local_pose.setRotation(tf::Quaternion(0, 0, 0, 1));
+
     local_pose.header.stamp = pcl_conversions::fromPCL(cloud.header).stamp;
     local_pose.header.frame_id = origin_frame;
 
@@ -148,7 +146,6 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 
-    //pcl_ros::transformPointCloud(_global_frame, cloud, *cld_global, _tf);
     _buffer.transform(cloud, *cld_global, _global_frame);
     cld_global->header.stamp = cloud.header.stamp;
 
