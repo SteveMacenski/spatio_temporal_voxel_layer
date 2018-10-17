@@ -42,6 +42,7 @@ namespace spatio_temporal_voxel_layer {
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
+  : _first_time(false)
 {
 }
 
@@ -63,15 +64,15 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   // initialize parameters, grid, and sub/pubs
   ros::NodeHandle nh("~/" + name_), g_nh, prefix_nh;
+  _nh = &nh;
 
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
   ROS_INFO("%s's global frame is %s.", \
                                     getName().c_str(), _global_frame.c_str());
 
   bool track_unknown_space;
-  double transform_tolerance, voxel_decay, map_save_time;
+  double transform_tolerance, map_save_time;
   std::string topics_string;
-  int decay_model;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
   // timeout in seconds for transforms
@@ -113,10 +114,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     default_value_ = costmap_2d::FREE_SPACE;
   }
 
-  if (_publish_voxels)
-  {
-    _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
-  }
+  _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
+
+
   _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
                                   this);
@@ -491,6 +491,10 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLayerConfig &config, uint32_t level)
 /*****************************************************************************/
 {
+  if (_first_time){
+    // Possible initialization here
+    _first_time = false;
+  }
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
     if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
@@ -499,12 +503,13 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLay
     }
   };
   auto default_value = (config.track_unknown_space) ?
-    costmap_2d::NO_INFORMATION:
+    costmap_2d::NO_INFORMATION :
     costmap_2d::FREE_SPACE;
   updateFlagIfChanged(default_value_, default_value);
   updateFlagIfChanged(_voxel_size, config.voxel_size);
   updateFlagIfChanged(_voxel_decay, config.voxel_decay);
   updateFlagIfChanged(_decay_model, config.decay_model);
+  updateFlagIfChanged(_publish_voxels, config.publish_voxel_map);
 
   _enabled = config.enabled;
   _combination_method = config.combination_method;

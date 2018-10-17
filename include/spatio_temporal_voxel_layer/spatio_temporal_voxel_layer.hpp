@@ -133,6 +133,7 @@ private:
   // Dynamic reconfigure
   void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
   dynamicReconfigureServerType* _dynamic_reconfigure_server;
+  bool _first_time;
 
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
@@ -153,6 +154,7 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
+  ros::NodeHandle* _nh;
 };
 
 }; // end namespace
