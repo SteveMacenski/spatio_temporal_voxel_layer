@@ -264,9 +264,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   }
 
   // Dynamic reconfigure
-  dynamic_reconfigure::Server<spatio_temporal_voxel_layer::SpatioTemporalVoxelLayerConfig>::CallbackType f;
+  dynamic_reconfigure::Server<dynamicReconfigureType>::CallbackType f;
   f = boost::bind(&SpatioTemporalVoxelLayer::DynamicReconfigureCallback, this, _1, _2);
-  _dynamic_reconfigure_server = std::make_shared<dynamicReconfigureServerType>(nh);
+  _dynamic_reconfigure_server = new dynamicReconfigureServerType(nh);
   _dynamic_reconfigure_server->setCallback(f);
 
   ROS_INFO("%s initialization complete!", getName().c_str());

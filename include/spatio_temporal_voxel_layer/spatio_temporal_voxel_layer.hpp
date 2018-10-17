@@ -60,7 +60,6 @@
 #include <string>
 #include <iostream>
 #include <time.h>
-#include <memory>
 // msgs
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -133,7 +132,7 @@ private:
 
   // Dynamic reconfigure
   void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
-  std::shared_ptr<dynamicReconfigureServerType> _dynamic_reconfigure_server;
+  dynamicReconfigureServerType* _dynamic_reconfigure_server;
 
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
