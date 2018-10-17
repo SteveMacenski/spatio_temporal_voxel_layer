@@ -18,15 +18,20 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   visualization_msgs
   message_generation
+  dynamic_reconfigure
 )
 
 add_service_files(DIRECTORY msgs
   FILES
   SaveGrid.srv
 )
+generate_dynamic_reconfigure_options(
+  cfg/SpatioTemporalVoxelLayer.cfg
+)
 generate_messages(
    DEPENDENCIES
    std_msgs
+   dynamic_reconfigure
 )
 
 find_package(PCL REQUIRED)
@@ -70,6 +75,7 @@ catkin_package(
         costmap_2d
         tf
         visualization_msgs
+        dynamic_reconfigure
     DEPENDS
         TBB
         OpenVDB
@@ -85,7 +91,7 @@ add_library(${PROJECT_NAME}
             src/frustum.cpp
             src/vdb2pc.cpp
 )
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
