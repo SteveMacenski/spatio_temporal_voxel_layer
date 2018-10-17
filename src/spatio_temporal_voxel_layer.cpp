@@ -51,6 +51,7 @@ SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 {
   // I prefer to manage my own memory, I know others like std::unique_ptr
   delete _voxel_grid;
+  delete _dynamic_reconfigure_server;
 }
 
 /*****************************************************************************/
@@ -491,32 +492,19 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLay
 /*****************************************************************************/
 {
   bool update_grid(false);
-  auto updateFlagIfChangedDouble = [&update_grid](double& own, double& reference){
-    if (own != reference){
+  auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
+    if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
       own = reference;
       update_grid = true;
     }
   };
-  auto updateFlagIfChangedUchar = [&update_grid](unsigned char& own, unsigned char& reference){
-    if (own != reference){
-      own = reference;
-      update_grid = true;
-    }
-  };
-  auto updateFlagIfChangedInt = [&update_grid](int& own, int& reference){
-    if (own != reference){
-      own = reference;
-      update_grid = true;
-    }
-  };
-
   auto default_value = (config.track_unknown_space) ?
     costmap_2d::NO_INFORMATION:
     costmap_2d::FREE_SPACE;
-  updateFlagIfChangedUchar(default_value_, default_value);
-  updateFlagIfChangedDouble(_voxel_size, config.voxel_size);
-  updateFlagIfChangedDouble(_voxel_decay, config.voxel_decay);
-  updateFlagIfChangedInt(_decay_model, config.decay_model);
+  updateFlagIfChanged(default_value_, default_value);
+  updateFlagIfChanged(_voxel_size, config.voxel_size);
+  updateFlagIfChanged(_voxel_decay, config.voxel_decay);
+  updateFlagIfChanged(_decay_model, config.decay_model);
 
   _enabled = config.enabled;
   _combination_method = config.combination_method;
