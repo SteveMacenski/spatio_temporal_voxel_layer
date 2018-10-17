@@ -528,7 +528,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLay
     _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
                                                           (double)default_value_, \
                                                           _decay_model, \
-                                                          _voxel_decay, \
+                                                          -_voxel_decay, \
                                                           _publish_voxels);
   }
 }
