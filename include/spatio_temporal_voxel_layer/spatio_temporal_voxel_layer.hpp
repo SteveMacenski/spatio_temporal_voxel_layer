@@ -43,9 +43,11 @@
 
 // voxel grid
 #include <spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp>
+#include <spatio_temporal_voxel_layer/SpatioTemporalVoxelLayerConfig.h>
 // ROS
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
+#include <dynamic_reconfigure/server.h>
 // costmap
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -58,6 +60,7 @@
 #include <string>
 #include <iostream>
 #include <time.h>
+#include <memory>
 // msgs
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -76,6 +79,8 @@ namespace spatio_temporal_voxel_layer
 // conveniences for line lengths
 typedef std::vector<boost::shared_ptr<message_filters::SubscriberBase> >::iterator observation_subscribers_iter;
 typedef std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >::iterator observation_buffers_iter;
+typedef spatio_temporal_voxel_layer::SpatioTemporalVoxelLayerConfig dynamicReconfigureType;
+typedef  dynamic_reconfigure::Server<dynamicReconfigureType> dynamicReconfigureServerType;
 
 // Core ROS voxel layer class
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer
@@ -126,6 +131,10 @@ private:
   bool AddStaticObservations(const observation::MeasurementReading& obs);
   bool RemoveStaticObservations(void);
 
+  // Dynamic reconfigure
+  void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
+  std::shared_ptr<dynamicReconfigureServerType> _dynamic_reconfigure_server;
+
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
   std::vector<boost::shared_ptr<tf::MessageFilterBase> >           _observation_notifiers;
@@ -139,8 +148,8 @@ private:
   ros::Duration                        _map_save_duration;
   ros::Time                            _last_map_save_time;
   std::string                          _global_frame;
-  double                               _voxel_size;
-  int                                  _combination_method, _mark_threshold;
+  double                               _voxel_size, _voxel_decay;
+  int                                  _combination_method, _mark_threshold, _decay_model;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;

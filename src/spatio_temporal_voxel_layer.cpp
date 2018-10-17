@@ -91,9 +91,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // keep tabs on unknown space
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
-  nh.param("decay_model", decay_model, 0);
+  nh.param("decay_model", _decay_model, 0);
   // decay param
-  nh.param("voxel_decay", voxel_decay, -1.);
+  nh.param("voxel_decay", _voxel_decay, -1.);
   // whether to map or navigate
   nh.param("mapping_mode", _mapping_mode, false);
   // if mapping, how often to save a map for safety
@@ -122,8 +122,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
                                                         (double)default_value_, \
-                                                        decay_model, \
-                                                        voxel_decay, \
+                                                        _decay_model, \
+                                                        _voxel_decay, \
                                                         _publish_voxels);
   matchSize();
   current_ = true;
@@ -262,6 +262,13 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_notifiers.back()->setTargetFrames(target_frames);
     }
   }
+
+  // Dynamic reconfigure
+  dynamic_reconfigure::Server<spatio_temporal_voxel_layer::SpatioTemporalVoxelLayerConfig>::CallbackType f;
+  f = boost::bind(&SpatioTemporalVoxelLayer::DynamicReconfigureCallback, this, _1, _2);
+  _dynamic_reconfigure_server = std::make_shared<dynamicReconfigureServerType>(nh);
+  _dynamic_reconfigure_server->setCallback(f);
+
   ROS_INFO("%s initialization complete!", getName().c_str());
 }
 
@@ -476,6 +483,53 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
     ROS_WARN("Couldn't remove static observations from %s.", \
              getName().c_str());
     return false;
+  }
+}
+
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLayerConfig &config, uint32_t level)
+/*****************************************************************************/
+{
+  bool update_grid(false);
+  auto updateFlagIfChangedDouble = [&update_grid](double& own, double& reference){
+    if (own != reference){
+      own = reference;
+      update_grid = true;
+    }
+  };
+  auto updateFlagIfChangedUchar = [&update_grid](unsigned char& own, unsigned char& reference){
+    if (own != reference){
+      own = reference;
+      update_grid = true;
+    }
+  };
+  auto updateFlagIfChangedInt = [&update_grid](int& own, int& reference){
+    if (own != reference){
+      own = reference;
+      update_grid = true;
+    }
+  };
+
+  auto default_value = (config.track_unknown_space) ?
+    costmap_2d::NO_INFORMATION:
+    costmap_2d::FREE_SPACE;
+  updateFlagIfChangedUchar(default_value_, default_value);
+  updateFlagIfChangedDouble(_voxel_size, config.voxel_size);
+  updateFlagIfChangedDouble(_voxel_decay, config.voxel_decay);
+  updateFlagIfChangedInt(_decay_model, config.decay_model);
+
+  _enabled = config.enabled;
+  _combination_method = config.combination_method;
+  _mark_threshold = config.mark_threshold;
+  _update_footprint_enabled = config.update_footprint_enabled;
+
+  if (update_grid){
+    delete _voxel_grid;
+    _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
+                                                          (double)default_value_, \
+                                                          _decay_model, \
+                                                          _voxel_decay, \
+                                                          _publish_voxels);
   }
 }
 
