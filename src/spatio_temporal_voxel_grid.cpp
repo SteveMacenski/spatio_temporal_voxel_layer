@@ -192,7 +192,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       const double time_until_decay = base_duration_to_decay;
       if (time_until_decay <= 0)
       {
-        // expired by acceleration
+        // expired by temporal clearing
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
@@ -305,7 +305,7 @@ double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(const double& time_d
   {
     return _voxel_decay * std::exp(-time_delta);
   }
-  return 0.; // PERSISTENT
+  return _voxel_decay; // PERSISTENT
 }
 
 /*****************************************************************************/
@@ -314,20 +314,9 @@ double SpatioTemporalVoxelGrid::GetFrustumAcceleration( \
                                              const double& acceleration_factor)
 /*****************************************************************************/
 {
-  if (_decay_model == LINEAR)
-  {
-    const double acceleration = 1. / 6. * \
-      acceleration_factor * (time_delta * time_delta * time_delta);
-    return acceleration;
-  }
-  else if (_decay_model == EXPONENTIAL)
-  {
-    const double acceleration = 1. / \
-      (acceleration_factor * acceleration_factor) * \
-      std::exp(acceleration_factor * time_delta);
-    return acceleration;
-  }
-  return 0.; // PERSISTENT
+  const double acceleration = 1. / 6. * acceleration_factor * \
+    (time_delta * time_delta * time_delta);
+  return acceleration;
 }
 
 /*****************************************************************************/
