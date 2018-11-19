@@ -70,7 +70,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   bool track_unknown_space;
   double transform_tolerance, voxel_decay, map_save_time;
   std::string topics_string;
-  int decay_model;
+  int decay_model_int;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
   // timeout in seconds for transforms
@@ -91,7 +91,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // keep tabs on unknown space
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
-  nh.param("decay_model", decay_model, 0);
+  nh.param("decay_model", decay_model_int, 0);
+  volume_grid::GlobalDecayModel decay_model = \
+                   static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // decay param
   nh.param("voxel_decay", voxel_decay, -1.);
   // whether to map or navigate

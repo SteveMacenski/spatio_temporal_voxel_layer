@@ -70,6 +70,13 @@
 namespace volume_grid
 {
 
+enum GlobalDecayModel
+{
+  LINEAR = 0,
+  EXPONENTIAL = 1,
+  PERSISTENT = 2
+};
+
 // Structure for an occupied cell for map
 struct occupany_cell
 {
@@ -106,7 +113,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(const float& voxel_size, const double& background_value,
-                          const int& decay_model, const double& voxel_decay,
+                          const GlobalDecayModel& decay_model, const double& voxel_decay,
                           const bool& pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
 
@@ -150,7 +157,7 @@ protected:
   openvdb::Vec3d IndexToWorld(const openvdb::Coord& coord) const;
 
   mutable openvdb::DoubleGrid::Ptr _grid;
-  int                             _decay_model;
+  GlobalDecayModel                _decay_model;
   double                          _background_value, _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
   pcl::PointCloud<pcl::PointXYZ>::Ptr     _pc;

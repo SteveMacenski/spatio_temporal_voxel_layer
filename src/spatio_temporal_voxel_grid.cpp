@@ -42,7 +42,8 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
-                   const double& background_value, const int& decay_model,\
+                   const double& background_value,                        \
+                   const GlobalDecayModel& decay_model,                   \
                    const double& voxel_decay, const bool& pub_voxels) :
                    _background_value(background_value),                   \
                    _voxel_size(voxel_size),                               \
@@ -296,15 +297,15 @@ double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(const double& time_d
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
-  if (_decay_model == 0) // linear
+  if (_decay_model == LINEAR)
   {
     return _voxel_decay - time_delta;
   }
-  else if (_decay_model == 1) // exponential
+  else if (_decay_model == EXPONENTIAL)
   {
     return _voxel_decay * std::exp(-time_delta);
   }
-  return 0.; // permanent
+  return 0.; // PERSISTENT
 }
 
 /*****************************************************************************/
@@ -313,20 +314,20 @@ double SpatioTemporalVoxelGrid::GetFrustumAcceleration( \
                                              const double& acceleration_factor)
 /*****************************************************************************/
 {
-  if (_decay_model == 0) // linear
+  if (_decay_model == LINEAR)
   {
     const double acceleration = 1. / 6. * \
       acceleration_factor * (time_delta * time_delta * time_delta);
     return acceleration;
   }
-  else if (_decay_model == 1) // exponential
+  else if (_decay_model == EXPONENTIAL)
   {
     const double acceleration = 1. / \
       (acceleration_factor * acceleration_factor) * \
       std::exp(acceleration_factor * time_delta);
     return acceleration;
   }
-  return 0.; // permanent
+  return 0.; // PERSISTENT
 }
 
 /*****************************************************************************/
