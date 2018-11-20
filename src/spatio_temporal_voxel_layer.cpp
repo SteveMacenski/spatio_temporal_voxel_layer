@@ -167,6 +167,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("voxel_filter", voxel_filter, false);
     // clears measurement buffer after reading values from it
     source_node.param("clear_after_reading", clear_after_reading, false);
+    // model type - default depth camera frustum model
+    int model_type_int;
+    source_node.param("model_type", model_type_int, 0);
+    ModelType model_type = static_cast<ModelType>(model_type_int);
 
     if (!sensor_frame.empty())
     {
@@ -194,7 +198,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
-        voxel_filter, clear_after_reading)));
+        voxel_filter, clear_after_reading, model_type)));
 
     // Add buffer to marking observation buffers
     if (marking == true)

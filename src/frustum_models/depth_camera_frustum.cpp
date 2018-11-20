@@ -35,16 +35,15 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include <spatio_temporal_voxel_layer/frustum.hpp>
+#include <spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp>
 
 namespace geometry
 {
 
 /*****************************************************************************/
-Frustum::Frustum(const double& vFOV, const double& hFOV,     \
-                 const double& min_dist, const double& max_dist) :  
-                                   _vFOV(vFOV), _hFOV(hFOV), \
-                                   _min_d(min_dist), _max_d(max_dist)
+DepthCameraFrustum::DepthCameraFrustum(const double& vFOV, const double& hFOV,
+                              const double& min_dist, const double& max_dist) :
+                   _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
 {
   _valid_frustum = false;
@@ -59,13 +58,13 @@ Frustum::Frustum(const double& vFOV, const double& hFOV,     \
 }
 
 /*****************************************************************************/
-Frustum::~Frustum(void)
+DepthCameraFrustum::~DepthCameraFrustum(void)
 /*****************************************************************************/
 {
 }
 
 /*****************************************************************************/
-void Frustum::ComputePlaneNormals(void)
+void DepthCameraFrustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
   // give ability to construct with bogus values
@@ -159,7 +158,7 @@ void Frustum::ComputePlaneNormals(void)
 }
 
 /*****************************************************************************/
-void Frustum::TransformPlaneNormals(void)
+void DepthCameraFrustum::TransformModel(void)
 /*****************************************************************************/
 {
   if (!_valid_frustum)
@@ -290,7 +289,7 @@ void Frustum::TransformPlaneNormals(void)
 }
 
 /*****************************************************************************/
-bool Frustum::IsInside(const openvdb::Vec3d& pt)
+bool DepthCameraFrustum::IsInside(const openvdb::Vec3d& pt)
 /*****************************************************************************/
 {
   if (!_valid_frustum)
@@ -315,21 +314,21 @@ bool Frustum::IsInside(const openvdb::Vec3d& pt)
 }
 
 /*****************************************************************************/
-void Frustum::SetPosition(const geometry_msgs::Point& origin)
+void DepthCameraFrustum::SetPosition(const geometry_msgs::Point& origin)
 /*****************************************************************************/
 {
   _position = Eigen::Vector3d(origin.x, origin.y, origin.z);
 }
 
 /*****************************************************************************/
-void Frustum::SetOrientation(const geometry_msgs::Quaternion& quat)
+void DepthCameraFrustum::SetOrientation(const geometry_msgs::Quaternion& quat)
 /*****************************************************************************/
 {
   _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
 }
 
 /*****************************************************************************/
-double Frustum::Dot(const VectorWithPt3D& plane_pt, \
+double DepthCameraFrustum::Dot(const VectorWithPt3D& plane_pt, \
                                           const openvdb::Vec3d& query_pt) const
 /*****************************************************************************/
 {
@@ -337,7 +336,7 @@ double Frustum::Dot(const VectorWithPt3D& plane_pt, \
 }
 
 /*****************************************************************************/
-double Frustum::Dot(const VectorWithPt3D& plane_pt, \
+double DepthCameraFrustum::Dot(const VectorWithPt3D& plane_pt, \
                                          const Eigen::Vector3d& query_pt) const
 /*****************************************************************************/
 {

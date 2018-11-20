@@ -109,7 +109,8 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
 
   if(clearing_readings.size() == 0)
   {
-    obs_frustums.push_back(frustum_model(geometry::Frustum(0.,0.,0.,0.), 0.));
+    obs_frustums.push_back(frustum_model( \
+                        new geometry::DepthCameraFrustum(0.,0.,0.,0.), 0.));
     TemporalClearAndGenerateCostmap(obs_frustums);
     return;
   }
@@ -120,13 +121,23 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
                                                   clearing_readings.begin();
   for (it; it != clearing_readings.end(); ++it)
   {
-    geometry::Frustum frustum(it->_vertical_fov_in_rad,   \
-                              it->_horizontal_fov_in_rad, \
-                              it->_min_z_in_m,            \
-                              it->_max_z_in_m);
-    frustum.SetPosition(it->_origin);
-    frustum.SetOrientation(it->_orientation);
-    frustum.TransformPlaneNormals();
+    geometry::Frustum* frustum;
+    if (it->_model_type == DEPTH_CAMERA)
+    {
+      frustum = new geometry::DepthCameraFrustum(it->_vertical_fov_in_rad,
+                                                 it->_horizontal_fov_in_rad,
+                                                 it->_min_z_in_m,
+                                                 it->_max_z_in_m);
+    }
+    else
+    {
+      // add else if statement for each implemented model
+      continue;
+    }
+
+    frustum->SetPosition(it->_origin);
+    frustum->SetOrientation(it->_orientation);
+    frustum->TransformModel();
     obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
   TemporalClearAndGenerateCostmap(obs_frustums);
@@ -156,7 +167,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
-      if ( frustum_it->frustum.IsInside(this->IndexToWorld(pt_index)) )
+      if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
 
@@ -184,6 +195,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
           break;
         }
       }
+      delete frustum_it->frustum;
     }
 
     // if not inside any, check against nominal decay model
