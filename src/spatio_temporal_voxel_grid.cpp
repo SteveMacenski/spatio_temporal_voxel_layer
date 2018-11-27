@@ -156,7 +156,6 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
-
   for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
