@@ -112,8 +112,6 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
 
   if(clearing_readings.size() == 0)
   {
-    obs_frustums.push_back(frustum_model( \
-                        new geometry::DepthCameraFrustum(0.,0.,0.,0.), 0.));
     TemporalClearAndGenerateCostmap(obs_frustums);
     return;
   }
@@ -158,7 +156,8 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
-  for (cit_grid; cit_grid; ++cit_grid)
+
+  for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
 
@@ -171,6 +170,11 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
+      if (!frustum_it->frustum)
+      {
+        continue;
+      }
+
       if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
