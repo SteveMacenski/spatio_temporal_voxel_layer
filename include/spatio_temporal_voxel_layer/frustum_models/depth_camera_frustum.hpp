@@ -37,25 +37,11 @@
  *          and associated methods
  *********************************************************************/
 
-#ifndef FRUSTUM_H_
-#define FRUSTUM_H_
+#ifndef DEPTH_FRUSTUM_H_
+#define DEPTH_FRUSTUM_H_
 
-// Eigen
-#include <Eigen/Geometry>
-// STL
-#include <vector>
-#include <cassert>
-// OpenVDB
-#include <openvdb/openvdb.h>
-// msgs
-#include <geometry_msgs/Point.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Quaternion.h>
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/Pose.h>
-// ROS
-#include <ros/ros.h>
+// STVL
+#include <spatio_temporal_voxel_layer/frustum_models/frustum.hpp>
 
 namespace geometry
 {
@@ -63,55 +49,23 @@ namespace geometry
 // visualize the frustum should someone other than me care
 #define VISUALIZE_FRUSTUM 0
 
-// A structure for maintaining vectors and points in world spaces
-struct VectorWithPt3D
-{
-  VectorWithPt3D(const double& x_, const double& y_, \
-                 const double& z_, const Eigen::Vector3d& p0) : \
-                 x(x_), y(y_), z(z_), initial_point(p0)
-  {
-  }
-  
-  VectorWithPt3D(void) : x(0.), y(0.), z(0.)
-  {
-  }
-
-  inline VectorWithPt3D operator*(double a)
-  {
-    return VectorWithPt3D(a*x, a*y, a*z, initial_point);
-  }
-
-  // given a transform, transform its information
-  void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
-  {
-    Eigen::Vector3d vec_t = homogeneous_transform.rotation() * Eigen::Vector3d(x,y,z);
-    vec_t.normalize();
-    x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
-    initial_point = homogeneous_transform * initial_point;
-    return;
-  }
-
-  double x, y, z;
-  Eigen::Vector3d initial_point;
-};
-
 // A class to model a depth sensor frustum in world space
-class Frustum
+class DepthCameraFrustum : public Frustum
 {
 public:
-  Frustum(const double& vFOV, const double& hFOV,
+  DepthCameraFrustum(const double& vFOV, const double& hFOV,
           const double& min_dist, const double& max_dist);
-  ~Frustum(void);
+  virtual ~DepthCameraFrustum(void);
 
   // transform plane normals by depth camera pose
-  void TransformPlaneNormals(void);
+  virtual void TransformModel(void);
 
   // determine if a point is inside of the transformed frustum
-  bool IsInside(const openvdb::Vec3d& pt);
+  virtual bool IsInside(const openvdb::Vec3d& pt);
 
   // set pose of depth camera in global space
-  void SetPosition(const geometry_msgs::Point& origin);
-  void SetOrientation(const geometry_msgs::Quaternion& quat);
+  virtual void SetPosition(const geometry_msgs::Point& origin);
+  virtual void SetOrientation(const geometry_msgs::Quaternion& quat);
 
 private:
   // utils to find useful frustum metadata

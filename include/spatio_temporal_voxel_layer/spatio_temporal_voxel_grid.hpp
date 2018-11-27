@@ -65,7 +65,7 @@
 #include <openvdb/tools/RayIntersector.h>
 // measurement struct and buffer
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
-#include <spatio_temporal_voxel_layer/frustum.hpp>
+#include <spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp>
 // Mutex
 #include <boost/thread/mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -92,11 +92,18 @@ struct occupany_cell
 // Structure for wrapping frustum model and necessary metadata
 struct frustum_model
 {
-  frustum_model(geometry::Frustum _frustum, const double& _factor) :
+  frustum_model(geometry::Frustum* _frustum, const double& _factor) :
     frustum(_frustum), accel_factor(_factor)
   {
   }
-  geometry::Frustum frustum;
+  ~frustum_model()
+  {
+    if (frustum)
+    {
+      delete frustum;
+    }
+  }
+  geometry::Frustum* frustum;
   const double accel_factor;
 };
 

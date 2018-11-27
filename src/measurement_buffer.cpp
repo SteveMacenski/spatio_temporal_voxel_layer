@@ -41,26 +41,27 @@ namespace buffer
 {
 
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
-                                     const double& observation_keep_time, \
-                                     const double& expected_update_rate,  \
-                                     const double& min_obstacle_height,   \
-                                     const double& max_obstacle_height,   \
-                                     const double& obstacle_range,        \
-                                     tf2_ros::Buffer& tf,                 \
-                                     const std::string& global_frame,     \
-                                     const std::string& sensor_frame,     \
-                                     const double& tf_tolerance,          \
-                                     const double& min_d,                 \
-                                     const double& max_d,                 \
-                                     const double& vFOV,                  \
-                                     const double& hFOV,                  \
-                                     const double& decay_acceleration,    \
-                                     const bool& marking,                 \
-                                     const bool& clearing,                \
-                                     const double& voxel_size,            \
-                                     const bool& voxel_filter,            \
-                                     const bool& clear_buffer_after_reading) :
+MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
+                                     const double& observation_keep_time,    \
+                                     const double& expected_update_rate,     \
+                                     const double& min_obstacle_height,      \
+                                     const double& max_obstacle_height,      \
+                                     const double& obstacle_range,           \
+                                     tf::TransformListener& tf,              \
+                                     const std::string& global_frame,        \
+                                     const std::string& sensor_frame,        \
+                                     const double& tf_tolerance,             \
+                                     const double& min_d,                    \
+                                     const double& max_d,                    \
+                                     const double& vFOV,                     \
+                                     const double& hFOV,                     \
+                                     const double& decay_acceleration,       \
+                                     const bool& marking,                    \
+                                     const bool& clearing,                   \
+                                     const double& voxel_size,               \
+                                     const bool& voxel_filter,               \
+                                     const bool& clear_buffer_after_reading, \
+                                     const ModelType& model_type) :
 /*****************************************************************************/
     _buffer(tf), _observation_keep_time(observation_keep_time),
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -71,7 +72,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading)
+    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _model_type(model_type)
 {
 }
 
@@ -122,6 +124,7 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
+    _observation_list.front()._model_type = _model_type;
 
     if (_clearing && !_marking)
     {

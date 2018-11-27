@@ -38,3 +38,4 @@ rgbd_obstacle_layer:
     vertical_fov_angle: 0.8745  # default 0.7, radians
     horizontal_fov_angle: 1.048 # default 1.04, radians
     decay_acceleration: 15.0    # default 0, 1/s^2. If laser scanner MUST be 0
+    model_type: 0                # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
