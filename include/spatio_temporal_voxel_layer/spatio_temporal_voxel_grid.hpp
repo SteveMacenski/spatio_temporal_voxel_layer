@@ -100,6 +100,13 @@ struct frustum_model
     frustum(_frustum), accel_factor(_factor)
   {
   }
+  ~frustum_model()
+  {
+    if (frustum)
+    {
+      delete frustum;
+    }
+  }
   geometry::Frustum* frustum;
   const double accel_factor;
 };

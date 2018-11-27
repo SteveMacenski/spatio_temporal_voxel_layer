@@ -132,6 +132,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
     else
     {
       // add else if statement for each implemented model
+      delete frustum;
       continue;
     }
 
@@ -195,7 +196,6 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
           break;
         }
       }
-      delete frustum_it->frustum;
     }
 
     // if not inside any, check against nominal decay model

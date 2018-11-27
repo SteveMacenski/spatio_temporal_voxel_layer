@@ -50,7 +50,10 @@ SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
 {
   // I prefer to manage my own memory, I know others like std::unique_ptr
-  delete _voxel_grid;
+  if (_voxel_grid)
+  {
+    delete _voxel_grid;    
+  }
 }
 
 /*****************************************************************************/
@@ -100,6 +103,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("mapping_mode", _mapping_mode, false);
   // if mapping, how often to save a map for safety
   nh.param("map_save_duration", map_save_time, 60.);
+  ROS_INFO("%s loaded parameters from parameter server.", getName().c_str());
 
   if (_mapping_mode)
   {
@@ -129,6 +133,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                                         _publish_voxels);
   matchSize();
   current_ = true;
+  ROS_INFO("%s created underlying voxel grid.", getName().c_str());
 
   const std::string tf_prefix = tf::getPrefixParam(prefix_nh);
   std::stringstream ss(topics_string);
