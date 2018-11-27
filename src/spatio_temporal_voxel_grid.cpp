@@ -62,7 +62,10 @@ SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
 /*****************************************************************************/
 {
   // pcl pointclouds free themselves
-  delete _cost_map;
+  if (_cost_map)
+  {
+    delete _cost_map;    
+  }
 }
 
 /*****************************************************************************/
