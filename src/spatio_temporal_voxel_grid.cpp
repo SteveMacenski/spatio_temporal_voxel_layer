@@ -112,8 +112,6 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
 
   if(clearing_readings.size() == 0)
   {
-    obs_frustums.push_back(frustum_model( \
-                        new geometry::DepthCameraFrustum(0.,0.,0.,0.), 0.));
     TemporalClearAndGenerateCostmap(obs_frustums);
     return;
   }
@@ -158,7 +156,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
-  for (cit_grid; cit_grid; ++cit_grid)
+  for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
 
@@ -171,6 +169,11 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
+      if (!frustum_it->frustum)
+      {
+        continue;
+      }
+
       if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
@@ -180,7 +183,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
         const double time_until_decay = base_duration_to_decay - \
           frustum_acceleration;
-        if (time_until_decay <= 0)
+        if (time_until_decay < 0.)
         {
           // expired by acceleration
           if(!this->ClearGridPoint(pt_index))
@@ -204,8 +207,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     // if not inside any, check against nominal decay model
     if(!frustum_cycle)
     {
-      const double time_until_decay = base_duration_to_decay;
-      if (time_until_decay <= 0)
+      if (base_duration_to_decay < 0.)
       {
         // expired by temporal clearing
         if(!this->ClearGridPoint(pt_index))
