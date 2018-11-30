@@ -307,11 +307,11 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   /*/
 
   //VLP Frustum
-  float local_x = pt[0] - _position[0];
-  float local_y = pt[1] - _position[1];
+  double local_x = pt[0] - _position[0];
+  double local_y = pt[1] - _position[1];
   // float local_z = pt[2] - _position[2];
 
-  float radial_distance = sqrt( (local_x * local_x) + (local_y * local_y) );
+  double radial_distance = sqrt( (local_x * local_x) + (local_y * local_y) );
 
   // Keep if inside minimum distance or beyond maximum range)
   if (radial_distance > _max_d || radial_distance < _min_d )
