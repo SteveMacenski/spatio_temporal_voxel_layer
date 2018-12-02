@@ -36,6 +36,6 @@ rgbd_obstacle_layer:
     max_z: 1.0                  # default 0, meters
     min_z: 8.0                  # default 10, meters
     vertical_fov_angle: 0.523  # default 0.7, radians (Realsense Camera).  VLP16 is 0.523 
-    horizontal_fov_angle: 5555  # Does nothing in VLP16 model, assumes 360. If vFOV cropping is needed, it needs to be done on the Point Cloud input.
+    horizontal_fov_angle: 5555  # Does nothing in VLP16 model, assumes 360. If hFOV cropping is needed, it needs to be done on the Point Cloud input.
     decay_acceleration: 5.0     # default 0, 1/s^2. 
     model_type: 1               # default 0, model type for frustum. 0=depth camera, 1=3d lidar like VLP16 or similar
