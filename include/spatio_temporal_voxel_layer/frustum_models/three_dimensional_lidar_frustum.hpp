@@ -37,17 +37,14 @@
  *          and associated methods
  *********************************************************************/
 
-#ifndef LIDAR_FRUSTUM_H_
-#define LIDAR_FRUSTUM_H_
+#ifndef THREE_DIMENSIONAL_LIDAR_FRUSTUM_H_
+#define THREE_DIMENSIONAL_LIDAR_FRUSTUM_H_
 
 // STVL
 #include <spatio_temporal_voxel_layer/frustum_models/frustum.hpp>
 
 namespace geometry
 {
-
-// visualize the frustum should someone other than me care
-#define VISUALIZE_FRUSTUM 0
 
 // A class to model a depth sensor frustum in world space
 class ThreeDimensionalLidarFrustum : public Frustum
@@ -69,7 +66,7 @@ public:
 
 private:
   // utils to find useful frustum metadata
-  void ComputePlaneNormals(void);
+  // void ComputePlaneNormals(void);
   double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
   double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
@@ -80,10 +77,6 @@ private:
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
 
-  #if VISUALIZE_FRUSTUM
-    std::vector<Eigen::Vector3d> _frustum_pts;
-    ros::Publisher _frustumPub;
-  #endif
 };
 
 } // end namespace
