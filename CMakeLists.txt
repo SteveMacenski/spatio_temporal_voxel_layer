@@ -84,7 +84,6 @@ add_library(${PROJECT_NAME}
             src/measurement_buffer.cpp
             src/frustum_models/depth_camera_frustum.cpp
             src/frustum_models/three_dimensional_lidar_frustum.cpp
-            src/frustum_models/vlp16_deadzone_frustum.cpp
             src/vdb2pc.cpp
 )
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
