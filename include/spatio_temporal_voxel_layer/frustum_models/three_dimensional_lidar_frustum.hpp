@@ -72,6 +72,7 @@ private:
 
   double _vFOV, _hFOV, _min_d, _max_d;
   double _vFOVhalf;
+  double _hFOVhalf;
   // std::vector<VectorWithPt3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;

@@ -48,7 +48,8 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV, c
   _valid_frustum = true;
   ros::NodeHandle nh;
 
-_vFOVhalf = _vFOV / 2.0;
+  _vFOVhalf = _vFOV / 2.0;
+  _hFOVhalf = _hFOV / 2.0;
 }
 
 /*****************************************************************************/
@@ -68,22 +69,55 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 /*****************************************************************************/
 {
 
-Eigen::Vector3d point_in_global_frame(pt[0],pt[1],pt[2]);
-Eigen::Vector3d point_in_vlp_frame = _orientation * (point_in_global_frame - _position);
+  Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
 
-  double radial_distance = sqrt( (point_in_vlp_frame[0] * point_in_vlp_frame[0]) + (point_in_vlp_frame[1] * point_in_vlp_frame[1]) );
+  // Eigen::Affine3d T = Eigen::Affine3d::Identity();
+  // T.pretranslate(_orientation.inverse()*_position);
+  // T.prerotate(_orientation);
+  // Eigen::Vector3d vec_t = T.rotation() * Eigen::Vector3d(point_in_global_frame[0],point_in_global_frame[1],point_in_global_frame[2]);
+  // vec_t.normalize();
+  // // x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
+  // Eigen::Vector3d point_in_vlp_frame(vec_t[0], vec_t[1], vec_t[2]);
+  
+  // Eigen::Affine3d T = Eigen::Affine3d::Identity();
+  // _orientation.normalize();
+  // T.rotate(_orientation);
+  // Eigen::Vector3d point_in_vlp_frame = T.rotation() * ( point_in_global_frame - _position);
+
+  // Eigen::Vector3d point_in_vlp_frame = _orientation * (point_in_global_frame - _position);
+
+  Eigen::Vector3d point_in_vlp_frame = point_in_global_frame - _position;
+
+
+  double radial_distance = sqrt((point_in_vlp_frame[0] * point_in_vlp_frame[0]) + (point_in_vlp_frame[1] * point_in_vlp_frame[1]));
 
   // Check if inside frustum valid range
-  if (radial_distance > _max_d || radial_distance < _min_d )
+  if (radial_distance > _max_d || radial_distance < _min_d)
   {
     return false;
   }
-  
+
   // // Check if inside frustum valid vFOV
-  if (fabs(atan(point_in_vlp_frame[2]/radial_distance)) > _vFOVhalf)
+  if (fabs(atan(point_in_vlp_frame[2] / radial_distance)) > _vFOVhalf)
   {
     return false;
-  } 
+  }
+
+  // // Check if inside frustum valid hFOV
+  // if (point_in_vlp_frame[0] > 0) {
+    // if (fabs(atan(point_in_vlp_frame[1] / point_in_vlp_frame[0]) > _hFOVhalf))
+    // {
+    //   return false;
+    // }
+  // }
+  // else
+  // {
+  //   if ( ( fabs(atan(point_in_vlp_frame[0] / point_in_vlp_frame[1])) + 1.570796 )  > _hFOVhalf)
+  //   {
+  //     return false;
+  //   }
+  // }
+
   return true;
 }
 
