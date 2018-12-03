@@ -97,8 +97,11 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
     return false;
   }
 
+  #define CONEPADDING 0.01   //This value shifts the frustum "cone" outwards without shifting its angle.
+ 
+
   // // Check if inside frustum valid vFOV
-  if (fabs(atan(point_in_vlp_frame[2] / radial_distance)) > _vFOVhalf)
+  if (atan((fabs(point_in_vlp_frame[2]) - CONEPADDING) / radial_distance) > _vFOVhalf)
   {
     return false;
   }
