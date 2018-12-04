@@ -101,7 +101,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
  
 
   // // Check if inside frustum valid vFOV
-  if (atan((fabs(point_in_vlp_frame[2]) - CONEPADDING) / radial_distance) > _vFOVhalf)
+  if (atan((fabs(point_in_vlp_frame[2]) + CONEPADDING) / radial_distance) > _vFOVhalf)
   {
     return false;
   }
