@@ -25,9 +25,11 @@ add_service_files(DIRECTORY msgs
   FILES
   SaveGrid.srv
 )
+
 generate_dynamic_reconfigure_options(
   cfg/SpatioTemporalVoxelLayer.cfg
 )
+
 generate_messages(
    DEPENDENCIES
    std_msgs

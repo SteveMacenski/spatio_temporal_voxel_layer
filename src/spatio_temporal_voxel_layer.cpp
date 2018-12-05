@@ -42,7 +42,6 @@ namespace spatio_temporal_voxel_layer {
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
-  : _first_time(false)
 {
 }
 
@@ -114,8 +113,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     default_value_ = costmap_2d::FREE_SPACE;
   }
 
-  _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
-
+  if (_publish_voxels)
+  {
+     _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
+  }
 
   _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
@@ -488,13 +489,10 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::DynamicReconfigureCallback(SpatioTemporalVoxelLayerConfig &config, uint32_t level)
+void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
+                       SpatioTemporalVoxelLayerConfig &config, uint32_t level)
 /*****************************************************************************/
 {
-  if (_first_time){
-    // Possible initialization here
-    _first_time = false;
-  }
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
     if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
