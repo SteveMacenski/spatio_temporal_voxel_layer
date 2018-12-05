@@ -186,6 +186,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
 
+    bool enabled = true;
     // create an observation buffer
     _observation_buffers.push_back(
         boost::shared_ptr <buffer::MeasurementBuffer>
@@ -194,7 +195,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
-        voxel_filter, clear_after_reading)));
+        voxel_filter, enabled,  clear_after_reading)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -250,6 +251,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       filter->registerCallback(
           boost::bind(&SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1, \
                                                    _observation_buffers.back()));
+
+      boost::shared_ptr <ros::ServiceServer> server(new ros::ServiceServer);
+      (*server) = nh.advertiseService(source, \
+          boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, this, _1, \
+          _observation_buffers.back(), _observation_subscribers.back()));
 
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
@@ -342,6 +348,35 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
   buffer->BufferROSCloud(*message);
   buffer->Unlock();
 }
+
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
+                std_srvs::SetBool::Request & request,   \
+                std_srvs::SetBool::Response & response, \
+                boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
+                boost::shared_ptr<message_filters::SubscriberBase>& subcriber)
+/*****************************************************************************/
+{
+  buffer->Lock();
+  if( buffer->isEnabled() != request.data ) //updated
+  {
+    buffer->setEnabled(request.data);
+    if(request.data == true)
+    {
+      subcriber->subscribe();
+    }
+    else
+    {
+      if (subcriber != NULL)
+      {
+        subcriber->unsubscribe();
+      }
+    }
+  }
+  buffer->Unlock();
+
+}
+
 
 /*****************************************************************************/
 bool SpatioTemporalVoxelLayer::GetMarkingObservations( \

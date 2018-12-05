@@ -66,6 +66,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point.h>
 #include <spatio_temporal_voxel_layer/SaveGrid.h>
+#include <std_srvs/SetBool.h>
 // projector
 #include <laser_geometry/laser_geometry.h>
 // tf
@@ -133,7 +134,11 @@ private:
   // Dynamic reconfigure
   void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
   dynamicReconfigureServerType* _dynamic_reconfigure_server;
-  bool _first_time;
+
+  void BufferEnablerCallback( std_srvs::SetBool::Request & request,    \
+                              std_srvs::SetBool::Response & response,  \
+                              boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
+                              boost::shared_ptr<message_filters::SubscriberBase>& subcriber);
 
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
@@ -141,6 +146,7 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _observation_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
+  std::vector<boost::shared_ptr<ros::ServiceServer> >              _buffer_enabler_servers;
 
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;

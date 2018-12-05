@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(spatio_temporal_voxel_layer)
-add_compile_options(-std=c++17)
+
+add_definitions (-std=c++14)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 

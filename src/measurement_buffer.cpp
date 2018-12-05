@@ -60,6 +60,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const bool& clearing,                \
                                      const double& voxel_size,            \
                                      const bool& voxel_filter,            \
+                                     const bool& enabled,                 \
                                      const bool& clear_buffer_after_reading) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
@@ -71,7 +72,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading)
+    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading)
 {
 }
 
@@ -273,6 +274,21 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
       _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
   }
   return current;
+}
+
+
+/*****************************************************************************/
+bool MeasurementBuffer::isEnabled() const
+/*****************************************************************************/
+{
+  return _enabled;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::setEnabled(const bool enabled)
+/*****************************************************************************/
+{
+  _enabled = enabled;
 }
 
 /*****************************************************************************/
