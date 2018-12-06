@@ -135,7 +135,7 @@ private:
   void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
   dynamicReconfigureServerType* _dynamic_reconfigure_server;
 
-  void BufferEnablerCallback( std_srvs::SetBool::Request & request,    \
+  bool BufferEnablerCallback( std_srvs::SetBool::Request & request,    \
                               std_srvs::SetBool::Response & response,  \
                               boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
                               boost::shared_ptr<message_filters::SubscriberBase>& subcriber);

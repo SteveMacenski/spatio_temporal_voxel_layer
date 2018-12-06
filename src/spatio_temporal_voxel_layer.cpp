@@ -252,10 +252,15 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           boost::bind(&SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1, \
                                                    _observation_buffers.back()));
 
-      boost::shared_ptr <ros::ServiceServer> server(new ros::ServiceServer);
-      (*server) = nh.advertiseService(source, \
-          boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, this, _1, \
-          _observation_buffers.back(), _observation_subscribers.back()));
+      ros::ServiceServer* server;
+      boost::function < bool(std_srvs::SetBool::Request&, \
+                             std_srvs::SetBool::Response&) > serv_callback;
+
+      serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
+                                  this, _1, _2, _observation_buffers.back().get(),  \
+                                  _observation_subscribers.back().get());
+
+      *server = nh.advertiseService(source, serv_callback);
 
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
@@ -350,7 +355,7 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
+bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
                 std_srvs::SetBool::Request & request,   \
                 std_srvs::SetBool::Response & response, \
                 boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
@@ -374,7 +379,7 @@ void SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
     }
   }
   buffer->Unlock();
-
+  return true;
 }
 
 
