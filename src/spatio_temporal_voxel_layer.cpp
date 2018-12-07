@@ -63,7 +63,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   // initialize parameters, grid, and sub/pubs
   ros::NodeHandle nh("~/" + name_), g_nh, prefix_nh;
-  _nh = &nh;
 
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
   ROS_INFO("%s's global frame is %s.", \
@@ -115,7 +114,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   if (_publish_voxels)
   {
-     _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
+    _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
   }
 
   _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
@@ -195,7 +194,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
-        voxel_filter, enabled,  clear_after_reading)));
+        voxel_filter, enabled, clear_after_reading)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -257,11 +256,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                              std_srvs::SetBool::Response&) > serv_callback;
 
       serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
-                                  this, _1, _2, _observation_buffers.back().get(),  \
-                                  _observation_subscribers.back().get());
+                                  this, _1, _2, _observation_buffers.back(),  \
+                                  _observation_subscribers.back());
 
       *server = nh.advertiseService(source, serv_callback);
 
+      _buffer_enabler_servers.push_back(server);
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
     }
@@ -363,16 +363,16 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
 /*****************************************************************************/
 {
   buffer->Lock();
-  if( buffer->isEnabled() != request.data ) //updated
+  if( buffer->IsEnabled() != request.data ) //updated
   {
-    buffer->setEnabled(request.data);
+    buffer->SetEnabled(request.data);
     if(request.data == true)
     {
       subcriber->subscribe();
     }
     else
     {
-      if (subcriber != NULL)
+      if (subcriber)
       {
         subcriber->unsubscribe();
       }

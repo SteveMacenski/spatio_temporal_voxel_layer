@@ -80,7 +80,7 @@ namespace spatio_temporal_voxel_layer
 typedef std::vector<boost::shared_ptr<message_filters::SubscriberBase> >::iterator observation_subscribers_iter;
 typedef std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >::iterator observation_buffers_iter;
 typedef spatio_temporal_voxel_layer::SpatioTemporalVoxelLayerConfig dynamicReconfigureType;
-typedef  dynamic_reconfigure::Server<dynamicReconfigureType> dynamicReconfigureServerType;
+typedef dynamic_reconfigure::Server<dynamicReconfigureType> dynamicReconfigureServerType;
 
 // Core ROS voxel layer class
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer
@@ -146,7 +146,8 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _observation_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
-  std::vector<boost::shared_ptr<ros::ServiceServer> >              _buffer_enabler_servers;
+  //std::vector<boost::shared_ptr<ros::ServiceServer> >              _buffer_enabler_servers;
+  std::vector<ros::ServiceServer*>                                 _buffer_enabler_servers;
 
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
@@ -160,7 +161,6 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
-  ros::NodeHandle* _nh;
 };
 
 }; // end namespace

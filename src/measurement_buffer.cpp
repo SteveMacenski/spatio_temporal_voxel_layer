@@ -276,16 +276,15 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
   return current;
 }
 
-
 /*****************************************************************************/
-bool MeasurementBuffer::isEnabled() const
+bool MeasurementBuffer::IsEnabled(void) const
 /*****************************************************************************/
 {
   return _enabled;
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::setEnabled(const bool enabled)
+void MeasurementBuffer::SetEnabled(const bool& enabled)
 /*****************************************************************************/
 {
   _enabled = enabled;

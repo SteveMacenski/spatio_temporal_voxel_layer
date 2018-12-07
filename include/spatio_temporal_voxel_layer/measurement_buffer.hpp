@@ -103,8 +103,8 @@ public:
   void GetReadings(std::vector<observation::MeasurementReading>& observations);
 
   // enabler setter getter
-  bool isEnabled() const;
-  void setEnabled(const bool enabled);
+  bool IsEnabled(void) const;
+  void SetEnabled(const bool& enabled);
 
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
