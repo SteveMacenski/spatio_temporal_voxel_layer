@@ -147,7 +147,7 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
   //std::vector<boost::shared_ptr<ros::ServiceServer> >              _buffer_enabler_servers;
-  std::vector<ros::ServiceServer*>                                 _buffer_enabler_servers;
+  std::vector<ros::ServiceServer>                                 _buffer_enabler_servers;
 
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
