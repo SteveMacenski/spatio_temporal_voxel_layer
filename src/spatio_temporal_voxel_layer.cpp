@@ -277,10 +277,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   }
 
   // Dynamic reconfigure
-  dynamic_reconfigure::Server<dynamicReconfigureType>::CallbackType f;
-  f = boost::bind(&SpatioTemporalVoxelLayer::DynamicReconfigureCallback, this, _1, _2);
-  _dynamic_reconfigure_server = new dynamicReconfigureServerType(nh);
-  _dynamic_reconfigure_server->setCallback(f);
+//  dynamic_reconfigure::Server<dynamicReconfigureType>::CallbackType f;
+//  f = boost::bind(&SpatioTemporalVoxelLayer::DynamicReconfigureCallback, this, _1, _2);
+//  _dynamic_reconfigure_server = new dynamicReconfigureServerType(nh);
+//  _dynamic_reconfigure_server->setCallback(f);
 
   ROS_INFO("%s initialization complete!", getName().c_str());
 }
