@@ -381,16 +381,23 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
     if(request.data == true)
     {
       subcriber->subscribe();
+      response.message = "Enabling sensor";
     }
     else
     {
       if (subcriber)
       {
         subcriber->unsubscribe();
+        response.message = "Disabling sensor";
       }
     }
   }
+  else
+  {
+    response.message = "Sensor already in the required state doing nothing";
+  }
   buffer->Unlock();
+  response.success = true;
   return true;
 }
 
