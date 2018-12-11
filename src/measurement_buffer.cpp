@@ -61,7 +61,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
                                      const double& voxel_size,            \
                                      const bool& voxel_filter,            \
                                      const bool& enabled,                 \
-                                     const bool& clear_buffer_after_reading) :
+                                     const bool& clear_buffer_after_reading, \
+                                     const ModelType& model_type) :
 /*****************************************************************************/
     _tf(tf), _observation_keep_time(observation_keep_time), 
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -72,7 +73,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading)
+    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
+    _model_type(model_type)
 {
 }
 
@@ -141,6 +143,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
+    _observation_list.front()._model_type = _model_type;
 
     if (_clearing && !_marking)
     {

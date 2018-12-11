@@ -46,6 +46,11 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Quaternion.h>
 
+enum ModelType
+{
+  DEPTH_CAMERA = 0
+};
+
 namespace observation
 {
 
@@ -61,7 +66,7 @@ struct MeasurementReading
   /*****************************************************************************/
   MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
             double obstacle_range, double min_z, double max_z, double vFOV, double hFOV,
-            double decay_acceleration, bool marking, bool clearing) :
+            double decay_acceleration, bool marking, bool clearing, ModelType model_type) :
   /*****************************************************************************/
                                       _origin(origin),                                   \
                                       _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
@@ -72,15 +77,16 @@ struct MeasurementReading
                                       _horizontal_fov_in_rad(hFOV),                      \
                                       _decay_acceleration(decay_acceleration),           \
                                       _marking(marking),                                 \
-                                      _clearing(clearing)
+                                      _clearing(clearing),                               \
+                                      _model_type(model_type)
   {
   }
 
   /*****************************************************************************/
-  MeasurementReading(pcl::PointCloud<pcl::PointXYZ> cloud, double obstacle_range) :
+  MeasurementReading(pcl::PointCloud<pcl::PointXYZ> cld, double obstacle_range) :
+                               _cloud(new pcl::PointCloud<pcl::PointXYZ>(cld)),
+                               _obstacle_range_in_m(obstacle_range)
   /*****************************************************************************/
-                                    _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
-                                    _obstacle_range_in_m(obstacle_range)
   {
   }
 
@@ -97,7 +103,8 @@ struct MeasurementReading
                              _marking(obs._marking),                                    \
                              _clearing(obs._clearing),                                  \
                              _orientation(obs._orientation),                            \
-                             _decay_acceleration(obs._decay_acceleration)
+                             _decay_acceleration(obs._decay_acceleration),              \
+                             _model_type(obs._model_type)
   {
   }
 
@@ -107,6 +114,7 @@ struct MeasurementReading
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
   double _vertical_fov_in_rad, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
+  ModelType _model_type;
 
 };
 

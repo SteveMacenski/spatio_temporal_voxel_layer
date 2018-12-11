@@ -49,9 +49,12 @@ SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
 SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
 {
-  // I prefer to manage my own memory, I know others like std::unique_ptr
-  delete _voxel_grid;
+  
   delete _dynamic_reconfigure_server;
+  if (_voxel_grid)
+  {
+    delete _voxel_grid;    
+  }
 }
 
 /*****************************************************************************/
@@ -71,6 +74,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
   std::string topics_string;
+  int decay_model_int;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
   // timeout in seconds for transforms
@@ -91,13 +95,16 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // keep tabs on unknown space
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
-  nh.param("decay_model", _decay_model, 0);
+  nh.param("decay_model", decay_model_int, 0);
+  volume_grid::GlobalDecayModel decay_model = \
+                   static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // decay param
   nh.param("voxel_decay", _voxel_decay, -1.);
   // whether to map or navigate
   nh.param("mapping_mode", _mapping_mode, false);
   // if mapping, how often to save a map for safety
   nh.param("map_save_duration", map_save_time, 60.);
+  ROS_INFO("%s loaded parameters from parameter server.", getName().c_str());
 
   if (_mapping_mode)
   {
@@ -128,6 +135,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                                         _publish_voxels);
   matchSize();
   current_ = true;
+  ROS_INFO("%s created underlying voxel grid.", getName().c_str());
 
   const std::string tf_prefix = tf::getPrefixParam(prefix_nh);
   std::stringstream ss(topics_string);
@@ -166,6 +174,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("voxel_filter", voxel_filter, false);
     // clears measurement buffer after reading values from it
     source_node.param("clear_after_reading", clear_after_reading, false);
+    // model type - default depth camera frustum model
+    int model_type_int;
+    source_node.param("model_type", model_type_int, 0);
+    ModelType model_type = static_cast<ModelType>(model_type_int);
 
     if (!sensor_frame.empty())
     {
@@ -194,7 +206,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
-        voxel_filter, enabled, clear_after_reading)));
+        voxel_filter, clear_after_reading, model_type)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -391,7 +403,7 @@ bool SpatioTemporalVoxelLayer::GetMarkingObservations( \
   // get marking observations and static marked areas
   bool current = true;
 
-  for (unsigned int i=0; i!=_marking_buffers.size(); ++i) //1
+  for (unsigned int i = 0; i != _marking_buffers.size(); ++i)
   {
     _marking_buffers[i]->Lock();
     _marking_buffers[i]->GetReadings(marking_observations);
@@ -411,7 +423,7 @@ bool SpatioTemporalVoxelLayer::GetClearingObservations( \
 {
   // get clearing observations
   bool current = true;
-  for (unsigned int i = 0; i < _clearing_buffers.size(); ++i)
+  for (unsigned int i = 0; i != _clearing_buffers.size(); ++i)
   {
     _clearing_buffers[i]->Lock();
     _clearing_buffers[i]->GetReadings(clearing_observations);

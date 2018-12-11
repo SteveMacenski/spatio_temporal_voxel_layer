@@ -91,7 +91,8 @@ public:
                     const double& voxel_size,            \
                     const bool& voxel_filter,            \
                     const bool& enabled,                 \
-                    const bool& clear_buffer_after_reading);
+                    const bool& clear_buffer_after_reading,
+                    const ModelType& model_type);
 
   ~MeasurementBuffer(void);
 
@@ -128,6 +129,7 @@ private:
   double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
   double _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
+  ModelType _model_type;
 };
 
 } // namespace buffer

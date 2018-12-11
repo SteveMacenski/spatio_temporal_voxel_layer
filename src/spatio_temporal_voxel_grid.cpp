@@ -42,7 +42,8 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
-                   const double& background_value, const int& decay_model,\
+                   const double& background_value,                        \
+                   const GlobalDecayModel& decay_model,                   \
                    const double& voxel_decay, const bool& pub_voxels) :
                    _background_value(background_value),                   \
                    _voxel_size(voxel_size),                               \
@@ -61,7 +62,10 @@ SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
 /*****************************************************************************/
 {
   // pcl pointclouds free themselves
-  delete _cost_map;
+  if (_cost_map)
+  {
+    delete _cost_map;    
+  }
 }
 
 /*****************************************************************************/
@@ -108,7 +112,6 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
 
   if(clearing_readings.size() == 0)
   {
-    obs_frustums.push_back(frustum_model(geometry::Frustum(0.,0.,0.,0.), 0.));
     TemporalClearAndGenerateCostmap(obs_frustums);
     return;
   }
@@ -119,13 +122,24 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
                                                   clearing_readings.begin();
   for (it; it != clearing_readings.end(); ++it)
   {
-    geometry::Frustum frustum(it->_vertical_fov_in_rad,   \
-                              it->_horizontal_fov_in_rad, \
-                              it->_min_z_in_m,            \
-                              it->_max_z_in_m);
-    frustum.SetPosition(it->_origin);
-    frustum.SetOrientation(it->_orientation);
-    frustum.TransformPlaneNormals();
+    geometry::Frustum* frustum;
+    if (it->_model_type == DEPTH_CAMERA)
+    {
+      frustum = new geometry::DepthCameraFrustum(it->_vertical_fov_in_rad,
+                                                 it->_horizontal_fov_in_rad,
+                                                 it->_min_z_in_m,
+                                                 it->_max_z_in_m);
+    }
+    else
+    {
+      // add else if statement for each implemented model
+      delete frustum;
+      continue;
+    }
+
+    frustum->SetPosition(it->_origin);
+    frustum->SetOrientation(it->_orientation);
+    frustum->TransformModel();
     obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
   TemporalClearAndGenerateCostmap(obs_frustums);
@@ -142,7 +156,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
-  for (cit_grid; cit_grid; ++cit_grid)
+  for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
 
@@ -155,7 +169,12 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
-      if ( frustum_it->frustum.IsInside(this->IndexToWorld(pt_index)) )
+      if (!frustum_it->frustum)
+      {
+        continue;
+      }
+
+      if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
       {
         frustum_cycle = true;
 
@@ -164,7 +183,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
         const double time_until_decay = base_duration_to_decay - \
           frustum_acceleration;
-        if (time_until_decay <= 0)
+        if (time_until_decay < 0.)
         {
           // expired by acceleration
           if(!this->ClearGridPoint(pt_index))
@@ -188,10 +207,9 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     // if not inside any, check against nominal decay model
     if(!frustum_cycle)
     {
-      const double time_until_decay = base_duration_to_decay;
-      if (time_until_decay <= 0)
+      if (base_duration_to_decay < 0.)
       {
-        // expired by acceleration
+        // expired by temporal clearing
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
@@ -296,15 +314,15 @@ double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(const double& time_d
 /*****************************************************************************/
 {
   // use configurable model to get desired decay time
-  if (_decay_model == 0) // linear
+  if (_decay_model == LINEAR)
   {
     return _voxel_decay - time_delta;
   }
-  else if (_decay_model == 1) // exponential
+  else if (_decay_model == EXPONENTIAL)
   {
     return _voxel_decay * std::exp(-time_delta);
   }
-  return 0.; // permanent
+  return _voxel_decay; // PERSISTENT
 }
 
 /*****************************************************************************/
@@ -313,20 +331,9 @@ double SpatioTemporalVoxelGrid::GetFrustumAcceleration( \
                                              const double& acceleration_factor)
 /*****************************************************************************/
 {
-  if (_decay_model == 0) // linear
-  {
-    const double acceleration = 1. / 6. * \
-      acceleration_factor * (time_delta * time_delta * time_delta);
-    return acceleration;
-  }
-  else if (_decay_model == 1) // exponential
-  {
-    const double acceleration = 1. / \
-      (acceleration_factor * acceleration_factor) * \
-      std::exp(acceleration_factor * time_delta);
-    return acceleration;
-  }
-  return 0.; // permanent
+  const double acceleration = 1. / 6. * acceleration_factor * \
+    (time_delta * time_delta * time_delta);
+  return acceleration;
 }
 
 /*****************************************************************************/

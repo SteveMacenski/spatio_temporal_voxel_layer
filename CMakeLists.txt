@@ -91,7 +91,7 @@ add_library(${PROJECT_NAME}
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
-            src/frustum.cpp
+            src/frustum_models/depth_camera_frustum.cpp
             src/vdb2pc.cpp
 )
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
