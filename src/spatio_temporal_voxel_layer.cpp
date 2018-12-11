@@ -206,7 +206,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame,                             \
         sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
         hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
-        voxel_filter, clear_after_reading, model_type)));
+        voxel_filter, enabled, clear_after_reading, model_type)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
@@ -558,7 +558,8 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   updateFlagIfChanged(default_value_, default_value);
   updateFlagIfChanged(_voxel_size, config.voxel_size);
   updateFlagIfChanged(_voxel_decay, config.voxel_decay);
-  updateFlagIfChanged(_decay_model, config.decay_model);
+  int decay_model_int = (int)_decay_model;
+  updateFlagIfChanged(decay_model_int, config.decay_model);
   updateFlagIfChanged(_publish_voxels, config.publish_voxel_map);
 
   _enabled = config.enabled;

@@ -156,7 +156,8 @@ private:
   ros::Time                            _last_map_save_time;
   std::string                          _global_frame;
   double                               _voxel_size, _voxel_decay;
-  int                                  _combination_method, _mark_threshold, _decay_model;
+  int                                  _combination_method, _mark_threshold;
+  volume_grid::GlobalDecayModel        _decay_model;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
