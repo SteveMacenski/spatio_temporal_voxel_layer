@@ -389,6 +389,7 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
       if (subcriber)
       {
         subcriber->unsubscribe();
+        this->ResetGrid(); //todo remove, make a way to clear local costmap when device is disabled
         response.message = "Disabling sensor";
       }
     }
