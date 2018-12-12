@@ -381,6 +381,7 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
     if(request.data == true)
     {
       subcriber->subscribe();
+      buffer->ResetLastUpdatedTime();
       response.message = "Enabling sensor";
     }
     else
