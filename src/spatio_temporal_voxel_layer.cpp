@@ -378,7 +378,7 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(   \
   if( buffer->IsEnabled() != request.data ) //updated
   {
     buffer->SetEnabled(request.data);
-    if(request.data == true)
+    if(request.data)
     {
       subcriber->subscribe();
       buffer->ResetLastUpdatedTime();
@@ -575,6 +575,8 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   _combination_method = config.combination_method;
   _mark_threshold = config.mark_threshold;
   _update_footprint_enabled = config.update_footprint_enabled;
+  _mapping_mode = config.mapping_mode;
+  _map_save_duration = ros::Duration(config.map_save_duration);
 
   if (update_grid){
     delete _voxel_grid;
