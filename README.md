@@ -64,31 +64,9 @@ sudo apt-get install ros-kinetic-spatio-temporal-voxel-layer
 ### Install from source
 Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
-If you are familiar with ROS, I have setup rosdep to work with all the necessary libraries, no need to install manually. In your workspace:
-
 `sudo rosdep init && rosdep update && rosdep install --from-paths src --ignore-src -r -y`
 
 If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
-
-#### ROS
-
-[See install instructions here.](http://wiki.ros.org/kinetic/Installation)
-
-#### Navigation
-
-`sudo apt-get install ros-kinetic-navigation`
-
-#### OpenVDB
-
-`sudo apt-get install libopenvdb3.1 libopenvdb-dev libopenvdb-tools`
-
-#### TBB
-
-`sudo apt-get install libtbb-dev libtbb2`
-
-#### OpenEXR
-
-`sudo apt-get install libopenexr-dev`
 
 ## Configuration and Running
 
