@@ -66,8 +66,6 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 `sudo rosdep init && rosdep update && rosdep install --from-paths src --ignore-src -r -y`
 
-If you are not familiar or cannot get rosdep to work, the dependencies and docs are listed below. 
-
 ## Configuration and Running
 
 ### costmap_common_params.yaml
