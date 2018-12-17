@@ -54,7 +54,7 @@ public:
           const double& min_dist, const double& max_dist);
   virtual ~ThreeDimensionalLidarFrustum(void);
 
-  // transform plane normals by 3d lidar pose
+  // Does nothing in 3D lidar model
   virtual void TransformModel(void);
 
   // determine if a point is inside of the transformed frustum
@@ -66,14 +66,12 @@ public:
 
 private:
   // utils to find useful frustum metadata
-  // void ComputePlaneNormals(void);
   double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
   double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
   double _vFOV, _hFOV, _min_d, _max_d;
   double _vFOVhalf;
   double _hFOVhalf;
-  // std::vector<VectorWithPt3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
