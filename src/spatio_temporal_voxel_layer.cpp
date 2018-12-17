@@ -96,8 +96,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("track_unknown_space", track_unknown_space, \
                                   layered_costmap_->isTrackingUnknown());
   nh.param("decay_model", decay_model_int, 0);
-  volume_grid::GlobalDecayModel decay_model = \
-                   static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
+  _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // decay param
   nh.param("voxel_decay", _voxel_decay, -1.);
   // whether to map or navigate
@@ -577,6 +576,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   _update_footprint_enabled = config.update_footprint_enabled;
   _mapping_mode = config.mapping_mode;
   _map_save_duration = ros::Duration(config.map_save_duration);
+  _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
 
   if (update_grid){
     delete _voxel_grid;
