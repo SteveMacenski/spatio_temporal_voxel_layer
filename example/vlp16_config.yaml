@@ -33,8 +33,8 @@ rgbd_obstacle_layer:
     topic: /velodyne_points
     marking: false
     clearing: true
-    max_z: 1.0                  # default 0, meters
-    min_z: 8.0                  # default 10, meters
+    max_z: 8.0                  # default 0, meters
+    min_z: 1.0                  # default 10, meters
     vertical_fov_angle: 0.523   # default 0.7, radians (Realsense Camera).  VLP16 is 0.523 
     horizontal_fov_angle: 6.29  # 3D lidar scanners like the VLP16 have 360 deg horizontal FOV.
     decay_acceleration: 5.0     # default 0, 1/s^2. 
