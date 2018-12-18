@@ -46,7 +46,7 @@
 namespace geometry
 {
 
-// A class to model a depth sensor frustum in world space
+// A class to model a spinning 3D Lidar frustum in world space
 class ThreeDimensionalLidarFrustum : public Frustum
 {
 public:
