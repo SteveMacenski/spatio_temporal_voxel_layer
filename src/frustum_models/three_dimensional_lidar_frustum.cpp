@@ -103,7 +103,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
     }
   }
   else{
-    if ( ( fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796 )  > _hFOVhalf)
+    if ((fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796 )  > _hFOVhalf)
     {
       return false;
     }
