@@ -37,12 +37,18 @@
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 
+#define CONEPADDING 0.0   //This value shifts the frustum "cone" outwards without shifting its angle.
+
 namespace geometry
 {
 
 /*****************************************************************************/
-ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV, const double &hFOV,
-                                                           const double &min_dist, const double &max_dist) : _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
+ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV,
+                                                           const double &hFOV,
+                                                           const double &min_dist,
+                                                           const double &max_dist) : _vFOV(vFOV),
+                                                           _hFOV(hFOV),_min_d(min_dist),
+                                                           _max_d(max_dist)
 /*****************************************************************************/
 {
   _valid_frustum = true;
@@ -70,17 +76,18 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 {
 
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
-  Eigen::Vector3d transformed_point = _orientation.conjugate() * (point_in_global_frame - _position);
+  Eigen::Vector3d transformed_point =
+  _orientation.conjugate() * (point_in_global_frame - _position);
 
-  double radial_distance = sqrt((transformed_point[0] * transformed_point[0]) + (transformed_point[1] * transformed_point[1]));
+  double radial_distance = 
+  sqrt((transformed_point[0] * transformed_point[0]) + 
+       (transformed_point[1] * transformed_point[1]));
 
   // Check if inside frustum valid range
   if (radial_distance > _max_d || radial_distance < _min_d)
   {
     return false;
   }
-
-  #define CONEPADDING 0.0   //This value shifts the frustum "cone" outwards without shifting its angle.
 
   // // Check if inside frustum valid vFOV
   if (atan((fabs(transformed_point[2]) + CONEPADDING) / radial_distance) > _vFOVhalf)
