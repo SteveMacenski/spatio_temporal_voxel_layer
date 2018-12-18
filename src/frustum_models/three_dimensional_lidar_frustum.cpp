@@ -32,7 +32,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Steve Macenski (steven.macenski@simberobotics.com)
+ * Author: Nicolas Varas (nicovaras@gmail.com)
  *********************************************************************/
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
