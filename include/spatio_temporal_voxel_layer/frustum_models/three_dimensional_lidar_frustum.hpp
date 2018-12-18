@@ -32,8 +32,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Steve Macenski (steven.macenski@simberobotics.com)
- * Purpose: Structure for handling camera FOVs to construct frustums
+ * Author: Nicolas Varas (nicovaras@gmail.com)
+ * Purpose: Structure for handling 3D Lidar FOVs to construct frustums
  *          and associated methods
  *********************************************************************/
 
