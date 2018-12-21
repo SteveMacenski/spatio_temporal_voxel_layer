@@ -71,7 +71,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   ROS_INFO("%s's global frame is %s.", \
                                     getName().c_str(), _global_frame.c_str());
 
-  bool track_unknown_space, realtime_disabling;
+  bool track_unknown_space;
   double transform_tolerance, map_save_time;
   std::string topics_string;
   int decay_model_int;
@@ -103,9 +103,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("mapping_mode", _mapping_mode, false);
   // if mapping, how often to save a map for safety
   nh.param("map_save_duration", map_save_time, 60.);
-  // if realtime_disabling services will be create to enble/disable obs in runtime
-  nh.param("realtime_disabling", realtime_disabling, false);
-
   ROS_INFO("%s loaded parameters from parameter server.", getName().c_str());
 
   if (_mapping_mode)
@@ -265,21 +262,17 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           boost::bind(&SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1, \
                                                    _observation_buffers.back()));
 
-      if (realtime_disabling) // creates services to enable disable obs_sources
-      {
-        ros::ServiceServer server;
-        boost::function < bool(std_srvs::SetBool::Request&, \
-                               std_srvs::SetBool::Response&) > serv_callback;
+      ros::ServiceServer server;
+      boost::function < bool(std_srvs::SetBool::Request&, \
+                             std_srvs::SetBool::Response&) > serv_callback;
 
-        serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
-                                    this, _1, _2, _observation_buffers.back(),  \
-                                    _observation_subscribers.back());
+      serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
+                                  this, _1, _2, _observation_buffers.back(),  \
+                                  _observation_subscribers.back());
 
-        server = nh.advertiseService(source, serv_callback);
+       server = nh.advertiseService(source, serv_callback);
 
-        _buffer_enabler_servers.push_back(server);
-      }
-
+      _buffer_enabler_servers.push_back(server);
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
     }
