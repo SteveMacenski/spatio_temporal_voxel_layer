@@ -270,7 +270,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                   this, _1, _2, _observation_buffers.back(),  \
                                   _observation_subscribers.back());
 
-       server = nh.advertiseService(source, serv_callback);
+      std::string topic = source +  "/toggle_enabled";
+      server = nh.advertiseService(topic, serv_callback);
 
       _buffer_enabler_servers.push_back(server);
       _observation_subscribers.push_back(sub);
@@ -552,6 +553,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                        SpatioTemporalVoxelLayerConfig &config, uint32_t level)
 /*****************************************************************************/
 {
+  _voxel_grid->Lock();
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
     if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
@@ -585,6 +587,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                                                           _voxel_decay, \
                                                           _publish_voxels);
   }
+  _voxel_grid->Unlock();
 }
 
 /*****************************************************************************/

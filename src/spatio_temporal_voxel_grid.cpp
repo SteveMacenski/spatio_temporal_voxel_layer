@@ -442,4 +442,18 @@ bool SpatioTemporalVoxelGrid::SaveGrid(const std::string& file_name, \
   return false; // best offense is a good defense
 }
 
+/*****************************************************************************/
+void SpatioTemporalVoxelGrid::Lock(void)
+/*****************************************************************************/
+{
+  _grid_lock.lock();
+}
+
+/*****************************************************************************/
+void SpatioTemporalVoxelGrid::Unlock(void)
+/*****************************************************************************/
+{
+  _grid_lock.unlock();
+}
+
 }; // end namespace
