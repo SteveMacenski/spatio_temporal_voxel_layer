@@ -54,13 +54,10 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV,
   _valid_frustum = true;
   ros::NodeHandle nh;
 
-  // _vFOVhalf = _vFOV / 2.0;
   _hFOVhalf = _hFOV / 2.0;
 
   _tan_vFOVhalf = tan(_vFOV / 2.0);
-  // _tan_hFOVhalf = tan(_hFOV / 2.0);
   _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
-  // _tan_hFOVhalf_rear = tan((_hFOV / 2.0) - 1.570796);
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
 }
@@ -86,21 +83,15 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   Eigen::Vector3d transformed_point =
       _orientation.conjugate() * (point_in_global_frame - _position);
 
-  // double radial_distance =
-  // sqrt((transformed_point[0] * transformed_point[0]) +
-  //      (transformed_point[1] * transformed_point[1]));
-
   double radial_distance_squared = ((transformed_point[0] * transformed_point[0]) + (transformed_point[1] * transformed_point[1]));
 
   // Check if inside frustum valid range
-  // if (radial_distance > _max_d || radial_distance < _min_d)
   if (radial_distance_squared > _max_d_squared || radial_distance_squared < _min_d_squared)
   {
     return false;
   }
 
   // // Check if inside frustum valid vFOV
-  // if (atan((fabs(transformed_point[2]) + CONEPADDING) / radial_distance) > _vFOVhalf)
   if (((fabs(transformed_point[2]) + CONEPADDING) * (fabs(transformed_point[2]) + CONEPADDING) / radial_distance_squared) > _tan_vFOVhalf_squared)
   {
     return false;
@@ -113,18 +104,6 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
     {
       return false;
     }
-
-    // if(transformed_point[1]>0){
-    //   if ( (transformed_point[1] / transformed_point[0]) > _tan_hFOVhalf)
-    //   {
-    //     return false;
-    //   }
-    // }else{
-    //   if ( (-transformed_point[1] / transformed_point[0]) > _tan_hFOVhalf)
-    //   {
-    //     return false;
-    //   }
-    // }
   }
   else
   {
@@ -132,21 +111,6 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
     {
       return false;
     }
-
-    // if (transformed_point[1] > 0)
-    // {
-    //   if ((-transformed_point[0] / transformed_point[1]) > _tan_hFOVhalf_rear)
-    //   {
-    //     return false;
-    //   }
-    // }
-    // else
-    // {
-    //   if ((transformed_point[0] / transformed_point[1]) > _tan_hFOVhalf_rear)
-    //   {
-    //     return false;
-    //   }
-    // }
   }
 
   return true;
