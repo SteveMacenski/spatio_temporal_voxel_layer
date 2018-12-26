@@ -72,6 +72,11 @@ private:
   double _vFOV, _hFOV, _min_d, _max_d;
   double _vFOVhalf;
   double _hFOVhalf;
+  double _min_d_squared, _max_d_squared;
+  double _tan_vFOVhalf;
+  double _tan_vFOVhalf_squared;
+  double _tan_hFOVhalf;
+  double _tan_hFOVhalf_rear;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;

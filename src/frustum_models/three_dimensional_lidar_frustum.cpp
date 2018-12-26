@@ -37,7 +37,7 @@
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 
-#define CONEPADDING 0.0   //This value shifts the frustum "cone" outwards without shifting its angle.
+#define CONEPADDING 0.0 //This value shifts the frustum "cone" outwards without shifting its angle.
 
 namespace geometry
 {
@@ -47,15 +47,22 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV,
                                                            const double &hFOV,
                                                            const double &min_dist,
                                                            const double &max_dist) : _vFOV(vFOV),
-                                                           _hFOV(hFOV),_min_d(min_dist),
-                                                           _max_d(max_dist)
+                                                                                     _hFOV(hFOV), _min_d(min_dist),
+                                                                                     _max_d(max_dist)
 /*****************************************************************************/
 {
   _valid_frustum = true;
   ros::NodeHandle nh;
 
-  _vFOVhalf = _vFOV / 2.0;
+  // _vFOVhalf = _vFOV / 2.0;
   _hFOVhalf = _hFOV / 2.0;
+
+  _tan_vFOVhalf = tan(_vFOV / 2.0);
+  // _tan_hFOVhalf = tan(_hFOV / 2.0);
+  _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
+  // _tan_hFOVhalf_rear = tan((_hFOV / 2.0) - 1.570796);
+  _min_d_squared = _min_d * _min_d;
+  _max_d_squared = _max_d * _max_d;
 }
 
 /*****************************************************************************/
@@ -77,36 +84,69 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
   Eigen::Vector3d transformed_point =
-  _orientation.conjugate() * (point_in_global_frame - _position);
+      _orientation.conjugate() * (point_in_global_frame - _position);
 
-  double radial_distance = 
-  sqrt((transformed_point[0] * transformed_point[0]) + 
-       (transformed_point[1] * transformed_point[1]));
+  // double radial_distance =
+  // sqrt((transformed_point[0] * transformed_point[0]) +
+  //      (transformed_point[1] * transformed_point[1]));
+
+  double radial_distance_squared = ((transformed_point[0] * transformed_point[0]) + (transformed_point[1] * transformed_point[1]));
 
   // Check if inside frustum valid range
-  if (radial_distance > _max_d || radial_distance < _min_d)
+  // if (radial_distance > _max_d || radial_distance < _min_d)
+  if (radial_distance_squared > _max_d_squared || radial_distance_squared < _min_d_squared)
   {
     return false;
   }
 
   // // Check if inside frustum valid vFOV
-  if (atan((fabs(transformed_point[2]) + CONEPADDING) / radial_distance) > _vFOVhalf)
+  // if (atan((fabs(transformed_point[2]) + CONEPADDING) / radial_distance) > _vFOVhalf)
+  if (((fabs(transformed_point[2]) + CONEPADDING) * (fabs(transformed_point[2]) + CONEPADDING) / radial_distance_squared) > _tan_vFOVhalf_squared)
   {
     return false;
   }
 
   // Check if inside frustum valid hFOV
-  if (transformed_point[0] > 0) {
+  if (transformed_point[0] > 0)
+  {
     if (fabs(atan(transformed_point[1] / transformed_point[0])) > _hFOVhalf)
     {
       return false;
     }
+
+    // if(transformed_point[1]>0){
+    //   if ( (transformed_point[1] / transformed_point[0]) > _tan_hFOVhalf)
+    //   {
+    //     return false;
+    //   }
+    // }else{
+    //   if ( (-transformed_point[1] / transformed_point[0]) > _tan_hFOVhalf)
+    //   {
+    //     return false;
+    //   }
+    // }
   }
-  else{
-    if ((fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796 )  > _hFOVhalf)
+  else
+  {
+    if ((fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796) > _hFOVhalf)
     {
       return false;
     }
+
+    // if (transformed_point[1] > 0)
+    // {
+    //   if ((-transformed_point[0] / transformed_point[1]) > _tan_hFOVhalf_rear)
+    //   {
+    //     return false;
+    //   }
+    // }
+    // else
+    // {
+    //   if ((transformed_point[0] / transformed_point[1]) > _tan_hFOVhalf_rear)
+    //   {
+    //     return false;
+    //   }
+    // }
   }
 
   return true;
