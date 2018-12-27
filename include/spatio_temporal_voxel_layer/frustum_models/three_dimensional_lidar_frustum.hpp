@@ -76,6 +76,7 @@ private:
   double _tan_vFOVhalf_squared;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
+  Eigen::Quaterniond _orientation_conjugate;
   bool _valid_frustum;
 
 };
