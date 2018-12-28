@@ -78,6 +78,7 @@ private:
   Eigen::Quaterniond _orientation;
   Eigen::Quaterniond _orientation_conjugate;
   bool _valid_frustum;
+  bool _full_hFOV;
 
 };
 

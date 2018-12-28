@@ -60,6 +60,10 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV,
   _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
+  if (_hFOV >= 6.28)
+  {
+    _full_hFOV = true;
+  }
 }
 
 /*****************************************************************************/
@@ -82,7 +86,6 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
   Eigen::Vector3d transformed_point =
-      // _orientation.conjugate() * (point_in_global_frame - _position);
       _orientation_conjugate * (point_in_global_frame - _position);
 
   double radial_distance_squared = ((transformed_point[0] * transformed_point[0]) + (transformed_point[1] * transformed_point[1]));
@@ -99,19 +102,22 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
     return false;
   }
 
-  // Check if inside frustum valid hFOV
-  if (transformed_point[0] > 0)
+  // Check if inside frustum valid hFOV, unless hFOV is full-circle (360 degree)
+  if (!_full_hFOV)
   {
-    if (fabs(atan(transformed_point[1] / transformed_point[0])) > _hFOVhalf)
+    if (transformed_point[0] > 0)
     {
-      return false;
+      if (fabs(atan(transformed_point[1] / transformed_point[0])) > _hFOVhalf)
+      {
+        return false;
+      }
     }
-  }
-  else
-  {
-    if ((fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796) > _hFOVhalf)
+    else
     {
-      return false;
+      if ((fabs(atan(transformed_point[0] / transformed_point[1])) + 1.570796) > _hFOVhalf)
+      {
+        return false;
+      }
     }
   }
 
