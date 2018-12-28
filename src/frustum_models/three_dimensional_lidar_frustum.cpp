@@ -64,6 +64,9 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double &vFOV,
   {
     _full_hFOV = true;
   }
+  else{
+    _full_hFOV = false;
+  }
 }
 
 /*****************************************************************************/
