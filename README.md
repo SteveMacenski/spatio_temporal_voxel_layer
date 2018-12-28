@@ -28,7 +28,7 @@ Below is an example a size of map that is **trivial** for the Spatio-Temportal V
 ## -**Temporal**
 The Temporal in this package is the novel concept of `voxel_decay` whereas we have configurable functions that expire voxels and their occupation over time. Infrasture was created to store times in each voxel after which the voxel will disappear from the map. This is combined with checking inclusion of voxels in current measurement frustums to accelerate the decay of those voxels that do not have measurements but should if still in the scene and remain marked. This is done rather than simply clearing them naively or via costly raytracing. The time it takes to clear depends on the configured functions and acceleration factors.
 
-Voxel acceleration uses given FOV to compute traditional 6-planed cubical frustums. Sensors that cannot be modelled by traditional frustums (i.e. 360 lidars or sensors without flat back planes) the frustum acceleration mathematics breakdown, **do not use frustum acceleration for these class of sensors**. PRs to implement curved frustums are welcome and encouraged.  
+Voxel acceleration uses given FOV to compute the frustum geometry. Depth cameras (e.g. Intel Realsense) are modeled with traditional 6-planed cubical frustums. 3D lidars (e.g. Velodyne VLP 16) are modeled with their hourglass-shaped FOV. Although many 3D lidars have 360 degree horizontal FOV, it is possible to use a narrower angle for the clearing frustum by setting the hFOV parameter accordingly.
 
 Future extensions will also to query a static map and determine which connected components belong to the map, not in the map, or moving. Each of these three classes of blobs will have configurable models to control the time they persist, and if these things are reported to the user.
 
@@ -138,6 +138,7 @@ rgbd_obstacle_layer:
     vertical_fov_angle: 0.7      #default 0.7, radians
     horizontal_fov_angle: 1.04   #default 1.04, radians
     decay_acceleration: 1.       #default 0, 1/s^2. If laser scanner MUST be 0
+    model_type: 0                #default 0 (depth camera). Use 1 for 3D Lidar
 ```
 
 ### local/global_costmap_params.yaml
