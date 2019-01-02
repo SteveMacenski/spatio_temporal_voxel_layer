@@ -42,6 +42,8 @@
 
 // STVL
 #include <spatio_temporal_voxel_layer/frustum_models/frustum.hpp>
+// M_PI
+#include <cmath>
 
 namespace geometry
 {

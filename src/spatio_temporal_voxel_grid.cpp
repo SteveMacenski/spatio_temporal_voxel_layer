@@ -132,11 +132,12 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
     }
     else if (it->_model_type == THREE_DIMENSIONAL_LIDAR)
     {
-      frustum = new geometry::ThreeDimensionalLidarFrustum(it->_vertical_fov_in_rad,
-                                                          it->_horizontal_fov_in_rad,
-                                                          it->_min_z_in_m,
-                                                          it->_max_z_in_m);
-    } 
+      frustum = new geometry::ThreeDimensionalLidarFrustum( \
+                                                    it->_vertical_fov_in_rad,
+                                                    it->_horizontal_fov_in_rad,
+                                                    it->_min_z_in_m,
+                                                    it->_max_z_in_m);
+    }
     else
     {
       // add else if statement for each implemented model
