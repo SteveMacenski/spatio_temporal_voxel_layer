@@ -118,10 +118,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     default_value_ = costmap_2d::FREE_SPACE;
   }
 
-  if (_publish_voxels)
-  {
-    _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
-  }
+
+  _voxel_pub = nh.advertise<sensor_msgs::PointCloud2>("voxel_grid", 1);
 
   _grid_saver = nh.advertiseService("spatiotemporal_voxel_grid/save_grid", \
                                  &SpatioTemporalVoxelLayer::SaveGridCallback, \
