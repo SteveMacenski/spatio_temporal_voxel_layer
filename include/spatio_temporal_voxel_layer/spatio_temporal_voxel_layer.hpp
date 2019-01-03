@@ -43,9 +43,11 @@
 
 // voxel grid
 #include <spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp>
+#include <spatio_temporal_voxel_layer/SpatioTemporalVoxelLayerConfig.h>
 // ROS
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
+#include <dynamic_reconfigure/server.h>
 // costmap
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
@@ -64,6 +66,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point.h>
 #include <spatio_temporal_voxel_layer/SaveGrid.h>
+#include <std_srvs/SetBool.h>
 // projector
 #include <laser_geometry/laser_geometry.h>
 // tf
@@ -79,6 +82,8 @@ namespace spatio_temporal_voxel_layer
 // conveniences for line lengths
 typedef std::vector<boost::shared_ptr<message_filters::SubscriberBase> >::iterator observation_subscribers_iter;
 typedef std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >::iterator observation_buffers_iter;
+typedef spatio_temporal_voxel_layer::SpatioTemporalVoxelLayerConfig dynamicReconfigureType;
+typedef dynamic_reconfigure::Server<dynamicReconfigureType> dynamicReconfigureServerType;
 
 // Core ROS voxel layer class
 class SpatioTemporalVoxelLayer : public costmap_2d::CostmapLayer
@@ -101,6 +106,7 @@ public:
   virtual void reset(void);
   virtual void activate(void);
   virtual void deactivate(void);
+
 
   // Functions for sensor feeds
   bool GetMarkingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
@@ -129,12 +135,23 @@ private:
   bool AddStaticObservations(const observation::MeasurementReading& obs);
   bool RemoveStaticObservations(void);
 
+  // Dynamic reconfigure
+  void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
+  dynamicReconfigureServerType* _dynamic_reconfigure_server;
+
+  bool BufferEnablerCallback( std_srvs::SetBool::Request & request,    \
+                              std_srvs::SetBool::Response & response,  \
+                              boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
+                              boost::shared_ptr<message_filters::SubscriberBase>& subcriber);
+
+
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
   std::vector<boost::shared_ptr<tf2_ros::MessageFilterBase> >           _observation_notifiers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _observation_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
+  std::vector<ros::ServiceServer>                                  _buffer_enabler_servers;
 
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
@@ -142,12 +159,14 @@ private:
   ros::Duration                        _map_save_duration;
   ros::Time                            _last_map_save_time;
   std::string                          _global_frame;
-  double                               _voxel_size;
+  double                               _voxel_size, _voxel_decay;
   int                                  _combination_method, _mark_threshold;
+  volume_grid::GlobalDecayModel        _decay_model;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
+  boost::mutex                                 _voxel_grid_lock;
 };
 
 }; // end namespace

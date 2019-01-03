@@ -75,26 +75,27 @@ typedef sensor_msgs::PointCloud2::Ptr point_cloud_ptr;
 class MeasurementBuffer
 {
 public:
-  MeasurementBuffer(const std::string& topic_name,          \
-                    const double& observation_keep_time,    \
-                    const double& expected_update_rate,     \
-                    const double& min_obstacle_height,      \
-                    const double& max_obstacle_height,      \
-                    const double& obstacle_range,           \
-                    tf::TransformListener& tf,              \
-                    const std::string& global_frame,        \
-                    const std::string& sensor_frame,        \
-                    const double& tf_tolerance,             \
-                    const double& min_d,                    \
-                    const double& max_d,                    \
-                    const double& vFOV,                     \
-                    const double& hFOV,                     \
-                    const double& decay_acceleration,       \
-                    const bool& marking,                    \
-                    const bool& clearing,                   \
-                    const double& voxel_size,               \
-                    const bool& voxel_filter,               \
-                    const bool& clear_buffer_after_reading, \
+  MeasurementBuffer(const std::string& topic_name,       \
+                    const double& observation_keep_time, \
+                    const double& expected_update_rate,  \
+                    const double& min_obstacle_height,   \
+                    const double& max_obstacle_height,   \
+                    const double& obstacle_range,        \
+                    tf::TransformListener& tf,           \
+                    const std::string& global_frame,     \
+                    const std::string& sensor_frame,     \
+                    const double& tf_tolerance,          \
+                    const double& min_d,                 \
+                    const double& max_d,                 \
+                    const double& vFOV,                  \
+                    const double& hFOV,                  \
+                    const double& decay_acceleration,    \
+                    const bool& marking,                 \
+                    const bool& clearing,                \
+                    const double& voxel_size,            \
+                    const bool& voxel_filter,            \
+                    const bool& enabled,                 \
+                    const bool& clear_buffer_after_reading,
                     const ModelType& model_type);
 
   ~MeasurementBuffer(void);
@@ -104,6 +105,10 @@ public:
 
   // Get measurements from the buffer
   void GetReadings(std::vector<observation::MeasurementReading>& observations);
+
+  // enabler setter getter
+  bool IsEnabled(void) const;
+  void SetEnabled(const bool& enabled);
 
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
@@ -126,7 +131,7 @@ private:
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
   double _voxel_size;
-  bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading;
+  bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
 };
 

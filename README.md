@@ -128,7 +128,20 @@ Add this plugin to your costmap params file.
 
 `roslaunch [navigation_pkg] move_base.launch`
 
+### Enabing/disabling observation_sources realtime
 
+To enable/disable observation sources use a ros service for each source:
+
+~rgbd_obstacle_layer/$(source_name)/toggle_enabled (std_srvs/SetBool)
+  -  request.data = true   // Enable observation source
+  -  request.data = false  // Disable observation source
+  
+ Example:
+ ```
+ rosservice call /move_base/global_costmap/rgbd_obstacle_layer/rgbd_back/toggle_enabled "data: true"
+ rosservice call /move_base/local_costmap/rgbd_obstacle_layer/rgbd_back/toggle_enabled "data: false"
+ ```
+ 
 ### Debug and Model Fitting
 
 I have made the frustum transformations available for visualization and debugging. You may enable them by the `VISUALIZE_FRUSTUM` macro, though be aware it takes a substantial decrease on performance since we're creating and destroying a ros publisher at a non-trivial rate.
