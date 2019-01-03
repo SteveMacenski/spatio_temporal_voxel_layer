@@ -41,25 +41,26 @@ namespace buffer
 {
 
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
-                                     const double& observation_keep_time,    \
-                                     const double& expected_update_rate,     \
-                                     const double& min_obstacle_height,      \
-                                     const double& max_obstacle_height,      \
-                                     const double& obstacle_range,           \
-                                     tf::TransformListener& tf,              \
-                                     const std::string& global_frame,        \
-                                     const std::string& sensor_frame,        \
-                                     const double& tf_tolerance,             \
-                                     const double& min_d,                    \
-                                     const double& max_d,                    \
-                                     const double& vFOV,                     \
-                                     const double& hFOV,                     \
-                                     const double& decay_acceleration,       \
-                                     const bool& marking,                    \
-                                     const bool& clearing,                   \
-                                     const double& voxel_size,               \
-                                     const bool& voxel_filter,               \
+MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
+                                     const double& observation_keep_time, \
+                                     const double& expected_update_rate,  \
+                                     const double& min_obstacle_height,   \
+                                     const double& max_obstacle_height,   \
+                                     const double& obstacle_range,        \
+                                     tf::TransformListener& tf,           \
+                                     const std::string& global_frame,     \
+                                     const std::string& sensor_frame,     \
+                                     const double& tf_tolerance,          \
+                                     const double& min_d,                 \
+                                     const double& max_d,                 \
+                                     const double& vFOV,                  \
+                                     const double& hFOV,                  \
+                                     const double& decay_acceleration,    \
+                                     const bool& marking,                 \
+                                     const bool& clearing,                \
+                                     const double& voxel_size,            \
+                                     const bool& voxel_filter,            \
+                                     const bool& enabled,                 \
                                      const bool& clear_buffer_after_reading, \
                                      const ModelType& model_type) :
 /*****************************************************************************/
@@ -72,7 +73,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
     _model_type(model_type)
 {
 }
@@ -276,6 +277,20 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
       _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
   }
   return current;
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::IsEnabled(void) const
+/*****************************************************************************/
+{
+  return _enabled;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetEnabled(const bool& enabled)
+/*****************************************************************************/
+{
+  _enabled = enabled;
 }
 
 /*****************************************************************************/
