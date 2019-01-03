@@ -553,7 +553,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                        SpatioTemporalVoxelLayerConfig &config, uint32_t level)
 /*****************************************************************************/
 {
-  _voxel_grid->Lock();
+  _layer_lock.lock();
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
     if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
@@ -587,7 +587,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                                                           _voxel_decay, \
                                                           _publish_voxels);
   }
-  _voxel_grid->Unlock();
+  _layer_lock.unlock();
 }
 
 /*****************************************************************************/

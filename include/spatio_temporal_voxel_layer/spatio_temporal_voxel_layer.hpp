@@ -104,6 +104,7 @@ public:
   virtual void activate(void);
   virtual void deactivate(void);
 
+
   // Functions for sensor feeds
   bool GetMarkingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
   bool GetClearingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
@@ -140,6 +141,7 @@ private:
                               boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
                               boost::shared_ptr<message_filters::SubscriberBase>& subcriber);
 
+
   laser_geometry::LaserProjection                                  _laser_projector;
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > _observation_subscribers;
   std::vector<boost::shared_ptr<tf::MessageFilterBase> >           _observation_notifiers;
@@ -161,6 +163,7 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
+  boost::mutex                                 _layer_lock;
 };
 
 }; // end namespace
