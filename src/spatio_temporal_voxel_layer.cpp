@@ -553,7 +553,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                        SpatioTemporalVoxelLayerConfig &config, uint32_t level)
 /*****************************************************************************/
 {
-  _layer_lock.lock();
+  _voxel_grid_lock.lock();
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference){
     if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON) {
@@ -587,19 +587,19 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                                                           _voxel_decay, \
                                                           _publish_voxels);
   }
-  _layer_lock.unlock();
+  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::ResetGrid(void)
 /*****************************************************************************/
 {
-  _layer_lock.lock();
+  _voxel_grid_lock.lock();
   if (!_voxel_grid->ResetGrid())
   {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
   }
-  _layer_lock.unlock();
+  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -644,7 +644,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  _layer_lock.lock();
+  _voxel_grid_lock.lock();
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
@@ -660,7 +660,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
       touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
-  _layer_lock.unlock();
+  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -696,9 +696,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // navigation mode: clear observations, mapping mode: save maps and publish
   if (!_mapping_mode)
   {
-    _layer_lock.lock();
+    _voxel_grid_lock.lock();
     _voxel_grid->ClearFrustums(clearing_observations);
-    _layer_lock.unlock();
+    _voxel_grid_lock.unlock();
   }
   else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
   {
@@ -714,10 +714,10 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     srv.request.file_name.data = time_buffer;
     SaveGridCallback(srv.request, srv.response);
   }
-  _layer_lock.lock();
+  _voxel_grid_lock.lock();
   // mark observations
   _voxel_grid->Mark(marking_observations);
-  _layer_lock.unlock();
+  _voxel_grid_lock.unlock();
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
@@ -726,9 +726,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   if (_publish_voxels && !_mapping_mode)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
-    _layer_lock.lock();
+    _voxel_grid_lock.lock();
     _voxel_grid->GetOccupancyPointCloud(pc);
-    _layer_lock.unlock();
+    _voxel_grid_lock.unlock();
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = _global_frame;
@@ -748,7 +748,7 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
 /*****************************************************************************/
 {
   double map_size_bytes;
-  _layer_lock.lock();
+  _voxel_grid_lock.lock();
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
@@ -756,10 +756,10 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
       req.file_name.data.c_str(), map_size_bytes);
     resp.map_size_bytes = map_size_bytes;
     resp.status = true;
-    _layer_lock.unlock();
+    _voxel_grid_lock.unlock();
     return true;
   }
-  _layer_lock.unlock();
+  _voxel_grid_lock.unlock();
   ROS_WARN("SpatioTemporalVoxelGrid: Failed to save grid.");
   resp.status = false;
   return false;
