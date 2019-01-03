@@ -675,7 +675,6 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     return;
   }
 
-  _layer_lock.lock();
   // Steve's Note June 22, 2018
   // I dislike this necessity, I can't remove the master grid's knowledge about
   // STVL on the fly so I have play games with the API even though this isn't
@@ -697,7 +696,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // navigation mode: clear observations, mapping mode: save maps and publish
   if (!_mapping_mode)
   {
+    _layer_lock.lock();
     _voxel_grid->ClearFrustums(clearing_observations);
+    _layer_lock.unlock();
   }
   else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
   {
@@ -713,9 +714,10 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     srv.request.file_name.data = time_buffer;
     SaveGridCallback(srv.request, srv.response);
   }
-
+  _layer_lock.lock();
   // mark observations
   _voxel_grid->Mark(marking_observations);
+  _layer_lock.unlock();
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
@@ -724,7 +726,9 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   if (_publish_voxels && !_mapping_mode)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
+    _layer_lock.lock();
     _voxel_grid->GetOccupancyPointCloud(pc);
+    _layer_lock.unlock();
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = _global_frame;
@@ -734,7 +738,6 @@ void SpatioTemporalVoxelLayer::updateBounds( \
 
   // update footprint
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
-  _layer_lock.unlock();
   return;
 }
 
@@ -744,8 +747,8 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
                          spatio_temporal_voxel_layer::SaveGrid::Response& resp)
 /*****************************************************************************/
 {
-  _layer_lock.lock();
   double map_size_bytes;
+  _layer_lock.lock();
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
@@ -756,9 +759,9 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
     _layer_lock.unlock();
     return true;
   }
+  _layer_lock.unlock();
   ROS_WARN("SpatioTemporalVoxelGrid: Failed to save grid.");
   resp.status = false;
-  _layer_lock.unlock();
   return false;
 }
 
