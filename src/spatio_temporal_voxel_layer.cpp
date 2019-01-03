@@ -501,6 +501,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
+  boost::mutex::scoped_lock lock(_voxel_grid_lock);
   // reset layer
   Costmap2D::resetMaps();
   this->ResetGrid();
@@ -551,7 +552,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                         SpatioTemporalVoxelLayerConfig& config, uint32_t level)
 /*****************************************************************************/
 {
-  _voxel_grid_lock.lock();
+  boost::mutex::scoped_lock lock(_voxel_grid_lock);
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference)
   {
@@ -567,9 +568,9 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   updateFlagIfChanged(default_value_, default_value);
   updateFlagIfChanged(_voxel_size, config.voxel_size);
   updateFlagIfChanged(_voxel_decay, config.voxel_decay);
+  int decay_model_int = (int)_decay_model;
   updateFlagIfChanged(decay_model_int, config.decay_model);
   updateFlagIfChanged(_publish_voxels, config.publish_voxel_map);
-  int decay_model_int = (int)_decay_model;
 
   _enabled = config.enabled;
   _combination_method = config.combination_method;
@@ -586,19 +587,16 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
       static_cast<double>(default_value_), _decay_model, \
       _voxel_decay, _publish_voxels);
   }
-  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelLayer::ResetGrid(void)
 /*****************************************************************************/
 {
-  _voxel_grid_lock.lock();
   if (!_voxel_grid->ResetGrid())
   {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
   }
-  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -643,7 +641,6 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
 {
-  _voxel_grid_lock.lock();
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
@@ -659,7 +656,6 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
       touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
-  _voxel_grid_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -673,6 +669,8 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   {
     return;
   }
+
+  boost::mutex::scoped_lock lock(_voxel_grid_lock);
 
   // Steve's Note June 22, 2018
   // I dislike this necessity, I can't remove the master grid's knowledge about
@@ -695,9 +693,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // navigation mode: clear observations, mapping mode: save maps and publish
   if (!_mapping_mode)
   {
-    _voxel_grid_lock.lock();
     _voxel_grid->ClearFrustums(clearing_observations);
-    _voxel_grid_lock.unlock();
   }
   else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
   {
@@ -714,10 +710,8 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     SaveGridCallback(srv.request, srv.response);
   }
 
-  _voxel_grid_lock.lock();
   // mark observations
   _voxel_grid->Mark(marking_observations);
-  _voxel_grid_lock.unlock();
 
   // update the ROS Layered Costmap
   UpdateROSCostmap(min_x, min_y, max_x, max_y);
@@ -726,9 +720,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   if (_publish_voxels && !_mapping_mode)
   {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
-    _voxel_grid_lock.lock();
     _voxel_grid->GetOccupancyPointCloud(pc);
-    _voxel_grid_lock.unlock();
     sensor_msgs::PointCloud2 pc2;
     pcl::toROSMsg(*pc, pc2);
     pc2.header.frame_id = _global_frame;
@@ -747,8 +739,9 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
                          spatio_temporal_voxel_layer::SaveGrid::Response& resp)
 /*****************************************************************************/
 {
+  boost::mutex::scoped_lock lock(_voxel_grid_lock);
   double map_size_bytes;
-  _voxel_grid_lock.lock();
+
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
     ROS_INFO( \
@@ -756,10 +749,9 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
       req.file_name.data.c_str(), map_size_bytes);
     resp.map_size_bytes = map_size_bytes;
     resp.status = true;
-    _voxel_grid_lock.unlock();
     return true;
   }
-  _voxel_grid_lock.unlock();
+
   ROS_WARN("SpatioTemporalVoxelGrid: Failed to save grid.");
   resp.status = false;
   return false;
