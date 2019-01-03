@@ -594,10 +594,12 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
 void SpatioTemporalVoxelLayer::ResetGrid(void)
 /*****************************************************************************/
 {
+  _layer_lock.lock();
   if (!_voxel_grid->ResetGrid())
   {
    ROS_WARN("Did not clear level set in %s!", getName().c_str());
   }
+  _layer_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -642,6 +644,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
 {
+  _layer_lock.lock();
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
@@ -657,6 +660,7 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
       touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
   }
+  _layer_lock.unlock();
 }
 
 /*****************************************************************************/
@@ -671,6 +675,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     return;
   }
 
+  _layer_lock.lock();
   // Steve's Note June 22, 2018
   // I dislike this necessity, I can't remove the master grid's knowledge about
   // STVL on the fly so I have play games with the API even though this isn't
@@ -729,6 +734,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
 
   // update footprint
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
+  _layer_lock.unlock();
   return;
 }
 
@@ -738,6 +744,7 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
                          spatio_temporal_voxel_layer::SaveGrid::Response& resp)
 /*****************************************************************************/
 {
+  _layer_lock.lock();
   double map_size_bytes;
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
   {
@@ -746,10 +753,12 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
       req.file_name.data.c_str(), map_size_bytes);
     resp.map_size_bytes = map_size_bytes;
     resp.status = true;
+    _layer_lock.unlock();
     return true;
   }
   ROS_WARN("SpatioTemporalVoxelGrid: Failed to save grid.");
   resp.status = false;
+  _layer_lock.unlock();
   return false;
 }
 
