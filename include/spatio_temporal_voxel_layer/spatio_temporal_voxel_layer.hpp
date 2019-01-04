@@ -134,8 +134,8 @@ private:
 
   // Dynamic reconfigure
   void DynamicReconfigureCallback(dynamicReconfigureType &config, uint32_t level);
-  dynamicReconfigureServerType* _dynamic_reconfigure_server;
 
+  // Enable/Disable callback
   bool BufferEnablerCallback( std_srvs::SetBool::Request & request,    \
                               std_srvs::SetBool::Response & response,  \
                               boost::shared_ptr<buffer::MeasurementBuffer>& buffer, \
@@ -149,6 +149,7 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
   std::vector<ros::ServiceServer>                                  _buffer_enabler_servers;
+  dynamicReconfigureServerType*                                    _dynamic_reconfigure_server;
 
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
@@ -163,7 +164,7 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
-  boost::mutex                                 _voxel_grid_lock;
+  boost::recursive_mutex                       _voxel_grid_lock;
 };
 
 }; // end namespace

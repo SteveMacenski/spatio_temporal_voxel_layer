@@ -128,7 +128,7 @@ Add this plugin to your costmap params file.
 
 `roslaunch [navigation_pkg] move_base.launch`
 
-### Enabing/disabling observation_sources realtime
+### Enabing/disabling observation_sources real-time
 
 To enable/disable observation sources use a ros service for each source:
 
