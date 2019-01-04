@@ -501,7 +501,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock lock(_voxel_grid_lock);
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   // reset layer
   Costmap2D::resetMaps();
   this->ResetGrid();
@@ -552,7 +552,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                         SpatioTemporalVoxelLayerConfig& config, uint32_t level)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock lock(_voxel_grid_lock);
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   bool update_grid(false);
   auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference)
   {
@@ -670,7 +670,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     return;
   }
 
-  boost::mutex::scoped_lock lock(_voxel_grid_lock);
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
 
   // Steve's Note June 22, 2018
   // I dislike this necessity, I can't remove the master grid's knowledge about
@@ -739,7 +739,7 @@ bool SpatioTemporalVoxelLayer::SaveGridCallback( \
                          spatio_temporal_voxel_layer::SaveGrid::Response& resp)
 /*****************************************************************************/
 {
-  boost::mutex::scoped_lock lock(_voxel_grid_lock);
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   double map_size_bytes;
 
   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )

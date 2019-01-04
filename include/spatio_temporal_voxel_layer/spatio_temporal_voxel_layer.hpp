@@ -164,7 +164,7 @@ private:
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   volume_grid::SpatioTemporalVoxelGrid*        _voxel_grid;
-  boost::mutex                                 _voxel_grid_lock;
+  boost::recursive_mutex                       _voxel_grid_lock;
 };
 
 }; // end namespace

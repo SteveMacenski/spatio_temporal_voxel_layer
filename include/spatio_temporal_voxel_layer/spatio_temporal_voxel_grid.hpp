@@ -66,6 +66,7 @@
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 // Mutex and locks
 #include <boost/thread.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 
 namespace volume_grid
 {
