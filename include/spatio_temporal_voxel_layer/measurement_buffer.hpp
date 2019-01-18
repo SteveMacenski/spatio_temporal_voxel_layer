@@ -53,9 +53,13 @@
 #include <ros/time.h>
 // TF
 #include "tf2_ros/transform_listener.h"
+#include "tf/transform_listener.h"
 #include "tf2_ros/message_filter.h"
+#include <tf2_ros/buffer.h>
 #include "message_filters/subscriber.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#include <tf2/transform_datatypes.h>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Quaternion.h>
@@ -126,6 +130,7 @@ private:
   double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
   double _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading;
+  geometry_msgs::TransformStamped tf_stamped;
 };
 
 } // namespace buffer
