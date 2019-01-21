@@ -154,18 +154,10 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
     // Create a tf::Transform using the tfStamped for _buffer
     geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time(0));
-    tf::Quaternion q(tf_stamped.transform.rotation.x,
-                     tf_stamped.transform.rotation.y,
-                     tf_stamped.transform.rotation.z,
-                     tf_stamped.transform.rotation.w);
 
-    tf::Vector3 t(tf_stamped.transform.translation.x,
-                  tf_stamped.transform.translation.y,
-                  tf_stamped.transform.translation.z);
-
-    tf::Transform transform(q, t);
-
-    pcl_ros::transformPointCloud(cloud, *cld_global, transform);
+    tf::Transform tf_transform;
+    tf::transformMsgToTF(tf_stamped.transform, tf_transform);
+    pcl_ros::transformPointCloud(cloud, *cld_global, tf_transform);
 
     cld_global->header.stamp = cloud.header.stamp;
 
