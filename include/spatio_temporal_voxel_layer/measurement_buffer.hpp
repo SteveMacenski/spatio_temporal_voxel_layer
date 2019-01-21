@@ -124,7 +124,6 @@ private:
   double _min_z, _max_z, _vertical_fov, _horizontal_fov, _decay_acceleration;
   double _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading;
-  geometry_msgs::TransformStamped tf_stamped;
 };
 
 } // namespace buffer
