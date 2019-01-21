@@ -21,8 +21,6 @@
   <build_depend>roscpp</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>tf2</build_depend>
-  <build_depend>tf2_ros</build_depend>
-  <build_depend>tf2_msgs</build_depend>
   <build_depend>tf2_tools</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
   <build_depend>tf2_conversions</build_depend>
@@ -45,8 +43,6 @@
   <run_depend>std_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>tf2</run_depend>
-  <run_depend>tf2_ros</run_depend>
-  <run_depend>tf2_msgs</run_depend>
   <run_depend>tf2_tools</run_depend>
   <run_depend>tf2_geometry_msgs</run_depend>
   <run_depend>tf2_conversions</run_depend>

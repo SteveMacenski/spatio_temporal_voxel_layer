@@ -18,9 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2
   tf2_geometry_msgs
-  tf2_ros
   tf2_sensor_msgs
-  tf2_msgs
   tf2_tools
   visualization_msgs
   message_generation
@@ -35,7 +33,7 @@ generate_messages(
    std_msgs
 )
 
-find_package(PCL REQUIRED)#1.7.2 EXACT)
+find_package(PCL REQUIRED)
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
 remove_definitions(-DDISABLE_LIBUSB-1.0)
@@ -75,8 +73,6 @@ catkin_package(
         std_msgs
         costmap_2d
         tf2
-        tf2_ros
-        tf2_msgs
         tf2_geometry_msgs
         tf2_conversions
         tf2_bullet
