@@ -19,7 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_geometry_msgs
   tf2_sensor_msgs
-  tf2_tools
   visualization_msgs
   message_generation
 )
@@ -75,8 +74,6 @@ catkin_package(
         tf2
         tf2_geometry_msgs
         tf2_conversions
-        tf2_bullet
-        rostime
         visualization_msgs
     DEPENDS
         TBB
