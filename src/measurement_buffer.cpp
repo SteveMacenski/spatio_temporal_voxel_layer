@@ -154,6 +154,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
 
     // Create a tf::Transform using the tfStamped for _buffer
     geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time(0));
+    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time::now(), ros::Duration(5.0));
 
     tf::Transform tf_transform;
     tf::transformMsgToTF(tf_stamped.transform, tf_transform);
