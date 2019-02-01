@@ -60,6 +60,7 @@
 #include <geometry_msgs/PoseStamped.h>
 // Mutex
 #include <boost/thread.hpp>
+#include <geometry_msgs/TransformStamped.h>
 
 namespace buffer
 {

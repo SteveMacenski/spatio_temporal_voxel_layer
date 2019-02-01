@@ -153,7 +153,6 @@ void MeasurementBuffer::BufferPCLCloud(const \
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
 
     // Create a tf::Transform using the tfStamped for _buffer
-    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time(0));
     geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time::now(), ros::Duration(5.0));
 
     tf::Transform tf_transform;
