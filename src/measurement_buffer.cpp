@@ -198,12 +198,6 @@ void MeasurementBuffer::GetReadings( \
   {
     observations.push_back(*it);
   }
-
-  // clear from buffer so we don't over report
-  if (_clear_buffer_after_reading || _observation_keep_time.toSec() == 0.)
-  {
-    _observation_list.clear();
-  }
 }
 
 /*****************************************************************************/
@@ -233,6 +227,20 @@ void MeasurementBuffer::RemoveStaleObservations(void)
       return;
     }
   }
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::ResetAllMeasurements(void)
+/*****************************************************************************/
+{
+  _observation_list.clear();
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::ClearAfterReading(void)
+/*****************************************************************************/
+{
+  return _clear_buffer_after_reading;
 }
 
 /*****************************************************************************/

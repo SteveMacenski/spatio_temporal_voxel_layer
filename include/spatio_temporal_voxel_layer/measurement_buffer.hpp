@@ -113,6 +113,8 @@ public:
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
   void ResetLastUpdatedTime(void);
+  void ResetAllMeasurements(void);
+  bool ClearAfterReading(void);
 
   // Public mutex locks
   void Lock(void);

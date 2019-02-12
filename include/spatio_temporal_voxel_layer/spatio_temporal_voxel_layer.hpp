@@ -111,6 +111,7 @@ public:
   // Functions for sensor feeds
   bool GetMarkingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
   bool GetClearingObservations(std::vector<observation::MeasurementReading>& marking_observations) const;
+  void ObservationsResetAfterReading() const;
 
   // Functions to interact with maps
   void UpdateROSCostmap(double* min_x, double* min_y, double* max_x, double* max_y);
