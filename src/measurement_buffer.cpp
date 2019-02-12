@@ -257,11 +257,7 @@ void MeasurementBuffer::RemoveStaleObservations(void)
 void MeasurementBuffer::ResetAllMeasurements(void)
 /*****************************************************************************/
 {
-  readings_iter it = _observation_list.begin();
-  for (it; it != _observation_list.end(); ++it)
-  {
-    _observation_list.erase(it, _observation_list.end());
-  }
+  _observation_list.clear();
 }
 
 /*****************************************************************************/
