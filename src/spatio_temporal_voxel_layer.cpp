@@ -440,6 +440,33 @@ bool SpatioTemporalVoxelLayer::GetClearingObservations( \
 }
 
 /*****************************************************************************/
+void SpatioTemporalVoxelLayer::ObservationsResetAfterReading() const
+/*****************************************************************************/
+{
+  // get clearing observations
+  for (unsigned int i = 0; i != _clearing_buffers.size(); ++i)
+  {
+    _clearing_buffers[i]->Lock();
+    if (_clearing_buffers[i]->ClearAfterReading())
+    {
+      _clearing_buffers[i]->ResetAllMeasurements();
+    }
+    _clearing_buffers[i]->Unlock();
+  }
+
+  for (unsigned int i = 0; i != _marking_buffers.size(); ++i)
+  {
+    _marking_buffers[i]->Lock();
+    if (_marking_buffers[i]->ClearAfterReading())
+    {
+      _marking_buffers[i]->ResetAllMeasurements();
+    }
+    _marking_buffers[i]->Unlock();
+  }
+  return;
+}
+
+/*****************************************************************************/
 bool SpatioTemporalVoxelLayer::updateFootprint(double robot_x, double robot_y, \
                                                double robot_yaw, double* min_x,\
                                                double* min_y, double* max_x,   \
@@ -688,6 +715,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
                                                clearing_observations;
   current = GetMarkingObservations(marking_observations) && current;
   current = GetClearingObservations(clearing_observations) && current;
+  ObservationsResetAfterReading();
   current_ = current;
 
   // navigation mode: clear observations, mapping mode: save maps and publish
