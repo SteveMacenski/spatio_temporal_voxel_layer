@@ -443,7 +443,6 @@ bool SpatioTemporalVoxelLayer::GetClearingObservations( \
 void SpatioTemporalVoxelLayer::ObservationsResetAfterReading() const
 /*****************************************************************************/
 {
-  // get clearing observations
   for (unsigned int i = 0; i != _clearing_buffers.size(); ++i)
   {
     _clearing_buffers[i]->Lock();
