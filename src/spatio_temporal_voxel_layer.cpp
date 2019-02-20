@@ -165,6 +165,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("max_z", max_z, 10.);
     // vertical FOV angle in rad
     source_node.param("vertical_fov_angle", vFOV, 0.7);
+    // vertical FOV padding in meters (3D lidar frustum only)
+    source_node.param("vertical_fov_padding", vFOVPadding, 0.0);
     // horizontal FOV angle in rad
     source_node.param("horizontal_fov_angle", hFOV, 1.04);
     // acceleration scales the model's decay in presence of readings
