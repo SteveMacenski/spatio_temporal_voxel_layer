@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>spatio_temporal_voxel_layer</name>
-  <version>1.1.4</version>
+  <version>1.2.0</version>
   <description>The spatio-temporal 3D obstacle costmap package</description>
 
   <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
@@ -26,6 +26,7 @@
   <build_depend>libopenvdb</build_depend>
   <build_depend>tbb</build_depend>
   <build_depend>libopenexr-dev</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
   <run_depend>costmap_2d</run_depend>
   <run_depend>laser_geometry</run_depend>
   <run_depend>message_filters</run_depend>
@@ -42,6 +43,7 @@
   <run_depend>libopenvdb</run_depend>
   <run_depend>tbb</run_depend>
   <run_depend>libopenexr-dev</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
 
   <export>
     <costmap_2d plugin="${prefix}/costmap_plugins.xml" />

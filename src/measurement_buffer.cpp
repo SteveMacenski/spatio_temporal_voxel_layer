@@ -60,6 +60,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const bool& clearing,                   \
                                      const double& voxel_size,               \
                                      const bool& voxel_filter,               \
+                                     const bool& enabled,                    \
                                      const bool& clear_buffer_after_reading, \
                                      const ModelType& model_type) :
 /*****************************************************************************/
@@ -72,7 +73,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _vertical_fov(vFOV), _horizontal_fov(hFOV),
     _decay_acceleration(decay_acceleration), _marking(marking),
     _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
     _model_type(model_type)
 {
 }
@@ -220,12 +221,6 @@ void MeasurementBuffer::GetReadings( \
   {
     observations.push_back(*it);
   }
-
-  // clear from buffer so we don't over report
-  if (_clear_buffer_after_reading || _observation_keep_time.toSec() == 0.)
-  {
-    _observation_list.clear();
-  }
 }
 
 /*****************************************************************************/
@@ -259,6 +254,20 @@ void MeasurementBuffer::RemoveStaleObservations(void)
 }
 
 /*****************************************************************************/
+void MeasurementBuffer::ResetAllMeasurements(void)
+/*****************************************************************************/
+{
+  _observation_list.clear();
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::ClearAfterReading(void)
+/*****************************************************************************/
+{
+  return _clear_buffer_after_reading;
+}
+
+/*****************************************************************************/
 bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
@@ -276,6 +285,20 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
       _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
   }
   return current;
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::IsEnabled(void) const
+/*****************************************************************************/
+{
+  return _enabled;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetEnabled(const bool& enabled)
+/*****************************************************************************/
+{
+  _enabled = enabled;
 }
 
 /*****************************************************************************/
