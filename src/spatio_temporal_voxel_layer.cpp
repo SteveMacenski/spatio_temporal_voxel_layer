@@ -203,11 +203,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // create an observation buffer
     _observation_buffers.push_back(
         boost::shared_ptr <buffer::MeasurementBuffer>
-        (new buffer::MeasurementBuffer(topic, observation_keep_time,     \
-        expected_update_rate, min_obstacle_height, max_obstacle_height,  \
-        obstacle_range, *tf_, _global_frame,                             \
-        sensor_frame, transform_tolerance, min_z, max_z, vFOV,           \
-        hFOV, decay_acceleration, marking, clearing, _voxel_size,        \
+        (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
+        expected_update_rate, min_obstacle_height, max_obstacle_height,   \
+        obstacle_range, *tf_, _global_frame,                              \
+        sensor_frame, transform_tolerance, min_z, max_z, vFOV,vFOVPadding,\
+        hFOV, decay_acceleration, marking, clearing, _voxel_size,         \
         voxel_filter, enabled, clear_after_reading, model_type)));
 
     // Add buffer to marking observation buffers
