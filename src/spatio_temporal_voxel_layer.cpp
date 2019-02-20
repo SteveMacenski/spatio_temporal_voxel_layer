@@ -145,7 +145,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height;
-    double max_obstacle_height, min_z, max_z, vFOV, hFOV, decay_acceleration;
+    double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
+    double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
     bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading;
 
