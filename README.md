@@ -116,6 +116,7 @@ rgbd_obstacle_layer:
     decay_acceleration: 1.       #default 0, 1/s^2. If laser scanner MUST be 0
     model_type: 0                #default 0 (depth camera). Use 1 for 3D Lidar
 ```
+More configuration samples are included in the examples folder, including a 3D lidar one.
 
 ### local/global_costmap_params.yaml
 
