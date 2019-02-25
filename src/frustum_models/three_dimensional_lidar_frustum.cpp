@@ -37,18 +37,17 @@
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 
-// Shifts the frustum "cone" outwards without shifting its angle
-#define CONEPADDING 0.0
-
 namespace geometry
 {
 
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
+                                                        const double& vFOVPadding,
                                                         const double& hFOV,
                                                         const double& min_dist,
                                                         const double& max_dist)
                                                         : _vFOV(vFOV),
+                                                          _vFOVPadding(vFOVPadding),  
                                                           _hFOV(hFOV),
                                                           _min_d(min_dist),
                                                           _max_d(max_dist)
@@ -101,7 +100,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   }
 
   // // Check if inside frustum valid vFOV
-  const double v_padded = fabs(transformed_pt[2]) + CONEPADDING;
+  const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
   if (( v_padded * v_padded / radial_distance_squared) > _tan_vFOVhalf_squared)
   {
     return false;
