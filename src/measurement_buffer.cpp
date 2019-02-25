@@ -85,7 +85,7 @@ MeasurementBuffer::~MeasurementBuffer(void)
 void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
 /*****************************************************************************/
 {
-  tryspatio_temporal_voxel_layer
+  try
   {
     pcl::PCLPointCloud2 pcl_pc2;
     pcl_conversions::toPCL(cloud, pcl_pc2);
