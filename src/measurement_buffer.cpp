@@ -54,6 +54,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const double& min_d,                    \
                                      const double& max_d,                    \
                                      const double& vFOV,                     \
+                                     const double& vFOVPadding,              \
                                      const double& hFOV,                     \
                                      const double& decay_acceleration,       \
                                      const bool& marking,                    \
@@ -70,10 +71,11 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _horizontal_fov(hFOV),
-    _decay_acceleration(decay_acceleration), _marking(marking),
-    _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
+    _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
+    _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
+    _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
+    _voxel_filter(voxel_filter), _enabled(enabled),
+    _clear_buffer_after_reading(clear_buffer_after_reading),
     _model_type(model_type)
 {
 }
@@ -139,6 +141,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
+    _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
