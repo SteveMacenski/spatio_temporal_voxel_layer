@@ -85,7 +85,7 @@ MeasurementBuffer::~MeasurementBuffer(void)
 void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
 /*****************************************************************************/
 {
-  try
+  tryspatio_temporal_voxel_layer
   {
     pcl::PCLPointCloud2 pcl_pc2;
     pcl_conversions::toPCL(cloud, pcl_pc2);
@@ -151,14 +151,12 @@ void MeasurementBuffer::BufferPCLCloud(const \
     }
 
     point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
-
-    // Create a tf::Transform using the tfStamped for _buffer
-    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), ros::Time::now(), ros::Duration(5.0));
-
-    tf::Transform tf_transform;
+    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), pcl_conversions::fromPCL(cloud.header).stamp);
+    tf::StampedTransform tf_transform;
     tf::transformMsgToTF(tf_stamped.transform, tf_transform);
+    tf_transform.frame_id_ = _global_frame;
+    tf_transform.stamp_ = tf_stamped.header.stamp;
     pcl_ros::transformPointCloud(cloud, *cld_global, tf_transform);
-
     cld_global->header.stamp = cloud.header.stamp;
 
     // if user wants to use a voxel filter
