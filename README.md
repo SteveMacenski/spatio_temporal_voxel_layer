@@ -12,6 +12,14 @@ An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFP
 
 We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-50%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`. 
 
+We've received feedback from users and have robots operating in the following environments with STVL:
+- Retail
+- Warehouses
+- Factories
+- Libraries
+- Hospitals
+- Hospitality
+
 Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](https://vimeo.com/292699571) (or click on image). 
 
 [![IMAGE ALT TEXT](https://user-images.githubusercontent.com/14944147/46768837-987c9280-cc9e-11e8-99ea-788d3d590dd8.png)](https://vimeo.com/292699571)
