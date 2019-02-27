@@ -6,7 +6,7 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
-Sample videos are shown below of a robot using *7 depth cameras* with less than 50% of a core, and another robot using a VLP-16.
+Sample videos are shown below of a robot using **7 depth cameras** with less than 50% of a core, and another robot using a **VLP-16**.
 
 7 Depth Cameras      |  VLP-16 LIDAR 
 :-------------------------:|:-------------------------:
