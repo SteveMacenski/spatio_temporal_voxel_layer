@@ -8,10 +8,7 @@ Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional 
 
 Sample videos are shown below of a robot using *7 depth cameras* with less than 50% of a core, and another robot using a VLP-16.
 
-7 Depth Cameras      |  VLP-16 LIDAR 
-:-------------------------:|:-------------------------:
-![ezgif com-video-to-gif](https://user-images.githubusercontent.com/14944147/37010885-b18fe1f8-20bb-11e8-8c28-5b31e65f2844.gif)
-  | ![vlp16](https://github.com/nickovaras/gifs/blob/master/follow.gif?raw=true)
+![ezgif com-video-to-gif](https://user-images.githubusercontent.com/14944147/37010885-b18fe1f8-20bb-11e8-8c28-5b31e65f2844.gif) ![vlp16](https://github.com/nickovaras/gifs/blob/master/follow.gif?raw=true)
 
 We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-50%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`. 
 
