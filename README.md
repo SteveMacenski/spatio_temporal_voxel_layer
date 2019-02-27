@@ -6,9 +6,12 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
-An simple example video can be seen [here](https://www.youtube.com/watch?v=8YIFPiI1vrg&feature=youtu.be), another more complex example can be seen [here](https://youtu.be/hpWxa6M1AR8) with global decay and frustum decay while moving with dynamic objects. A short clip from this is shown below.
+Sample videos are shown below of a robot using *7 depth cameras* with less than 50% of a core, and another robot using a VLP-16.
 
+7 Depth Cameras      |  VLP-16 LIDAR 
+:-------------------------:|:-------------------------:
 ![ezgif com-video-to-gif](https://user-images.githubusercontent.com/14944147/37010885-b18fe1f8-20bb-11e8-8c28-5b31e65f2844.gif)
+  |  ![ezgif com-video-to-gif 1](https://user-images.githubusercontent.com/14944147/37063574-d0923d24-2167-11e8-850c-18b6aed61634.gif)
 
 We found in experimental trials with **6** 7hz dense stereo RGBD cameras we ran the major move_base process at **20-50%** nominal from **80-110%** on a 5th gen i7 CPU in the global costmap updating using the existing `voxel_layer`. 
 
