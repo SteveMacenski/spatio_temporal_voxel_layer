@@ -51,9 +51,12 @@
 #include <ctime>
 #include <iostream>
 #include <utility>
+#include <list>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <visualization_msgs/Marker.h>
+#include <geometry_msgs/Point.h>
 // TBB
 #include <tbb/parallel_do.h>
 // OpenVDB
@@ -116,7 +119,7 @@ public:
   void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations);
 
   // Get the pointcloud of the underlying occupancy grid
-  void GetOccupancyPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr& pc);
+  void GetOccupancyPointCloud(sensor_msgs::PointCloud2::Ptr& pc2);
   std::unordered_map<occupany_cell, uint>* GetFlattenedCostmap();
 
   // Clear the grid
@@ -153,7 +156,7 @@ protected:
   int                             _decay_model;
   double                          _background_value, _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr     _pc;
+  std::list<geometry_msgs::Point32>*   _grid_points;
   std::unordered_map<occupany_cell, uint>* _cost_map;
   boost::mutex                            _grid_lock;
 };

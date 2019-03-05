@@ -85,27 +85,6 @@ MeasurementBuffer::~MeasurementBuffer(void)
 void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
 /*****************************************************************************/
 {
-  try
-  {
-    pcl::PCLPointCloud2 pcl_pc2;
-    pcl_conversions::toPCL(cloud, pcl_pc2);
-    pcl::PointCloud < pcl::PointXYZ > pcl_cloud;
-    pcl::fromPCLPointCloud2(pcl_pc2, pcl_cloud);
-    BufferPCLCloud(pcl_cloud);
-  }
-  catch (pcl::PCLException& ex)
-  {
-    ROS_ERROR("Failed to convert to pcl type, dropping observation: %s", \
-              ex.what());
-    return;
-  }
-}
-
-/*****************************************************************************/
-void MeasurementBuffer::BufferPCLCloud(const \
-                                         pcl::PointCloud<pcl::PointXYZ>& cloud)
-/*****************************************************************************/
-{
   // add a new measurement to be populated
   _observation_list.push_front(observation::MeasurementReading());
 
@@ -123,7 +102,7 @@ void MeasurementBuffer::BufferPCLCloud(const \
     local_pose.pose.orientation.y=0;
     local_pose.pose.orientation.z=0;
     local_pose.pose.orientation.w=1;
-    local_pose.header.stamp = pcl_conversions::fromPCL(cloud.header).stamp;
+    local_pose.header.stamp = cloud.header.stamp;
     local_pose.header.frame_id = origin_frame;
 
     _buffer.canTransform(_global_frame, local_pose.header.frame_id , \
@@ -150,53 +129,46 @@ void MeasurementBuffer::BufferPCLCloud(const \
       return;
     }
 
-    point_cloud_ptr cld_global(new pcl::PointCloud<pcl::PointXYZ>);
-    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id.c_str(), pcl_conversions::fromPCL(cloud.header).stamp);
-    tf::StampedTransform tf_transform;
-    tf::transformMsgToTF(tf_stamped.transform, tf_transform);
-    tf_transform.frame_id_ = _global_frame;
-    tf_transform.stamp_ = tf_stamped.header.stamp;
-    pcl_ros::transformPointCloud(cloud, *cld_global, tf_transform);
-    cld_global->header.stamp = cloud.header.stamp;
+    // transform the cloud in the global frame
+    point_cloud_ptr cld_global(new sensor_msgs::PointCloud2());
+    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform(_global_frame, cloud.header.frame_id, cloud.header.stamp);
+    tf2::doTransform (cloud, *cld_global, tf_stamped);
 
-    // if user wants to use a voxel filter
+    pcl::PCLPointCloud2::Ptr cloud_pcl (new pcl::PCLPointCloud2 ());
+    pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2 ());
+
+    pcl_conversions::toPCL(*cld_global, *cloud_pcl);
+
+    // remove points that are below or above our height restrictions, and in the same time, remove NaNs
+    // and if user wants to use it, combine with a voxel filter
     if ( _voxel_filter )
     {
-      // remove nans because they show things down
-      point_cloud_ptr cld_no_nan(new pcl::PointCloud<pcl::PointXYZ>);
-      std::vector<int> indices;
-      pcl::removeNaNFromPointCloud(*cld_global, *cld_no_nan, indices);
-
-      // minimize information needed to process
-      cld_global->clear();
-      pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor1;
-      sor1.setInputCloud (cld_no_nan);
-      sor1.setLeafSize ((float)_voxel_size,
-                        (float)_voxel_size,
-                        (float)_voxel_size);
-      sor1.filter (*cld_global);
+        pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+        sor.setInputCloud (cloud_pcl);
+        sor.setFilterFieldName("z");
+        sor.setFilterLimits(_min_obstacle_height,_max_obstacle_height);
+        sor.setDownsampleAllData(false);
+        sor.setLeafSize ((float)_voxel_size,
+                         (float)_voxel_size,
+                         (float)_voxel_size);
+        sor.filter(*cloud_filtered);
+        cloud_filtered.swap(cloud_pcl);
+        cloud_pcl->is_dense=true;
     }
-
-    // remove points that are below or above our height restrictions
-    pcl::PointCloud<pcl::PointXYZ>& obs_cloud = \
-                                *(_observation_list.front()._cloud);
-    unsigned int cloud_size = cld_global->points.size();
-
-    obs_cloud.points.resize(cloud_size);
-    unsigned int point_count = 0;
-    pcl::PointCloud<pcl::PointXYZ>::iterator it;
-    for (it = cld_global->begin(); it != cld_global->end(); ++it)
+    else
     {
-      if (it->z <= _max_obstacle_height && it->z >= _min_obstacle_height)
-      {
-        obs_cloud.points.at(point_count++) = *it;
-      }
+        pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
+        pass_through_filter.setInputCloud(cloud_pcl);
+        pass_through_filter.setKeepOrganized(false);
+        pass_through_filter.setFilterFieldName("z");
+        pass_through_filter.setFilterLimits(_min_obstacle_height,_max_obstacle_height);
+        pass_through_filter.filter(*cloud_filtered);
+        cloud_filtered.swap(cloud_pcl);
+        cloud_pcl->is_dense=true;
     }
 
-    // resize the cloud for the number of legal points
-    obs_cloud.points.resize(point_count);
-    obs_cloud.header.stamp = cloud.header.stamp;
-    obs_cloud.header.frame_id = cld_global->header.frame_id;
+    pcl_conversions::fromPCL(*cloud_pcl, *cld_global);
+    _observation_list.front()._cloud=cld_global;
   }
   catch (tf::TransformException& ex)
   {
@@ -252,7 +224,7 @@ void MeasurementBuffer::RemoveStaleObservations(void)
   {
     observation::MeasurementReading& obs = *it;
     const ros::Duration time_diff = \
-            _last_updated - pcl_conversions::fromPCL(obs._cloud->header).stamp;
+            _last_updated - obs._cloud->header.stamp;
 
     if (time_diff > _observation_keep_time)
     {
