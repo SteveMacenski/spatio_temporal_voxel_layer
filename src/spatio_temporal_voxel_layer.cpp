@@ -644,6 +644,7 @@ void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, in
   _voxel_grid->ResetGrid();
   Costmap2D::resetMaps();
 
+
   // hard way selected points
   /*
   auto& grid =  _voxel_grid;
@@ -656,15 +657,20 @@ void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, in
       if(xrange && y>start_y && y<end_y)
         continue;
 
+      uint grid_x, grid_y;
+      mapToWord(x,y, grid_x, grid_y);
+
       for(int z=0; z< GridGetMaxZ(); z++) // metacode how to know maxZ grid?
       {
-        if(!grid->ClearGridPoint(openvdb::Coord(x,y,z)))
+        if(!grid->ClearGridPoint(openvdb::Coord(grid_x, grid_y, z)))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
       }
     }
-  } */
+  }
+  Costmap2D::resetMaps();
+*/
 }
 
 
