@@ -637,6 +637,38 @@ void SpatioTemporalVoxelLayer::updateCosts( \
 }
 
 /*****************************************************************************/
+void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, int end_y)
+/*****************************************************************************/
+{
+  //easy way reset the whole grid.
+  _voxel_grid->ResetGrid();
+  Costmap2D::resetMaps();
+
+  // hard way selected points
+  /*
+  auto& grid =  _voxel_grid;
+  for(int x=0; x<(int)getSizeInCellsX(); x++)
+  {
+    bool xrange = x>start_x && x<end_x;
+
+    for(int y=0; y<(int)getSizeInCellsY(); y++)
+    {
+      if(xrange && y>start_y && y<end_y)
+        continue;
+
+      for(int z=0; z< GridGetMaxZ(); z++) // metacode how to know maxZ grid?
+      {
+        if(!grid->ClearGridPoint(openvdb::Coord(x,y,z)))
+        {
+          std::cout << "Failed to clear point." << std::endl;
+        }
+      }
+    }
+  } */
+}
+
+
+/*****************************************************************************/
 void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
