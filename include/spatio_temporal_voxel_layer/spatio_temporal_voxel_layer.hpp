@@ -96,7 +96,7 @@ public:
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, \
                                                                int max_i, int max_j);
 
-  virtual void clearArea(int start_x, int start_y, int end_x, int end_y) override;
+  virtual void clearArea(int start_x, int start_y, int end_x, int end_y);
 
   // Functions to interact with other layers
   virtual void matchSize(void);
