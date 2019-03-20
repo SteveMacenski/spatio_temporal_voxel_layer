@@ -60,6 +60,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 // Mutex
 #include <boost/thread.hpp>
 
