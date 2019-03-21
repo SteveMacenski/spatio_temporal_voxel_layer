@@ -136,8 +136,6 @@ private:
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _marking_buffers;
   std::vector<boost::shared_ptr<buffer::MeasurementBuffer> >       _clearing_buffers;
 
-  ros::Time t1, t2;
-  ros::Duration t_diff;
   bool                                 _publish_voxels, _mapping_mode;
   ros::Publisher                       _voxel_pub;
   ros::ServiceServer                   _grid_saver;
