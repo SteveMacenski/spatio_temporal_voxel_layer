@@ -144,7 +144,6 @@ private:
   std::string                          _global_frame;
   double                               _voxel_size;
   int                                  _combination_method, _mark_threshold;
-  int                                  _buffer_passthrough, _iteration;
   bool                                 _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::Point>    _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;

@@ -99,8 +99,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // if mapping, how often to save a map for safety
   nh.param("map_save_duration", map_save_time, 60.);
 
-  nh.param("buffer_passthrough", _buffer_passthrough, 1);
-  _iteration = 0;
   if (_mapping_mode)
   {
     _map_save_duration = ros::Duration(map_save_time);
@@ -331,15 +329,10 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
                 const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
-  if(_iteration < _buffer_passthrough){
-      _iteration++;
-  } else {
-      // buffer the point cloud
-      buffer->Lock();
-      buffer->BufferROSCloud(*message);
-      buffer->Unlock();
-      _iteration=0;
-  }
+	// buffer the point cloud
+	buffer->Lock();
+	buffer->BufferROSCloud(*message);
+	buffer->Unlock();
 }
 
 /*****************************************************************************/
