@@ -166,7 +166,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // clears measurement buffer after reading values from it
     source_node.param("clear_after_reading", clear_after_reading, false);
 
-
     if (!sensor_frame.empty())
     {
      sensor_frame = tf::resolve(tf_prefix, sensor_frame);
