@@ -216,9 +216,9 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
   if (_pub_voxels)
   {
     geometry_msgs::Point32 point;
-		point.x = pose_world[0];
-		point.y = pose_world[1];
-		point.z = pose_world[2];
+    point.x = pose_world[0];
+    point.y = pose_world[1];
+    point.z = pose_world[2];
     _grid_points->push_back(point);
   }
 
@@ -269,25 +269,25 @@ void SpatioTemporalVoxelGrid::operator()(const \
     sensor_msgs::PointCloud2ConstIterator<float> iter_y(cloud, "y");
     sensor_msgs::PointCloud2ConstIterator<float> iter_z(cloud, "z");
 
-		for (iter_x, iter_y, iter_z; iter_x !=iter_x.end(); \
-		                                            ++iter_x, ++iter_y, ++iter_z)
+    for (iter_x, iter_y, iter_z; iter_x !=iter_x.end(); \
+         ++iter_x, ++iter_y, ++iter_z)
     {
-			float distance_2 = \
-			                (*iter_x - obs._origin.x) * (*iter_x - obs._origin.x) \
-			              + (*iter_y - obs._origin.y) * (*iter_y - obs._origin.y) \
-			              + (*iter_z - obs._origin.z) * (*iter_z - obs._origin.z);
-			if (distance_2 > mark_range_2 || distance_2 < 0.0001)
-			{
-				continue;
-			}
-			openvdb::Vec3d mark_grid(this->WorldToIndex( \
-			                           openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
+      float distance_2 = \
+          (*iter_x - obs._origin.x) * (*iter_x - obs._origin.x) \
+          + (*iter_y - obs._origin.y) * (*iter_y - obs._origin.y) \
+          + (*iter_z - obs._origin.z) * (*iter_z - obs._origin.z);
+      if (distance_2 > mark_range_2 || distance_2 < 0.0001)
+      {
+        continue;
+      }
+      openvdb::Vec3d mark_grid(this->WorldToIndex( \
+                                 openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
 
-			if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
-			                                       mark_grid[2]), cur_time))
-			{
-				std::cout << "Failed to mark point." << std::endl;
-			}
+      if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
+                                             mark_grid[2]), cur_time))
+      {
+        std::cout << "Failed to mark point." << std::endl;
+      }
     }
   }
   return;
@@ -345,11 +345,11 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
 /*****************************************************************************/
 {
   // convert the grid points stored in a PointCloud2
-	pc2->width  = _grid_points->size();
-	pc2->height = 1;
-	pc2->is_dense = true;
+  pc2->width  = _grid_points->size();
+  pc2->height = 1;
+  pc2->is_dense = true;
 
-	sensor_msgs::PointCloud2Modifier modifier(*pc2);
+  sensor_msgs::PointCloud2Modifier modifier(*pc2);
 
   modifier.setPointCloud2Fields(3,
                                 "x", 1, sensor_msgs::PointField::FLOAT32,
@@ -357,13 +357,13 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
                                 "z", 1, sensor_msgs::PointField::FLOAT32);
   modifier.setPointCloud2FieldsByString(1, "xyz");
 
-	sensor_msgs::PointCloud2Iterator<float>iter_x(*pc2, "x");
-	sensor_msgs::PointCloud2Iterator<float>iter_y(*pc2, "y");
-	sensor_msgs::PointCloud2Iterator<float>iter_z(*pc2, "z");
+  sensor_msgs::PointCloud2Iterator<float>iter_x(*pc2, "x");
+  sensor_msgs::PointCloud2Iterator<float>iter_y(*pc2, "y");
+  sensor_msgs::PointCloud2Iterator<float>iter_z(*pc2, "z");
 
-	for(std::list<geometry_msgs::Point32>::iterator it = _grid_points->begin(); \
-	                                              it != _grid_points->end(); ++it)
-	{
+  for(std::list<geometry_msgs::Point32>::iterator it = _grid_points->begin(); \
+      it != _grid_points->end(); ++it)
+  {
     const geometry_msgs::Point32& pt = *it;
     *iter_x = pt.x;
     *iter_y = pt.y;

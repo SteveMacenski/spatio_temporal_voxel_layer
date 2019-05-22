@@ -329,10 +329,10 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback( \
                 const boost::shared_ptr<buffer::MeasurementBuffer>& buffer)
 /*****************************************************************************/
 {
-	// buffer the point cloud
-	buffer->Lock();
-	buffer->BufferROSCloud(*message);
-	buffer->Unlock();
+  // buffer the point cloud
+  buffer->Lock();
+  buffer->BufferROSCloud(*message);
+  buffer->Unlock();
 }
 
 /*****************************************************************************/
