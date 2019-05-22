@@ -51,7 +51,7 @@
 #include <ctime>
 #include <iostream>
 #include <utility>
-#include <list>
+#include <vector>
 // msgs
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
@@ -156,7 +156,7 @@ protected:
   int                             _decay_model;
   double                          _background_value, _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
-  std::list<geometry_msgs::Point32>*   _grid_points;
+  std::vector<geometry_msgs::Point32>*   _grid_points;
   std::unordered_map<occupany_cell, uint>* _cost_map;
   boost::mutex                            _grid_lock;
 };

@@ -49,7 +49,7 @@ SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
                    _decay_model(decay_model),                             \
                    _voxel_decay(voxel_decay),                             \
                    _pub_voxels(pub_voxels),                               \
-                   _grid_points(new std::list<geometry_msgs::Point32>),   \
+                   _grid_points(new std::vector<geometry_msgs::Point32>),   \
                    _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
 {
@@ -361,7 +361,7 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud( \
   sensor_msgs::PointCloud2Iterator<float>iter_y(*pc2, "y");
   sensor_msgs::PointCloud2Iterator<float>iter_z(*pc2, "z");
 
-  for(std::list<geometry_msgs::Point32>::iterator it = _grid_points->begin(); \
+  for(std::vector<geometry_msgs::Point32>::iterator it = _grid_points->begin(); \
       it != _grid_points->end(); ++it)
   {
     const geometry_msgs::Point32& pt = *it;
