@@ -43,7 +43,9 @@
 #include <spatio_temporal_voxel_layer/measurement_reading.h>
 // PCL
 #include <pcl_ros/transforms.h>
-#include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/passthrough.h>
 // STL
 #include <vector>
 #include <list>
@@ -58,16 +60,16 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 // Mutex
 #include <boost/thread.hpp>
-#include <geometry_msgs/TransformStamped.h>
 
 namespace buffer
 {
 
 // conveniences for line lengths
 typedef std::list<observation::MeasurementReading>::iterator readings_iter;
-typedef pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr;
+typedef sensor_msgs::PointCloud2::Ptr point_cloud_ptr;
 
 // Measurement buffer
 class MeasurementBuffer
@@ -98,7 +100,6 @@ public:
 
   // Buffers for different types of pointclouds
   void BufferROSCloud(const sensor_msgs::PointCloud2& cloud);
-  void BufferPCLCloud(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 
   // Get measurements from the buffer
   void GetReadings(std::vector<observation::MeasurementReading>& observations);

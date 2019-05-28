@@ -607,13 +607,11 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   // publish point cloud in navigation mode
   if (_publish_voxels && !_mapping_mode)
   {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pc(new pcl::PointCloud<pcl::PointXYZ>);
-    _voxel_grid->GetOccupancyPointCloud(pc);
-    sensor_msgs::PointCloud2 pc2;
-    pcl::toROSMsg(*pc, pc2);
-    pc2.header.frame_id = _global_frame;
-    pc2.header.stamp = ros::Time::now();
-    _voxel_pub.publish(pc2);
+    sensor_msgs::PointCloud2::Ptr pc2(new sensor_msgs::PointCloud2());
+    _voxel_grid->GetOccupancyPointCloud(pc2);
+    pc2->header.frame_id = _global_frame;
+    pc2->header.stamp = ros::Time::now();
+    _voxel_pub.publish(*pc2);
   }
 
   // update footprint
