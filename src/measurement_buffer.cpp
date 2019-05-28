@@ -41,26 +41,29 @@ namespace buffer
 {
 
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
-                                     const double& observation_keep_time, \
-                                     const double& expected_update_rate,  \
-                                     const double& min_obstacle_height,   \
-                                     const double& max_obstacle_height,   \
-                                     const double& obstacle_range,        \
-                                     tf2_ros::Buffer& tf,                 \
-                                     const std::string& global_frame,     \
-                                     const std::string& sensor_frame,     \
-                                     const double& tf_tolerance,          \
-                                     const double& min_d,                 \
-                                     const double& max_d,                 \
-                                     const double& vFOV,                  \
-                                     const double& hFOV,                  \
-                                     const double& decay_acceleration,    \
-                                     const bool& marking,                 \
-                                     const bool& clearing,                \
-                                     const double& voxel_size,            \
-                                     const bool& voxel_filter,            \
-                                     const bool& clear_buffer_after_reading) :
+MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
+                                     const double& observation_keep_time,    \
+                                     const double& expected_update_rate,     \
+                                     const double& min_obstacle_height,      \
+                                     const double& max_obstacle_height,      \
+                                     const double& obstacle_range,           \
+                                     tf2_ros::Buffer& tf,                    \
+                                     const std::string& global_frame,        \
+                                     const std::string& sensor_frame,        \
+                                     const double& tf_tolerance,             \
+                                     const double& min_d,                    \
+                                     const double& max_d,                    \
+                                     const double& vFOV,                     \
+                                     const double& vFOVPadding,              \
+                                     const double& hFOV,                     \
+                                     const double& decay_acceleration,       \
+                                     const bool& marking,                    \
+                                     const bool& clearing,                   \
+                                     const double& voxel_size,               \
+                                     const bool& voxel_filter,               \
+                                     const bool& enabled,                    \
+                                     const bool& clear_buffer_after_reading, \
+                                     const ModelType& model_type) :
 /*****************************************************************************/
     _buffer(tf), _observation_keep_time(observation_keep_time),
     _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
@@ -68,10 +71,12 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,       \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _horizontal_fov(hFOV),
-    _decay_acceleration(decay_acceleration), _marking(marking),
-    _clearing(clearing), _voxel_size(voxel_size), _voxel_filter(voxel_filter),
-    _clear_buffer_after_reading(clear_buffer_after_reading)
+    _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
+    _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
+    _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
+    _voxel_filter(voxel_filter), _enabled(enabled),
+    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _model_type(model_type)
 {
 }
 
@@ -118,10 +123,12 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
+    _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
+    _observation_list.front()._model_type = _model_type;
 
     if (_clearing && !_marking)
     {
@@ -194,12 +201,6 @@ void MeasurementBuffer::GetReadings( \
   {
     observations.push_back(*it);
   }
-
-  // clear from buffer so we don't over report
-  if (_clear_buffer_after_reading || _observation_keep_time.toSec() == 0.)
-  {
-    _observation_list.clear();
-  }
 }
 
 /*****************************************************************************/
@@ -232,6 +233,20 @@ void MeasurementBuffer::RemoveStaleObservations(void)
 }
 
 /*****************************************************************************/
+void MeasurementBuffer::ResetAllMeasurements(void)
+/*****************************************************************************/
+{
+  _observation_list.clear();
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::ClearAfterReading(void)
+/*****************************************************************************/
+{
+  return _clear_buffer_after_reading;
+}
+
+/*****************************************************************************/
 bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
@@ -249,6 +264,20 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
       _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
   }
   return current;
+}
+
+/*****************************************************************************/
+bool MeasurementBuffer::IsEnabled(void) const
+/*****************************************************************************/
+{
+  return _enabled;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetEnabled(const bool& enabled)
+/*****************************************************************************/
+{
+  _enabled = enabled;
 }
 
 /*****************************************************************************/

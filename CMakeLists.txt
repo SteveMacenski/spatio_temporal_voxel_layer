@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(spatio_temporal_voxel_layer)
-add_compile_options(-std=c++17)
+
+add_definitions (-std=c++17)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
@@ -18,15 +19,22 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   visualization_msgs
   message_generation
+  dynamic_reconfigure
 )
 
 add_service_files(DIRECTORY msgs
   FILES
   SaveGrid.srv
 )
+
+generate_dynamic_reconfigure_options(
+  cfg/SpatioTemporalVoxelLayer.cfg
+)
+
 generate_messages(
    DEPENDENCIES
    std_msgs
+   dynamic_reconfigure
 )
 
 find_package(PCL REQUIRED)
@@ -70,6 +78,7 @@ catkin_package(
         costmap_2d
         tf2_ros
         visualization_msgs
+        dynamic_reconfigure
     DEPENDS
         TBB
         OpenVDB
@@ -82,10 +91,11 @@ add_library(${PROJECT_NAME}
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
-            src/frustum.cpp
+            src/frustum_models/depth_camera_frustum.cpp
+            src/frustum_models/three_dimensional_lidar_frustum.cpp
             src/vdb2pc.cpp
 )
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
