@@ -74,6 +74,13 @@
 namespace volume_grid
 {
 
+enum GlobalDecayModel
+{
+  LINEAR = 0,
+  EXPONENTIAL = 1,
+  PERSISTENT = 2
+};
+
 // Structure for an occupied cell for map
 struct occupany_cell
 {

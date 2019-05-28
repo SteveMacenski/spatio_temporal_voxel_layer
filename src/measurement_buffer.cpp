@@ -47,7 +47,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const double& min_obstacle_height,      \
                                      const double& max_obstacle_height,      \
                                      const double& obstacle_range,           \
-                                     tf::TransformListener& tf,              \
+                                     tf2_ros::Buffer& tf,                    \
                                      const std::string& global_frame,        \
                                      const std::string& sensor_frame,        \
                                      const double& tf_tolerance,             \

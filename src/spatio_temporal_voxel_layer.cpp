@@ -76,7 +76,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
   std::string topics_string;
-  int decay_model;
+  int decay_model_int;
   // source names
   nh.param("observation_sources", topics_string, std::string(""));
   // timeout in seconds for transforms

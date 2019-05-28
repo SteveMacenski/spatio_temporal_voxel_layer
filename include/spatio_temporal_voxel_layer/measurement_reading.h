@@ -63,9 +63,9 @@ struct MeasurementReading
   }
 
   /*****************************************************************************/
-  MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
-            double obstacle_range, double min_z, double max_z, double vFOV,
-            double vFOVPadding, double hFOV, double decay_acceleration, bool marking,
+  MeasurementReading(geometry_msgs::Point& origin, sensor_msgs::PointCloud2 cloud,       \
+            double obstacle_range, double min_z, double max_z, double vFOV,              \
+            double vFOVPadding, double hFOV, double decay_acceleration, bool marking,    \
             bool clearing, ModelType model_type) :
   /*****************************************************************************/
                                       _origin(origin),                                   \
