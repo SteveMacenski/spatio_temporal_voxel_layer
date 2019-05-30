@@ -666,6 +666,15 @@ void SpatioTemporalVoxelLayer::updateCosts( \
 }
 
 /*****************************************************************************/
+void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, int end_y)
+/*****************************************************************************/
+{
+  _voxel_grid->ResetGrid();
+  Costmap2D::resetMaps();
+}
+
+
+/*****************************************************************************/
 void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
                                                 double* max_x, double* max_y)
 /*****************************************************************************/
