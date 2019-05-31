@@ -582,24 +582,6 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
 /*****************************************************************************/
 {
   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
-  bool update_grid(false);
-  auto updateFlagIfChanged = [&update_grid](auto& own, const auto& reference)
-  {
-    if (static_cast<float>(std::abs(own - reference)) >= FLT_EPSILON)
-    {
-      own = reference;
-      update_grid = true;
-    }
-  };
-
-  auto default_value = (config.track_unknown_space) ? \
-                          costmap_2d::NO_INFORMATION : costmap_2d::FREE_SPACE;
-  updateFlagIfChanged(default_value_, default_value);
-  updateFlagIfChanged(_voxel_size, config.voxel_size);
-  updateFlagIfChanged(_voxel_decay, config.voxel_decay);
-  int decay_model_int = (int)_decay_model;
-  updateFlagIfChanged(decay_model_int, config.decay_model);
-  updateFlagIfChanged(_publish_voxels, config.publish_voxel_map);
 
   _enabled = config.enabled;
   _combination_method = config.combination_method;
@@ -607,10 +589,17 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   _update_footprint_enabled = config.update_footprint_enabled;
   _mapping_mode = config.mapping_mode;
   _map_save_duration = ros::Duration(config.map_save_duration);
-  _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
 
-  if (update_grid)
+  if (level >=1) //update grid
   {
+    auto default_value = (config.track_unknown_space) ? \
+                            costmap_2d::NO_INFORMATION : costmap_2d::FREE_SPACE;
+    default_value_ = default_value;
+    _voxel_size = config.voxel_size;
+    _voxel_decay = config.voxel_decay;
+    _decay_model = static_cast<volume_grid::GlobalDecayModel>(config.decay_model);
+    _publish_voxels = config.publish_voxel_map;
+
     delete _voxel_grid;
     _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
       static_cast<double>(default_value_), _decay_model, \
