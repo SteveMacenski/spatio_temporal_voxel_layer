@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   tf2_ros
+  tf2_geometry_msgs
   visualization_msgs
   message_generation
   dynamic_reconfigure
@@ -77,6 +78,7 @@ catkin_package(
         std_msgs
         costmap_2d
         tf2_ros
+        tf2_geometry_msgs
         visualization_msgs
         dynamic_reconfigure
     DEPENDS
