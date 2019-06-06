@@ -36,6 +36,7 @@
  *********************************************************************/
 
 #include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace buffer
 {
