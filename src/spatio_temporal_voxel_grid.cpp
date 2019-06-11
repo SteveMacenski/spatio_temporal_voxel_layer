@@ -43,14 +43,16 @@ namespace volume_grid
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
                    const double& background_value, const int& decay_model,\
-                   const double& voxel_decay, const bool& pub_voxels) :
+                   const double& voxel_decay, const bool& pub_voxels,
+                   const costmap_2d::Costmap2D* cost_map) :
                    _background_value(background_value),                   \
                    _voxel_size(voxel_size),                               \
                    _decay_model(decay_model),                             \
                    _voxel_decay(voxel_decay),                             \
                    _pub_voxels(pub_voxels),                               \
-                   _grid_points(new std::vector<geometry_msgs::Point32>),   \
-                   _cost_map(new std::unordered_map<occupany_cell, uint>)
+                   _grid_points(new std::vector<geometry_msgs::Point32>), \
+                   _cost_map(new flat_map_t), \
+                   _cf(*cost_map)
 /*****************************************************************************/
 {
   this->InitializeGrid();
@@ -176,6 +178,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
     const double base_duration_to_decay = GetTemporalClearingDuration( \
                                                             time_since_marking);
 
+    const auto world = this->IndexToWorld(pt_index);
     for(frustum_it; frustum_it != frustums.end(); ++frustum_it)
     {
       if (!frustum_it->frustum)
@@ -183,7 +186,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         continue;
       }
 
-      if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
+      if ( frustum_it->frustum->IsInside(world))
       {
         frustum_cycle = true;
 
@@ -227,38 +230,27 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       }
     }
     // if here, we can add to costmap and PC2
-    PopulateCostmapAndPointcloud(pt_index);
+    PopulateCostmapAndPointcloud(world);
   }
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
-                                                            openvdb::Coord& pt)
+                                                            openvdb::Vec3d& pt)
 /*****************************************************************************/
 {
-  // add pt to the pointcloud and costmap
-  openvdb::Vec3d pose_world = _grid->indexToWorld(pt);
-
   if (_pub_voxels)
   {
     geometry_msgs::Point32 point;
-    point.x = pose_world[0];
-    point.y = pose_world[1];
-    point.z = pose_world[2];
+    point.x = pt[0];
+    point.y = pt[1];
+    point.z = pt[2];
     _grid_points->push_back(point);
   }
 
-  std::unordered_map<occupany_cell, uint>::iterator cell;
-  cell = _cost_map->find(occupany_cell(pose_world[0], pose_world[1]));
-  if (cell != _cost_map->end())
-  {
-    cell->second += 1;
-  }
-  else
-  {
-    _cost_map->insert(std::make_pair( \
-                              occupany_cell(pose_world[0], pose_world[1]), 1));
-  }
+  index_t index;
+  if(_cf(pt[0], pt[1], index))
+    ++(*_cost_map)[index];
 }
 
 /*****************************************************************************/
@@ -320,8 +312,7 @@ void SpatioTemporalVoxelGrid::operator()(const \
 }
 
 /*****************************************************************************/
-std::unordered_map<occupany_cell, uint>*
-                                 SpatioTemporalVoxelGrid::GetFlattenedCostmap()
+flat_map_t* SpatioTemporalVoxelGrid::GetFlattenedCostmap()
 /*****************************************************************************/
 {
   return _cost_map;

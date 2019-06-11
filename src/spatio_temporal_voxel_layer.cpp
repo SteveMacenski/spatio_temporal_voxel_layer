@@ -131,7 +131,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                                         (double)default_value_, \
                                                         _decay_model, \
                                                         _voxel_decay, \
-                                                        _publish_voxels);
+                                                        _publish_voxels, 
+                                                        this);
   matchSize();
   current_ = true;
   ROS_INFO("%s created underlying voxel grid.", getName().c_str());
@@ -603,7 +604,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
     delete _voxel_grid;
     _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
       static_cast<double>(default_value_), _decay_model, \
-      _voxel_decay, _publish_voxels);
+      _voxel_decay, _publish_voxels, this);
   }
 }
 
@@ -662,17 +663,15 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap(double* min_x, double* min_y, \
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
-  std::unordered_map<volume_grid::occupany_cell, uint>::iterator it;
-  for (it = _voxel_grid->GetFlattenedCostmap()->begin();
-       it != _voxel_grid->GetFlattenedCostmap()->end(); ++it)
+  const auto& flat_map = *_voxel_grid->GetFlattenedCostmap();
+  volume_grid::index_t mx, my;
+  for(const auto& iter : flat_map)
   {
-    uint map_x, map_y;
-    if ( it->second >= _mark_threshold && \
-         worldToMap(it->first.x, it->first.y, map_x, map_y))
-    {
-      costmap_[getIndex(map_x, map_y)] = costmap_2d::LETHAL_OBSTACLE;
-      touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
-    }
+    if(iter.second < _mark_threshold)
+      continue;
+    costmap_[iter.first] = costmap_2d::LETHAL_OBSTACLE;
+    indexToCells(iter.first, mx, my);
+    touch(mx, my, min_x, min_y, max_x, max_y);
   }
 }
 

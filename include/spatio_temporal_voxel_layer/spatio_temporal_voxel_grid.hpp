@@ -45,6 +45,7 @@
 #include <pcl/PCLPointCloud2.h>
 // ROS
 #include <ros/ros.h>
+#include <costmap_2d/costmap_2d.h>
 // STL
 #include <math.h>
 #include <unordered_map>
@@ -81,22 +82,6 @@ enum GlobalDecayModel
   PERSISTENT = 2
 };
 
-// Structure for an occupied cell for map
-struct occupany_cell
-{
-  occupany_cell(const double& _x, const double& _y) :
-    x(_x), y(_y)
-  {
-  }
-
-  bool operator==(const occupany_cell& other) const
-  {
-    return x==other.x && y==other.y;
-  }
-
-  double x, y;
-};
-
 // Structure for wrapping frustum model and necessary metadata
 struct frustum_model
 {
@@ -115,6 +100,36 @@ struct frustum_model
   const double accel_factor;
 };
 
+using index_t = unsigned int;
+using flat_map_t = std::unordered_map<index_t, unsigned int>;
+
+/// functor holding the converter function from global space to 2d-map-indexing
+struct converter_func {
+
+  /// @brief c'tor
+  converter_func(const costmap_2d::Costmap2D& _m) noexcept : m_(_m) {}
+
+  /// @brief converter function
+  /**
+   * @param[in] x x-coordinate in global space
+   * @param[in] y y-coordinate in global space
+   * @param[out] out output mapped to index space
+   * @return true, iff mapping successful
+   */
+  inline bool operator()(double x, double y, index_t & out) noexcept
+  {
+    static index_t mx, my;
+    if(!m_.worldToMap(x, y, mx, my)){
+      return false;
+    }
+    out = m_.getIndex(mx, my);
+    return true;
+  }
+
+private:
+  const costmap_2d::Costmap2D& m_;
+};
+
 // Core voxel grid structure and interface
 class SpatioTemporalVoxelGrid
 {
@@ -123,9 +138,12 @@ public:
   typedef openvdb::math::Ray<openvdb::Real> GridRay;
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
-  SpatioTemporalVoxelGrid(const float& voxel_size, const double& background_value,
-                          const int& decay_model, const double& voxel_decay,
-                          const bool& pub_voxels);
+  SpatioTemporalVoxelGrid(const float& voxel_size, 
+                          const double& background_value,
+                          const int& decay_model, 
+                          const double& voxel_decay,
+                          const bool& pub_voxels, 
+                          const costmap_2d::Costmap2D* cost_map);
   ~SpatioTemporalVoxelGrid(void);
 
   // Core making and clearing functions
@@ -135,7 +153,7 @@ public:
 
   // Get the pointcloud of the underlying occupancy grid
   void GetOccupancyPointCloud(sensor_msgs::PointCloud2::Ptr& pc2);
-  std::unordered_map<occupany_cell, uint>* GetFlattenedCostmap();
+  flat_map_t* GetFlattenedCostmap();
 
   // Clear the grid
   bool ResetGrid(void);
@@ -161,7 +179,7 @@ protected:
   void TemporalClearAndGenerateCostmap(std::vector<frustum_model>& frustums);
 
   // Populate the costmap ROS api and pointcloud with a marked point
-  void PopulateCostmapAndPointcloud(const openvdb::Coord& pt);
+  void PopulateCostmapAndPointcloud(const openvdb::Vec3d& pt);
 
   // Utilities for tranformation
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
@@ -172,23 +190,11 @@ protected:
   double                          _background_value, _voxel_size, _voxel_decay;
   bool                            _pub_voxels;
   std::vector<geometry_msgs::Point32>*   _grid_points;
-  std::unordered_map<occupany_cell, uint>* _cost_map;
+  flat_map_t* _cost_map;
+  converter_func _cf;
   boost::mutex                            _grid_lock;
 };
 
 } // end volume_grid namespace
-
-// hash function for unordered_map of occupancy_cells
-namespace std {
-template <>
-struct hash<volume_grid::occupany_cell>
-{
-  std::size_t operator()(const volume_grid::occupany_cell& k) const
-  {
-    return ((std::hash<double>()(k.x) ^ (std::hash<double>()(k.y) << 1)) >> 1);
-  }
-};
-
-} // end std namespace
 
 #endif
