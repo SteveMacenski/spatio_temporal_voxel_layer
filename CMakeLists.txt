@@ -107,19 +107,20 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
 
-add_executable(minimal_test
-            test/minimal_test.cpp
-)
-target_link_libraries(minimal_test
-  ${Boost_LIBRARIES}
-  ${EIGEN3_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${OpenVDB_LIBRARIES}
-  ${TBB_LIBRARIES}
-  ${catkin_LIBRARIES}
-)
+# For testing on standalone, don't want to ship with production builds
+#add_executable(minimal_test
+#            test/minimal_test.cpp
+#)
+#target_link_libraries(minimal_test
+#  ${Boost_LIBRARIES}
+#  ${EIGEN3_LIBRARIES}
+#  ${PCL_LIBRARIES}
+#  ${OpenVDB_LIBRARIES}
+#  ${TBB_LIBRARIES}
+#  ${catkin_LIBRARIES}
+#)
 
-install(TARGETS ${PROJECT_NAME} minimal_test
+install(TARGETS ${PROJECT_NAME} #minimal_test
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
