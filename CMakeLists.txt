@@ -39,6 +39,22 @@ generate_messages(
 )
 
 find_package(PCL REQUIRED)
+if(NOT "${PCL_LIBRARIES}" STREQUAL "")
+  # This package fails to build on Debian Stretch with a linking error against
+  # 'Qt5::Widgets'.  This is a transitive dependency that comes in to PCL via
+  # the PCL dependency on VTK.  However, we don't actually care about the Qt
+  # dependencies for this package, so just remove them.  This is similar to the
+  # workaround in https://github.com/ros-perception/perception_pcl/pull/151,
+  # and can be removed when Stretch goes out of support.
+  list(REMOVE_ITEM PCL_LIBRARIES
+    "vtkGUISupportQt"
+    "vtkGUISupportQtOpenGL"
+    "vtkGUISupportQtSQL"
+    "vtkGUISupportQtWebkit"
+    "vtkViewsQt"
+    "vtkRenderingQt")
+endif()
+
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
 remove_definitions(-DDISABLE_LIBUSB-1.0)
