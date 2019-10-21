@@ -148,7 +148,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
-    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading;
+    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -176,6 +176,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("voxel_filter", voxel_filter, false);
     // clears measurement buffer after reading values from it
     source_node.param("clear_after_reading", clear_after_reading, false);
+    // Whether the frustum is enabled on startup. Can be toggled with service
+    source_node.param("enabled", enabled, true);
     // model type - default depth camera frustum model
     int model_type_int;
     source_node.param("model_type", model_type_int, 0);
@@ -199,7 +201,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
 
-    bool enabled = true;
     // create an observation buffer
     _observation_buffers.push_back(
         boost::shared_ptr <buffer::MeasurementBuffer>
