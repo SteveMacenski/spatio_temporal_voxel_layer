@@ -115,6 +115,7 @@ rgbd_obstacle_layer:
     clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
     voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
   rgbd1_clear:
+    enabled: true                #default true, can be toggled on/off with associated service call
     data_type: PointCloud2
     topic: camera1/depth/points
     marking: false
