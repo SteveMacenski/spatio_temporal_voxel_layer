@@ -37,54 +37,49 @@
  *          and associated methods
  *********************************************************************/
 
-#ifndef DEPTH_FRUSTUM_H_
-#define DEPTH_FRUSTUM_H_
+#ifndef SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__DEPTH_CAMERA_FRUSTUM_HPP_
+#define SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__DEPTH_CAMERA_FRUSTUM_HPP_
 
+// STL
+#include <vector>
 // STVL
-#include <spatio_temporal_voxel_layer/frustum_models/frustum.hpp>
+#include "spatio_temporal_voxel_layer/frustum_models/frustum.hpp"
 
 namespace geometry
 {
-
-// visualize the frustum should someone other than me care
-#define VISUALIZE_FRUSTUM 0
 
 // A class to model a depth sensor frustum in world space
 class DepthCameraFrustum : public Frustum
 {
 public:
-  DepthCameraFrustum(const double& vFOV, const double& hFOV,
-          const double& min_dist, const double& max_dist);
+  DepthCameraFrustum(
+    const double & vFOV, const double & hFOV,
+    const double & min_dist, const double & max_dist);
   virtual ~DepthCameraFrustum(void);
 
   // transform plane normals by depth camera pose
   virtual void TransformModel(void);
 
   // determine if a point is inside of the transformed frustum
-  virtual bool IsInside(const openvdb::Vec3d& pt);
+  virtual bool IsInside(const openvdb::Vec3d & pt);
 
   // set pose of depth camera in global space
-  virtual void SetPosition(const geometry_msgs::Point& origin);
-  virtual void SetOrientation(const geometry_msgs::Quaternion& quat);
+  virtual void SetPosition(const geometry_msgs::msg::Point & origin);
+  virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
 
 private:
   // utils to find useful frustum metadata
   void ComputePlaneNormals(void);
-  double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
-  double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
+  double Dot(const VectorWithPt3D &, const openvdb::Vec3d &) const;
+  double Dot(const VectorWithPt3D &, const Eigen::Vector3d &) const;
 
   double _vFOV, _hFOV, _min_d, _max_d;
   std::vector<VectorWithPt3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
-
-  #if VISUALIZE_FRUSTUM
-    std::vector<Eigen::Vector3d> _frustum_pts;
-    ros::Publisher _frustumPub;
-  #endif
 };
 
-} // end namespace
+}  // namespace geometry
 
-#endif
+#endif  // SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__DEPTH_CAMERA_FRUSTUM_HPP_

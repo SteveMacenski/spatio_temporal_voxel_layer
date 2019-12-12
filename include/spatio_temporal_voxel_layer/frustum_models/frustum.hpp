@@ -36,25 +36,25 @@
  * Purpose: Abstract class for a frustum model implementation
  *********************************************************************/
 
-#ifndef FRUSTUM_H_
-#define FRUSTUM_H_
+#ifndef SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__FRUSTUM_HPP_
+#define SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__FRUSTUM_HPP_
 
-// Eigen
-#include <Eigen/Geometry>
 // STL
 #include <vector>
 #include <cassert>
+// Eigen
+#include "Eigen/Geometry"
 // OpenVDB
-#include <openvdb/openvdb.h>
+#include "openvdb/openvdb.h"
 // msgs
-#include <geometry_msgs/Point.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Quaternion.h>
-#include <geometry_msgs/PointStamped.h>
-#include <geometry_msgs/Pose.h>
+#include "geometry_msgs/msg/point.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 // ROS
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 
 namespace geometry
 {
@@ -62,29 +62,30 @@ namespace geometry
 // A structure for maintaining vectors and points in world spaces
 struct VectorWithPt3D
 {
-  VectorWithPt3D(const double& x_, const double& y_, \
-                 const double& z_, const Eigen::Vector3d& p0) : \
-                 x(x_), y(y_), z(z_), initial_point(p0)
+  VectorWithPt3D(
+    const double & x_, const double & y_,
+    const double & z_, const Eigen::Vector3d & p0)
+  : x(x_), y(y_), z(z_), initial_point(p0)
   {
   }
-  
-  VectorWithPt3D(void) : x(0.), y(0.), z(0.)
+
+  VectorWithPt3D(void)
+  : x(0.), y(0.), z(0.)
   {
   }
 
   inline VectorWithPt3D operator*(double a)
   {
-    return VectorWithPt3D(a*x, a*y, a*z, initial_point);
+    return VectorWithPt3D(a * x, a * y, a * z, initial_point);
   }
 
   // given a transform, transform its information
-  void TransformFrames(const Eigen::Affine3d& homogeneous_transform)
+  void TransformFrames(const Eigen::Affine3d & homogeneous_transform)
   {
-    Eigen::Vector3d vec_t = homogeneous_transform.rotation() * Eigen::Vector3d(x,y,z);
+    Eigen::Vector3d vec_t = homogeneous_transform.rotation() * Eigen::Vector3d(x, y, z);
     vec_t.normalize();
     x = vec_t[0]; y = vec_t[1]; z = vec_t[2];
     initial_point = homogeneous_transform * initial_point;
-    return;
   }
 
   double x, y, z;
@@ -95,15 +96,15 @@ struct VectorWithPt3D
 class Frustum
 {
 public:
-  Frustum() {};
-  virtual ~Frustum(void) {};
+  Frustum() {}
+  virtual ~Frustum(void) {}
 
   // determine if a point is inside of the transformed frustum
-  virtual bool IsInside(const openvdb::Vec3d& pt) = 0;
+  virtual bool IsInside(const openvdb::Vec3d & pt) = 0;
 
   // set pose of depth camera in global space
-  virtual void SetPosition(const geometry_msgs::Point& origin) = 0;
-  virtual void SetOrientation(const geometry_msgs::Quaternion& quat) = 0;
+  virtual void SetPosition(const geometry_msgs::msg::Point & origin) = 0;
+  virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat) = 0;
 
   // transform model to the current coordinates
   virtual void TransformModel(void) = 0;
@@ -114,6 +115,6 @@ private:
   bool _valid_frustum;
 };
 
-} // end namespace
+}  // namespace geometry
 
-#endif
+#endif  // SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__FRUSTUM_HPP_

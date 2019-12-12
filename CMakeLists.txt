@@ -1,12 +1,40 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(spatio_temporal_voxel_layer)
 
-add_definitions (-std=c++17)
+if(NOT WIN32)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
-find_package(catkin REQUIRED COMPONENTS
-  costmap_2d
+find_package(ament_cmake REQUIRED)
+find_package(nav2_costmap_2d REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(laser_geometry REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+find_package(OpenVDB REQUIRED)
+find_package(TBB REQUIRED)
+remove_definitions(-DDISABLE_LIBUSB-1.0)
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system thread)
+
+set(dependencies
+  nav2_costmap_2d
   geometry_msgs
   pluginlib
   sensor_msgs
@@ -14,28 +42,11 @@ find_package(catkin REQUIRED COMPONENTS
   laser_geometry
   message_filters
   pcl_conversions
-  pcl_ros
-  roscpp
+  rclcpp
   tf2_ros
   tf2_geometry_msgs
   visualization_msgs
-  message_generation
-  dynamic_reconfigure
-)
-
-add_service_files(DIRECTORY msgs
-  FILES
-  SaveGrid.srv
-)
-
-generate_dynamic_reconfigure_options(
-  cfg/SpatioTemporalVoxelLayer.cfg
-)
-
-generate_messages(
-   DEPENDENCIES
-   std_msgs
-   dynamic_reconfigure
+  builtin_interfaces
 )
 
 find_package(PCL REQUIRED)
@@ -55,57 +66,28 @@ if(NOT "${PCL_LIBRARIES}" STREQUAL "")
     "vtkRenderingQt")
 endif()
 
-find_package(OpenVDB REQUIRED)
-find_package(TBB REQUIRED)
-remove_definitions(-DDISABLE_LIBUSB-1.0)
-find_package(Eigen3 REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system thread)
 include_directories(
     include
     ${BOOST_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${catkin_INCLUDE_DIRS}
     ${OpenVDB_INCLUDE_DIR}
     ${TBB_INCLUDE_DIRS}
 )
 
+set(library_name spatio_temporal_voxel_layer_core)
+
 add_definitions(${EIGEN3_DEFINITIONS})
 
-catkin_package(
-    INCLUDE_DIRS
-        include
-        ${BOOST_INCLUDE_DIRS}
-        ${EIGEN3_INCLUDE_DIRS}
-        ${PCL_INCLUDE_DIRS}
-        ${OpenVDB_INCLUDE_DIR}
-        ${TBB_INCLUDE_DIRS}
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS
-        geometry_msgs
-        laser_geometry
-        message_filters
-        pcl_ros
-        pcl_conversions
-        pluginlib
-        roscpp
-        sensor_msgs
-        std_msgs
-        costmap_2d
-        tf2_ros
-        tf2_geometry_msgs
-        visualization_msgs
-        dynamic_reconfigure
-    DEPENDS
-        TBB
-        OpenVDB
-        PCL
-        EIGEN3
-        Boost
-)
+#set(srv_files "srv/SaveGrid.srv")
+#rosidl_generate_interfaces(${PROJECT_NAME}
+#  ${srv_files}
+#  DEPENDENCIES builtin_interfaces std_msgs
+#  ADD_LINTER_TESTS
+#)
 
-add_library(${PROJECT_NAME}
+add_library(${library_name}
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
@@ -113,39 +95,38 @@ add_library(${PROJECT_NAME}
             src/frustum_models/three_dimensional_lidar_frustum.cpp
             src/vdb2pc.cpp
 )
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME}
+
+#rosidl_target_interfaces(${library_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenVDB_LIBRARIES}
   ${TBB_LIBRARIES}
-  ${catkin_LIBRARIES}
 )
 
-# For testing on standalone, don't want to ship with production builds
-#add_executable(minimal_test
-#            test/minimal_test.cpp
-#)
-#target_link_libraries(minimal_test
-#  ${Boost_LIBRARIES}
-#  ${EIGEN3_LIBRARIES}
-#  ${PCL_LIBRARIES}
-#  ${OpenVDB_LIBRARIES}
-#  ${TBB_LIBRARIES}
-#  ${catkin_LIBRARIES}
-#)
+ament_target_dependencies(${library_name} ${dependencies})
 
-install(TARGETS ${PROJECT_NAME} #minimal_test
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+install(TARGETS ${library_name}
+  DESTINATION share
 )
 
 install(FILES costmap_plugins.xml test/minimal_test.launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION share
 )
 
 install(DIRECTORY example
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION share
 )
+
+ament_export_dependencies(rosidl_default_runtime)
+pluginlib_export_plugin_description_file(nav2_costmap_2d costmap_plugins.xml)
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME})
+ament_package()

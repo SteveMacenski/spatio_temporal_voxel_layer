@@ -41,16 +41,11 @@ namespace geometry
 {
 
 /*****************************************************************************/
-ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
-                                                        const double& vFOVPadding,
-                                                        const double& hFOV,
-                                                        const double& min_dist,
-                                                        const double& max_dist)
-                                                        : _vFOV(vFOV),
-                                                          _vFOVPadding(vFOVPadding),  
-                                                          _hFOV(hFOV),
-                                                          _min_d(min_dist),
-                                                          _max_d(max_dist)
+ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
+  const double & vFOV, const double & vFOVPadding, const double & hFOV,
+  const double & min_dist, const double & max_dist)
+: _vFOV(vFOV), _vFOVPadding(vFOVPadding), _hFOV(hFOV),
+  _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
 {
   _hFOVhalf = _hFOV / 2.0;
@@ -59,8 +54,7 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
   _full_hFOV = false;
-  if (_hFOV > 6.27)
-  {
+  if (_hFOV > 6.27) {
     _full_hFOV = true;
   }
 }
@@ -80,45 +74,40 @@ void ThreeDimensionalLidarFrustum::TransformModel(void)
 }
 
 /*****************************************************************************/
-bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
+bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
 /*****************************************************************************/
 {
-
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
   Eigen::Vector3d transformed_pt =
-      _orientation_conjugate * (point_in_global_frame - _position);
+    _orientation_conjugate * (point_in_global_frame - _position);
 
-  const double radial_distance_squared = \
-                                   (transformed_pt[0] * transformed_pt[0]) + \
-                                   (transformed_pt[1] * transformed_pt[1]);
+  const double radial_distance_squared =
+    (transformed_pt[0] * transformed_pt[0]) +
+    (transformed_pt[1] * transformed_pt[1]);
 
   // Check if inside frustum valid range
-  if (radial_distance_squared > _max_d_squared || 
-      radial_distance_squared < _min_d_squared)
+  if (radial_distance_squared > _max_d_squared ||
+    radial_distance_squared < _min_d_squared)
   {
     return false;
   }
 
   // // Check if inside frustum valid vFOV
   const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
-  if (( v_padded * v_padded / radial_distance_squared) > _tan_vFOVhalf_squared)
+  if (( v_padded * v_padded / radial_distance_squared) >
+    _tan_vFOVhalf_squared)
   {
     return false;
   }
 
   // Check if inside frustum valid hFOV, unless hFOV is full-circle (360 degree)
-  if (!_full_hFOV)
-  {
-    if (transformed_pt[0] > 0)
-    {
-      if (fabs(atan(transformed_pt[1] / transformed_pt[0])) > _hFOVhalf)
-      {
+  if (!_full_hFOV) {
+    double half_pi = M_PI / 2;
+    if (transformed_pt[0] > 0) {
+      if (fabs(atan(transformed_pt[1] / transformed_pt[0])) > _hFOVhalf) {
         return false;
       }
-    }
-    else if ( \
-      fabs(atan(transformed_pt[0] / transformed_pt[1])) + M_PI/2 > _hFOVhalf)
-    {
+    } else if (fabs(atan(transformed_pt[0] / transformed_pt[1])) + half_pi > _hFOVhalf) {
       return false;
     }
   }
@@ -127,35 +116,39 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 }
 
 /*****************************************************************************/
-void ThreeDimensionalLidarFrustum::SetPosition(const \
-                                                  geometry_msgs::Point& origin)
+void ThreeDimensionalLidarFrustum::SetPosition(
+  const geometry_msgs::msg::Point & origin)
 /*****************************************************************************/
 {
   _position = Eigen::Vector3d(origin.x, origin.y, origin.z);
 }
 
 /*****************************************************************************/
-void ThreeDimensionalLidarFrustum::SetOrientation(const \
-                                               geometry_msgs::Quaternion& quat)
+void ThreeDimensionalLidarFrustum::SetOrientation(
+  const geometry_msgs::msg::Quaternion & quat)
 /*****************************************************************************/
 {
   _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
 }
 
 /*****************************************************************************/
-double ThreeDimensionalLidarFrustum::Dot(const VectorWithPt3D &plane_pt,
-                                         const openvdb::Vec3d &query_pt) const
+double ThreeDimensionalLidarFrustum::Dot(
+  const VectorWithPt3D & plane_pt, const openvdb::Vec3d & query_pt) const
 /*****************************************************************************/
 {
-  return plane_pt.x*query_pt[0]+plane_pt.y*query_pt[1]+plane_pt.z*query_pt[2];
+  return plane_pt.x * query_pt[0] +
+         plane_pt.y * query_pt[1] +
+         plane_pt.z * query_pt[2];
 }
 
 /*****************************************************************************/
-double ThreeDimensionalLidarFrustum::Dot(const VectorWithPt3D &plane_pt,
-                                         const Eigen::Vector3d &query_pt) const
+double ThreeDimensionalLidarFrustum::Dot(
+  const VectorWithPt3D & plane_pt, const Eigen::Vector3d & query_pt) const
 /*****************************************************************************/
 {
-  return plane_pt.x*query_pt[0]+plane_pt.y*query_pt[1]+plane_pt.z*query_pt[2];
+  return plane_pt.x * query_pt[0] +
+         plane_pt.y * query_pt[1] +
+         plane_pt.z * query_pt[2];
 }
 
-} // namespace geometry
+}  // namespace geometry

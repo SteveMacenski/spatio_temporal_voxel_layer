@@ -35,49 +35,44 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include <spatio_temporal_voxel_layer/measurement_buffer.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <string>
+#include <memory>
+#include <vector>
+#include "spatio_temporal_voxel_layer/measurement_buffer.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 namespace buffer
 {
 
+using namespace std::chrono_literals;
+
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
-                                     const double& observation_keep_time,    \
-                                     const double& expected_update_rate,     \
-                                     const double& min_obstacle_height,      \
-                                     const double& max_obstacle_height,      \
-                                     const double& obstacle_range,           \
-                                     tf2_ros::Buffer& tf,                    \
-                                     const std::string& global_frame,        \
-                                     const std::string& sensor_frame,        \
-                                     const double& tf_tolerance,             \
-                                     const double& min_d,                    \
-                                     const double& max_d,                    \
-                                     const double& vFOV,                     \
-                                     const double& vFOVPadding,              \
-                                     const double& hFOV,                     \
-                                     const double& decay_acceleration,       \
-                                     const bool& marking,                    \
-                                     const bool& clearing,                   \
-                                     const double& voxel_size,               \
-                                     const bool& voxel_filter,               \
-                                     const bool& enabled,                    \
-                                     const bool& clear_buffer_after_reading, \
-                                     const ModelType& model_type) :
+MeasurementBuffer::MeasurementBuffer(
+  const std::string & topic_name, const double & observation_keep_time,
+  const double & expected_update_rate, const double & min_obstacle_height,
+  const double & max_obstacle_height, const double & obstacle_range,
+  tf2_ros::Buffer & tf, const std::string & global_frame,
+  const std::string & sensor_frame, const double & tf_tolerance,
+  const double & min_d, const double & max_d, const double & vFOV,
+  const double & vFOVPadding, const double & hFOV,
+  const double & decay_acceleration, const bool & marking,
+  const bool & clearing, const double & voxel_size, const bool & voxel_filter,
+  const bool & enabled, const bool & clear_buffer_after_reading,
+  const ModelType & model_type,
+  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node)
+: _buffer(tf), _observation_keep_time(observation_keep_time),
+  _expected_update_rate(expected_update_rate), _last_updated(node->now()),
+  _global_frame(global_frame), _sensor_frame(sensor_frame),
+  _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
+  _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
+  _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
+  _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
+  _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
+  _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
+  _voxel_filter(voxel_filter),
+  _clear_buffer_after_reading(clear_buffer_after_reading),
+  _enabled(enabled), _model_type(model_type), node_(node)
 /*****************************************************************************/
-    _buffer(tf), _observation_keep_time(observation_keep_time),
-    _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
-    _global_frame(global_frame), _sensor_frame(sensor_frame),
-    _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
-    _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
-    _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
-    _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
-    _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
-    _voxel_filter(voxel_filter), _enabled(enabled),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
-    _model_type(model_type)
 {
 }
 
@@ -88,31 +83,31 @@ MeasurementBuffer::~MeasurementBuffer(void)
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
+void MeasurementBuffer::BufferROSCloud(
+  const sensor_msgs::msg::PointCloud2 & cloud)
 /*****************************************************************************/
 {
   // add a new measurement to be populated
   _observation_list.push_front(observation::MeasurementReading());
 
-  const std::string origin_frame = \
-                  _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
+  const std::string origin_frame =
+    _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
 
-  try
-  {
+  try {
     // transform into global frame
-    geometry_msgs::PoseStamped  local_pose, global_pose;
-    local_pose.pose.position.x=0;
-    local_pose.pose.position.y=0;
-    local_pose.pose.position.z=0;
-    local_pose.pose.orientation.x=0;
-    local_pose.pose.orientation.y=0;
-    local_pose.pose.orientation.z=0;
-    local_pose.pose.orientation.w=1;
+    geometry_msgs::msg::PoseStamped local_pose, global_pose;
+    local_pose.pose.position.x = 0;
+    local_pose.pose.position.y = 0;
+    local_pose.pose.position.z = 0;
+    local_pose.pose.orientation.x = 0;
+    local_pose.pose.orientation.y = 0;
+    local_pose.pose.orientation.z = 0;
+    local_pose.pose.orientation.w = 1;
     local_pose.header.stamp = cloud.header.stamp;
     local_pose.header.frame_id = origin_frame;
 
-    _buffer.canTransform(_global_frame, local_pose.header.frame_id , \
-                         local_pose.header.stamp, ros::Duration(0.5));
+    _buffer.canTransform(_global_frame, local_pose.header.frame_id,
+      tf2_ros::fromMsg(local_pose.header.stamp), tf2::durationFromSec(0.5));
     _buffer.transform(local_pose, global_pose, _global_frame);
 
     _observation_list.front()._origin.x = global_pose.pose.position.x;
@@ -124,81 +119,76 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
-    _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
+    _observation_list.front()._vertical_fov_padding_in_m =
+      _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
     _observation_list.front()._model_type = _model_type;
 
-    if (_clearing && !_marking)
-    {
+    if (_clearing && !_marking) {
       // no need to buffer points
       return;
     }
 
     // transform the cloud in the global frame
-    point_cloud_ptr cld_global(new sensor_msgs::PointCloud2());
-    geometry_msgs::TransformStamped tf_stamped = _buffer.lookupTransform( \
-                 _global_frame, cloud.header.frame_id, cloud.header.stamp);
-    tf2::doTransform (cloud, *cld_global, tf_stamped);
+    point_cloud_ptr cld_global(new sensor_msgs::msg::PointCloud2());
+    geometry_msgs::msg::TransformStamped tf_stamped =
+      _buffer.lookupTransform(_global_frame, cloud.header.frame_id,
+        tf2_ros::fromMsg(cloud.header.stamp));
+    tf2::doTransform(cloud, *cld_global, tf_stamped);
 
-    pcl::PCLPointCloud2::Ptr cloud_pcl (new pcl::PCLPointCloud2 ());
-    pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2 ());
+    pcl::PCLPointCloud2::Ptr cloud_pcl(new pcl::PCLPointCloud2());
+    pcl::PCLPointCloud2::Ptr cloud_filtered(new pcl::PCLPointCloud2());
 
     pcl_conversions::toPCL(*cld_global, *cloud_pcl);
 
     // remove points that are below or above our height restrictions, and
     // in the same time, remove NaNs and if user wants to use it, combine with a
-    if ( _voxel_filter )
-    {
+    if (_voxel_filter) {
       pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-      sor.setInputCloud (cloud_pcl);
+      sor.setInputCloud(cloud_pcl);
       sor.setFilterFieldName("z");
-      sor.setFilterLimits(_min_obstacle_height,_max_obstacle_height);
+      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
       sor.setDownsampleAllData(false);
-      sor.setLeafSize ((float)_voxel_size,
-                       (float)_voxel_size,
-                       (float)_voxel_size);
+      float v_s = static_cast<float>(_voxel_size);
+      sor.setLeafSize(v_s, v_s, v_s);
       sor.filter(*cloud_filtered);
-    }
-    else
-    {
+    } else {
       pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
       pass_through_filter.setInputCloud(cloud_pcl);
       pass_through_filter.setKeepOrganized(false);
       pass_through_filter.setFilterFieldName("z");
-      pass_through_filter.setFilterLimits( \
-                  _min_obstacle_height,_max_obstacle_height);
+      pass_through_filter.setFilterLimits(
+        _min_obstacle_height, _max_obstacle_height);
       pass_through_filter.filter(*cloud_filtered);
     }
 
     pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
-    _observation_list.front()._cloud = cld_global;
-  }
-  catch (tf::TransformException& ex)
-  {
+    _observation_list.front()._cloud.reset(cld_global.release());
+  } catch (tf2::TransformException & ex) {
     // if fails, remove the empty observation
     _observation_list.pop_front();
-    ROS_ERROR( \
-      "TF Exception for sensor frame: %s, cloud frame: %s, %s", \
+    RCLCPP_ERROR(node_->get_logger(),
+      "TF Exception for sensor frame: %s, cloud frame: %s, %s",
       _sensor_frame.c_str(), cloud.header.frame_id.c_str(), ex.what());
     return;
   }
 
-  _last_updated = ros::Time::now();
+  _last_updated = node_->now();
   RemoveStaleObservations();
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::GetReadings( \
-                    std::vector<observation::MeasurementReading>& observations)
+void MeasurementBuffer::GetReadings(
+  std::vector<observation::MeasurementReading> & observations)
 /*****************************************************************************/
 {
   RemoveStaleObservations();
 
-  for (readings_iter it = _observation_list.begin(); \
-                                          it != _observation_list.end(); ++it)
+  for (readings_iter it = _observation_list.begin();
+    it != _observation_list.end(); ++it)
   {
     observations.push_back(*it);
   }
@@ -208,25 +198,20 @@ void MeasurementBuffer::GetReadings( \
 void MeasurementBuffer::RemoveStaleObservations(void)
 /*****************************************************************************/
 {
-  if (_observation_list.empty())
-  {
+  if (_observation_list.empty()) {
     return;
   }
 
   readings_iter it = _observation_list.begin();
-  if (_observation_keep_time == ros::Duration(0.0))
-  {
+  if (_observation_keep_time == rclcpp::Duration(0.0)) {
     _observation_list.erase(++it, _observation_list.end());
     return;
   }
 
-  for (it = _observation_list.begin(); it != _observation_list.end(); ++it)
-  {
-    observation::MeasurementReading& obs = *it;
-    const ros::Duration time_diff = _last_updated - obs._cloud->header.stamp;
+  for (it = _observation_list.begin(); it != _observation_list.end(); ++it) {
+    const rclcpp::Duration time_diff = _last_updated - it->_cloud->header.stamp;
 
-    if (time_diff > _observation_keep_time)
-    {
+    if (time_diff > _observation_keep_time) {
       _observation_list.erase(it, _observation_list.end());
       return;
     }
@@ -251,18 +236,17 @@ bool MeasurementBuffer::ClearAfterReading(void)
 bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
-  if (_expected_update_rate == ros::Duration(0.0))
-  {
+  if (_expected_update_rate == rclcpp::Duration(0.0)) {
     return true;
   }
 
-  const ros::Duration update_time = ros::Time::now() - _last_updated;
-  const bool current = update_time.toSec() <= _expected_update_rate.toSec();
-  if (!current)
-  {
-    ROS_WARN_THROTTLE(10.,
+  const rclcpp::Duration update_time = node_->now() - _last_updated;
+  bool current = update_time.seconds() <= _expected_update_rate.seconds();
+  if (!current) {
+    RCLCPP_WARN(node_->get_logger(),
       "%s buffer updated in %.2fs, it should be updated every %.2fs.",
-      _topic_name.c_str(), update_time.toSec(), _expected_update_rate.toSec());
+      _topic_name.c_str(), update_time.seconds(),
+      _expected_update_rate.seconds());
   }
   return current;
 }
@@ -275,7 +259,7 @@ bool MeasurementBuffer::IsEnabled(void) const
 }
 
 /*****************************************************************************/
-void MeasurementBuffer::SetEnabled(const bool& enabled)
+void MeasurementBuffer::SetEnabled(const bool & enabled)
 /*****************************************************************************/
 {
   _enabled = enabled;
@@ -285,7 +269,7 @@ void MeasurementBuffer::SetEnabled(const bool& enabled)
 void MeasurementBuffer::ResetLastUpdatedTime(void)
 /*****************************************************************************/
 {
-  _last_updated = ros::Time::now();
+  _last_updated = node_->now();
 }
 
 /*****************************************************************************/
@@ -303,4 +287,3 @@ void MeasurementBuffer::Unlock(void)
 }
 
 }  // namespace buffer
-

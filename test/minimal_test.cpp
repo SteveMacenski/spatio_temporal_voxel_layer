@@ -55,22 +55,21 @@ void TransformThread()
   tf::TransformBroadcaster tfB;
   tf::Transform transform;
   transform.setIdentity();
-  transform.setOrigin(tf::Vector3(2.,2.,0.));
+  transform.setOrigin(tf::Vector3(2., 2., 0.));
 
   ros::Rate r(20);
-  while (ros::ok())
-  {
-    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
-                                                        "map", "base_link"));
-    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(), \
-                                                "base_link", "camera_link"));
+  while (ros::ok()) {
+    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(),
+      "map", "base_link"));
+    tfB.sendTransform(tf::StampedTransform(transform, ros::Time::now(),
+      "base_link", "camera_link"));
     r.sleep();
     ros::spinOnce();
   }
 }
 
 /*****************************************************************************/
-int main(int argc, char **argv)
+int main(int argc, char ** argv)
 /*****************************************************************************/
 {
   ros::init(argc, argv, "STVL_minimal_test");
@@ -83,8 +82,7 @@ int main(int argc, char **argv)
   costmap.start();
 
   ros::Rate r(10);
-  while (ros::ok())
-  {
+  while (ros::ok()) {
     // then make a thread to do something with a costmap pointer...
     ros::spinOnce();
     r.sleep();
