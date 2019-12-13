@@ -118,8 +118,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   if (_mapping_mode) {
     _map_save_duration = std::make_unique<rclcpp::Duration>(
       map_save_time, 0.0);
-    _last_map_save_time = node_->now() - *_map_save_duration;
   }
+
+  _last_map_save_time = node_->now();
 
   if (track_unknown_space) {
     default_value_ = nav2_costmap_2d::NO_INFORMATION;
@@ -127,12 +128,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     default_value_ = nav2_costmap_2d::FREE_SPACE;
   }
 
-  _voxel_pub = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
+  _voxel_pub = rclcpp_node_->create_publisher<sensor_msgs::msg::PointCloud2>(
     "voxel_grid", rclcpp::QoS(1));
 
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
-  _grid_saver = node_->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
+  _grid_saver = rclcpp_node_->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
     "save_grid", save_grid_callback);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
@@ -666,10 +667,13 @@ void SpatioTemporalVoxelLayer::updateBounds(
   current_ = current;
 
   // navigation mode: clear observations, mapping mode: save maps and publish
-  bool should_save = node_->now() - _last_map_save_time > *_map_save_duration;
+  bool should_save = false;
+  if (_map_save_duration) {
+      should_save = node_->now() - _last_map_save_time > *_map_save_duration;
+  }
   if (!_mapping_mode) {
     _voxel_grid->ClearFrustums(clearing_observations);
-  } else if (_map_save_duration && should_save) {
+  } else if (should_save) {
     _last_map_save_time = node_->now();
     time_t rawtime;
     struct tm * timeinfo;
