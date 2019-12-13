@@ -65,6 +65,11 @@ SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
   {
     delete _cost_map;    
   }
+
+  if (_grid_points)
+  {
+    delete _grid_points;
+  }
 }
 
 /*****************************************************************************/
