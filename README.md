@@ -1,13 +1,14 @@
 # Spatio-Temporal Voxel Layer [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64)](http://build.ros.org/view/Kbin_uX64/job/Mdev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/)
 
 ROS2 Porting Status:
-- Need to update build icons
-- Dynamic parameter updates
+- params readin work
 - launch files
 - parameters
 - test
+
+- Need to update build icons
+- Dynamic parameter updates
 - save grid service and option back in when PCL <> generation issue resolved
-- params readin work
 
 ROS1:
 - leaking grid_points member

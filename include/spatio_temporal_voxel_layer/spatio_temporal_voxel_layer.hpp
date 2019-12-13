@@ -142,11 +142,11 @@ private:
   bool RemoveStaticObservations(void);
 
   // Enable/Disable callback
-  bool BufferEnablerCallback(
-    const std::shared_ptr<rmw_request_id_t>/*request_header*/,
+  void BufferEnablerCallback(
+    const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response,
-    const std::shared_ptr<buffer::MeasurementBuffer> & buffer,
+    const std::shared_ptr<buffer::MeasurementBuffer> buffer,
     const std::shared_ptr<message_filters::SubscriberBase> & subcriber);
 
 

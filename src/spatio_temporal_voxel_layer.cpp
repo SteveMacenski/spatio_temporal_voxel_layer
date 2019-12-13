@@ -266,16 +266,19 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_notifiers.push_back(filter);
     }
 
-    // TODO(stevemacenski)
-    auto toggle_srv_callback =
-      std::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback,
-        this, _1, _2, _3, _observation_buffers.back(),
-        _observation_subscribers.back());
+    std::function<void(const std::shared_ptr<rmw_request_id_t>,
+      const std::shared_ptr<std_srvs::srv::SetBool::Request>,
+      std::shared_ptr<std_srvs::srv::SetBool::Response>)> toggle_srv_callback;
 
+    toggle_srv_callback = std::bind(
+      &SpatioTemporalVoxelLayer::BufferEnablerCallback, this,
+      _1, _2, _3, _observation_buffers.back(),
+      _observation_subscribers.back());
     std::string toggle_topic = source + "/toggle_enabled";
-    // auto server = node_->create_service<std_srvs::srv::SetBool>(toggle_topic,
-    //     toggle_srv_callback);
-    // _buffer_enabler_servers.push_back(server);
+    auto server = node_->create_service<std_srvs::srv::SetBool>(
+      toggle_topic, toggle_srv_callback);
+
+    _buffer_enabler_servers.push_back(server);
 
     if (sensor_frame != "") {
       std::vector<std::string> target_frames;
@@ -359,11 +362,11 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback(
 }
 
 /*****************************************************************************/
-bool SpatioTemporalVoxelLayer::BufferEnablerCallback(
+void SpatioTemporalVoxelLayer::BufferEnablerCallback(
   const std::shared_ptr<rmw_request_id_t>/*request_header*/,
   const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
   std::shared_ptr<std_srvs::srv::SetBool::Response> response,
-  const std::shared_ptr<buffer::MeasurementBuffer> & buffer,
+  const std::shared_ptr<buffer::MeasurementBuffer> buffer,
   const std::shared_ptr<message_filters::SubscriberBase> & subcriber)
 /*****************************************************************************/
 {
@@ -383,7 +386,6 @@ bool SpatioTemporalVoxelLayer::BufferEnablerCallback(
   }
   buffer->Unlock();
   response->success = true;
-  return response->success;
 }
 
 
