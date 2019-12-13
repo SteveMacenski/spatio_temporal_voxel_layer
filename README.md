@@ -1,15 +1,4 @@
-# Spatio-Temporal Voxel Layer [![Build Status](http://build.ros.org/buildStatus/icon?job=Mdev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64)](http://build.ros.org/view/Kbin_uX64/job/Mdev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/)
-
-ROS2 Porting Status:
-- test working
-- save grid service and option back in when PCL <> generation issue resolved
-
-- Need to update build icons
-- Dynamic parameter updates
-
-ROS1:
-- leaking grid_points member
-- toggle outside of pointclouds for lasers too
+# Spatio-Temporal Voxel Layer
 
 This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/).
 

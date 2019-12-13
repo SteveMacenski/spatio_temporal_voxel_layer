@@ -59,9 +59,7 @@ SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
 SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 /*****************************************************************************/
 {
-  if (_voxel_grid) {
-    delete _voxel_grid;
-  }
+  _voxel_grid.reset();
 }
 
 /*****************************************************************************/
@@ -131,13 +129,15 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   _voxel_pub = node_->create_publisher<sensor_msgs::msg::PointCloud2>(
     "voxel_grid", rclcpp::QoS(1));
-  // _grid_saver = nh.advertiseService(
-  //   "spatiotemporal_voxel_grid/save_grid",
-  //   &SpatioTemporalVoxelLayer::SaveGridCallback, this);
 
-  _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(node_, _voxel_size,
-      static_cast<double>(default_value_), _decay_model,
-      _voxel_decay, _publish_voxels);
+  auto save_grid_callback = std::bind(
+    &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
+  _grid_saver = node_->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
+    "save_grid", save_grid_callback);
+
+  _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
+    node_, _voxel_size, static_cast<double>(default_value_), _decay_model,
+    _voxel_decay, _publish_voxels);
   matchSize();
   current_ = true;
   RCLCPP_INFO(node_->get_logger(),
@@ -680,11 +680,12 @@ void SpatioTemporalVoxelLayer::updateBounds(
     timeinfo = localtime(&rawtime);  //NOLINT
     strftime(time_buffer, 100, "%F-%r", timeinfo);
 
-    // TODO(stevemacenski): enable grid saving when PCL issues are resolved
-    // see https://github.com/ros2/rosidl/issues/402
-    // spatio_temporal_voxel_layer::SaveGrid srv;
-    // srv.request.file_name.data = time_buffer;
-    // SaveGridCallback(srv.request, srv.response);
+    auto request =
+      std::make_shared<spatio_temporal_voxel_layer::srv::SaveGrid::Request>();
+    auto response =
+      std::make_shared<spatio_temporal_voxel_layer::srv::SaveGrid::Response>();
+    request->file_name = time_buffer;
+    SaveGridCallback(nullptr, request, response);
   }
 
   // mark observations
@@ -707,29 +708,28 @@ void SpatioTemporalVoxelLayer::updateBounds(
   updateFootprint(robot_x, robot_y, robot_yaw, min_x, min_y, max_x, max_y);
 }
 
-// /*****************************************************************************/
-// bool SpatioTemporalVoxelLayer::SaveGridCallback(
-//   spatio_temporal_voxel_layer::SaveGrid::Request& req,
-//   spatio_temporal_voxel_layer::SaveGrid::Response& resp)
-// /*****************************************************************************/
-// {
-//   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
-//   double map_size_bytes;
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::SaveGridCallback(
+  const std::shared_ptr<rmw_request_id_t>/*header*/,
+  const std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Request> req,
+  std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Response> resp)
+/*****************************************************************************/
+{
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  double map_size_bytes;
 
-//   if( _voxel_grid->SaveGrid(req.file_name.data, map_size_bytes) )
-//   {
-//     RCLCPP_INFO(node_->get_logger(),
-//       "SpatioTemporalVoxelGrid: Saved %s grid! Has memory footprint of %f bytes.",
-//       req.file_name.data.c_str(), map_size_bytes);
-//     resp.map_size_bytes = map_size_bytes;
-//     resp.status = true;
-//     return true;
-//   }
+  if (_voxel_grid->SaveGrid(req->file_name, map_size_bytes) ) {
+    RCLCPP_INFO(node_->get_logger(),
+      "SpatioTemporalVoxelGrid: Saved %s grid! Has memory footprint of %f bytes.",
+      req->file_name.c_str(), map_size_bytes);
+    resp->map_size_bytes = map_size_bytes;
+    resp->status = true;
+    return;
+  }
 
-//   RCLCPP_WARN(node_->get_logger(), "SpatioTemporalVoxelGrid: Failed to save grid.");
-//   resp.status = false;
-//   return false;
-// }
+  RCLCPP_WARN(node_->get_logger(), "SpatioTemporalVoxelGrid: Failed to save grid.");
+  resp->status = false;
+}
 
 }  // namespace spatio_temporal_voxel_layer
 

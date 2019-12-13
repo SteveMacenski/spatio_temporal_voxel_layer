@@ -63,7 +63,7 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/point_cloud_conversion.hpp"
 #include "geometry_msgs/msg/point.hpp"
-// #include "spatio_temporal_voxel_layer/srv/save_grid.hpp"
+#include "spatio_temporal_voxel_layer/srv/save_grid.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 // projector
 #include "laser_geometry/laser_geometry.hpp"
@@ -122,8 +122,10 @@ public:
   void ResetGrid(void);
 
   // Saving grids callback for openVDB
-  // bool SaveGridCallback(spatio_temporal_voxel_layer::SaveGrid::Request& req,
-  //                       spatio_temporal_voxel_layer::SaveGrid::Response& resp);
+  void SaveGridCallback(
+    const std::shared_ptr<rmw_request_id_t>/*header*/,
+    std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Request> req,
+    std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Response> resp);
 
 private:
   // Sensor callbacks
@@ -160,7 +162,7 @@ private:
 
   bool _publish_voxels, _mapping_mode;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
-  // ros::ServiceServer                   _grid_saver;
+  rclcpp::Service<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
   std::unique_ptr<rclcpp::Duration> _map_save_duration;
   rclcpp::Time _last_map_save_time;
   std::string _global_frame;
@@ -170,7 +172,7 @@ private:
   bool _update_footprint_enabled, _enabled;
   std::vector<geometry_msgs::msg::Point> _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
-  volume_grid::SpatioTemporalVoxelGrid * _voxel_grid;
+  std::unique_ptr<volume_grid::SpatioTemporalVoxelGrid> _voxel_grid;
   boost::recursive_mutex _voxel_grid_lock;
 };
 

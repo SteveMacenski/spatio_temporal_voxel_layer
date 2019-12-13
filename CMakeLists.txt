@@ -33,23 +33,7 @@ remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
 
-set(dependencies
-  nav2_costmap_2d
-  geometry_msgs
-  pluginlib
-  sensor_msgs
-  std_msgs
-  laser_geometry
-  message_filters
-  pcl_conversions
-  rclcpp
-  tf2_ros
-  tf2_geometry_msgs
-  visualization_msgs
-  builtin_interfaces
-)
-
-find_package(PCL REQUIRED)
+find_package(PCL REQUIRED COMPONENTS filters common)
 if(NOT "${PCL_LIBRARIES}" STREQUAL "")
   # This package fails to build on Debian Stretch with a linking error against
   # 'Qt5::Widgets'.  This is a transitive dependency that comes in to PCL via
@@ -66,6 +50,33 @@ if(NOT "${PCL_LIBRARIES}" STREQUAL "")
     "vtkRenderingQt")
 endif()
 
+set(dependencies
+  nav2_costmap_2d
+  geometry_msgs
+  pluginlib
+  sensor_msgs
+  std_msgs
+  laser_geometry
+  message_filters
+  pcl_conversions
+  rclcpp
+  tf2_ros
+  tf2_geometry_msgs
+  visualization_msgs
+  builtin_interfaces
+)
+
+set(library_name spatio_temporal_voxel_layer_core)
+
+add_definitions(${EIGEN3_DEFINITIONS})
+
+set(srv_files "srv/SaveGrid.srv")
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${srv_files}
+  DEPENDENCIES builtin_interfaces std_msgs
+  ADD_LINTER_TESTS
+)
+
 include_directories(
     include
     ${BOOST_INCLUDE_DIRS}
@@ -76,17 +87,6 @@ include_directories(
     ${TBB_INCLUDE_DIRS}
 )
 
-set(library_name spatio_temporal_voxel_layer_core)
-
-add_definitions(${EIGEN3_DEFINITIONS})
-
-#set(srv_files "srv/SaveGrid.srv")
-#rosidl_generate_interfaces(${PROJECT_NAME}
-#  ${srv_files}
-#  DEPENDENCIES builtin_interfaces std_msgs
-#  ADD_LINTER_TESTS
-#)
-
 add_library(${library_name}
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
@@ -96,7 +96,7 @@ add_library(${library_name}
             src/vdb2pc.cpp
 )
 
-#rosidl_target_interfaces(${library_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_target_interfaces(${library_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
