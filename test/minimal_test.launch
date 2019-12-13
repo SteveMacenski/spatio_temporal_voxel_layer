@@ -1,7 +1,0 @@
-<launch>
-    <node name="stvl_minimal_test" pkg="spatio_temporal_voxel_layer" type="minimal_test" output="screen">
-
-    <rosparam file="$(find spatio_temporal_voxel_layer)/example/global_costmap_params.yaml" command="load" />
-    <rosparam file="$(find spatio_temporal_voxel_layer)/example/standard_indoor_environment_config.yaml" command="load" ns="global_costmap"/>
-    </node>
-</launch>

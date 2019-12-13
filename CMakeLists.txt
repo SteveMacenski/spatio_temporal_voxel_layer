@@ -117,10 +117,6 @@ install(TARGETS ${library_name}
   DESTINATION share
 )
 
-install(FILES costmap_plugins.xml test/minimal_test.launch
-  DESTINATION share
-)
-
 install(DIRECTORY example
   DESTINATION share
 )

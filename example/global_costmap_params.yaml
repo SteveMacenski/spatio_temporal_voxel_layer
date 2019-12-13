@@ -1,10 +1,12 @@
 global_costmap:
-   global_frame: map
-   robot_base_frame: base_link
-   update_frequency: 1.0
-   publish_frequency: 0.5
-   static_map: true
-   transform_tolerance: 0.5
-   resolution: 0.05 # overwritten by static map resolution
-   plugins:
-    - {name: rgbd_obstacle_layer,     type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"}
+  global_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: base_link
+      update_frequency: 1.0
+      publish_frequency: 0.5
+      static_map: true
+      transform_tolerance: 0.5
+      resolution: 0.05 # overwritten by static map resolution
+      plugins:
+        - {name: rgbd_obstacle_layer,     type: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"}
