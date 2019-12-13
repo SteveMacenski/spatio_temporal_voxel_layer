@@ -247,7 +247,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::LaserScan>
       > sub(new message_filters::Subscriber<sensor_msgs::msg::LaserScan>(
           rclcpp_node_, topic, custom_qos_profile));
-      _observation_subscribers.push_back(sub);
 
       std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>
       > filter(new tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>(
@@ -271,7 +270,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>
       > sub(new message_filters::Subscriber<sensor_msgs::msg::PointCloud2>(
           rclcpp_node_, topic, custom_qos_profile));
-      _observation_subscribers.push_back(sub);
 
       std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>
       > filter(new tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>(
