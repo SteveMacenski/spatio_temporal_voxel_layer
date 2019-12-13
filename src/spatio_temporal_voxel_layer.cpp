@@ -278,8 +278,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                 this, _1, _2, _observation_buffers.back(),  \
                                 _observation_subscribers.back());
 
-    std::string topic = source +  "/toggle_enabled";
-    server = nh.advertiseService(topic, serv_callback);
+    std::string toggle_topic = source +  "/toggle_enabled";
+    server = nh.advertiseService(toggle_topic, serv_callback);
 
     _buffer_enabler_servers.push_back(server);
 
