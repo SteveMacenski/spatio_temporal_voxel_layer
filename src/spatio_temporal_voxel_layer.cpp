@@ -146,61 +146,79 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   std::stringstream ss(topics_string);
   std::string source;
   while (ss >> source) {
-    // TODO(stevemacenski)
-    // ros::NodeHandle source_node(nh, source);
-
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height;
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
-    double hFOV, decay_acceleration;
+    double hFOV, decay_acceleration, obstacle_range;
     std::string topic, sensor_frame, data_type;
     bool inf_is_valid = false, clearing, marking;
     bool voxel_filter, clear_after_reading, enabled;
-    // TODO(stevemacenski)
-    // source_node.param("topic", topic, source);
-    // source_node.param("sensor_frame", sensor_frame, std::string(""));
-    // source_node.param("observation_persistence", observation_keep_time, 0.0);
-    // source_node.param("expected_update_rate", expected_update_rate, 0.0);
-    // source_node.param("data_type", data_type, std::string("PointCloud2"));
-    // source_node.param("min_obstacle_height", min_obstacle_height, 0.0);
-    // source_node.param("max_obstacle_height", max_obstacle_height, 3.0);
-    // source_node.param("inf_is_valid", inf_is_valid, false);
-    // source_node.param("clearing", clearing, false);
-    // source_node.param("marking", marking, true);
-    // // minimum distance from camera it can see
-    // source_node.param("min_z", min_z, 0.);
-    // // maximum distance from camera it can see
-    // source_node.param("max_z", max_z, 10.);
-    // // vertical FOV angle in rad
-    // source_node.param("vertical_fov_angle", vFOV, 0.7);
-    // // vertical FOV padding in meters (3D lidar frustum only)
-    // source_node.param("vertical_fov_padding", vFOVPadding, 0.0);
-    // // horizontal FOV angle in rad
-    // source_node.param("horizontal_fov_angle", hFOV, 1.04);
-    // // acceleration scales the model's decay in presence of readings
-    // source_node.param("decay_acceleration", decay_acceleration, 0.);
-    // // performs an approximate voxel filter over the data to reduce
-    // source_node.param("voxel_filter", voxel_filter, false);
-    // // clears measurement buffer after reading values from it
-    // source_node.param("clear_after_reading", clear_after_reading, false);
-    // // Whether the frustum is enabled on startup. Can be toggled with service
-    // source_node.param("enabled", enabled, true);
-    // // model type - default depth camera frustum model
+
+    declareParameter(source + "." + "topic", rclcpp::ParameterValue(std::string("")));
+    declareParameter(source + "." + "sensor_frame", rclcpp::ParameterValue(std::string("")));
+    declareParameter(source + "." + "observation_persistence", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "expected_update_rate", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "data_type",
+      rclcpp::ParameterValue(std::string("PointCloud2")));
+    declareParameter(source + "." + "min_obstacle_height", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "max_obstacle_height", rclcpp::ParameterValue(3.0));
+    declareParameter(source + "." + "inf_is_valid", rclcpp::ParameterValue(false));
+    declareParameter(source + "." + "marking", rclcpp::ParameterValue(true));
+    declareParameter(source + "." + "clearing", rclcpp::ParameterValue(false));
+    declareParameter(source + "." + "obstacle_range", rclcpp::ParameterValue(2.5));
+
+    declareParameter(source + "." + "min_z", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "max_z", rclcpp::ParameterValue(10.0));
+    declareParameter(source + "." + "vertical_fov_angle", rclcpp::ParameterValue(0.7));
+    declareParameter(source + "." + "vertical_fov_padding", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "horizontal_fov_angle", rclcpp::ParameterValue(1.04));
+    declareParameter(source + "." + "decay_acceleration", rclcpp::ParameterValue(0.0));
+    declareParameter(source + "." + "voxel_filter", rclcpp::ParameterValue(false));
+    declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
+    declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
+    declareParameter(source + "." + "model_type", rclcpp::ParameterValue(0));
+
+    node_->get_parameter(name_ + "." + source + "." + "topic", topic);
+    node_->get_parameter(name_ + "." + source + "." + "sensor_frame", sensor_frame);
+    node_->get_parameter(name_ + "." + source + "." + "observation_persistence",
+      observation_keep_time);
+    node_->get_parameter(name_ + "." + source + "." + "expected_update_rate",
+      expected_update_rate);
+    node_->get_parameter(name_ + "." + source + "." + "data_type", data_type);
+    node_->get_parameter(name_ + "." + source + "." + "min_obstacle_height", min_obstacle_height);
+    node_->get_parameter(name_ + "." + source + "." + "max_obstacle_height", max_obstacle_height);
+    node_->get_parameter(name_ + "." + source + "." + "inf_is_valid", inf_is_valid);
+    node_->get_parameter(name_ + "." + source + "." + "marking", marking);
+    node_->get_parameter(name_ + "." + source + "." + "clearing", clearing);
+    node_->get_parameter(name_ + "." + source + "." + "obstacle_range", obstacle_range);
+
+    // minimum distance from camera it can see
+    node_->get_parameter(name_ + "." + source + "." + "min_z", min_z);
+    // maximum distance from camera it can see
+    node_->get_parameter(name_ + "." + source + "." + "max_z", max_z);
+    // vertical FOV angle in rad
+    node_->get_parameter(name_ + "." + source + "." + "vertical_fov_angle", vFOV);
+    // vertical FOV padding in meters (3D lidar frustum only)
+    node_->get_parameter(name_ + "." + source + "." + "vertical_fov_padding", vFOVPadding);
+    // horizontal FOV angle in rad
+    node_->get_parameter(name_ + "." + source + "." + "horizontal_fov_angle", hFOV);
+    // acceleration scales the model's decay in presence of readings
+    node_->get_parameter(name_ + "." + source + "." + "decay_acceleration", decay_acceleration);
+    // performs an approximate voxel filter over the data to reduce
+    node_->get_parameter(name_ + "." + source + "." + "voxel_filter", voxel_filter);
+    // clears measurement buffer after reading values from it
+    node_->get_parameter(name_ + "." + source + "." + "clear_after_reading", clear_after_reading);
+    // Whether the frustum is enabled on startup. Can be toggled with service
+    node_->get_parameter(name_ + "." + source + "." + "enabled", enabled);
+    // model type - default depth camera frustum model
     int model_type_int = 0;
-    // source_node.param("model_type", model_type_int, 0);
+    node_->get_parameter(name_ + "." + source + "." + "model_type", model_type_int);
     ModelType model_type = static_cast<ModelType>(model_type_int);
 
     if (!(data_type == "PointCloud2" || data_type == "LaserScan")) {
       throw std::runtime_error(
               "Only topics that use pointclouds or laser scans are supported.");
     }
-
-    std::string obstacle_range_param_name;
-    double obstacle_range = 3.0;
-    // TODO(stevemacenski)
-    // if (source_node.searchParam("obstacle_range", obstacle_range_param_name)) {
-    //   source_node.getParam(obstacle_range_param_name, obstacle_range);
-    // }
 
     // create an observation buffer
     _observation_buffers.push_back(
