@@ -266,21 +266,22 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           boost::bind(&SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1, \
                                                    _observation_buffers.back()));
 
-      ros::ServiceServer server;
-      boost::function < bool(std_srvs::SetBool::Request&, \
-                             std_srvs::SetBool::Response&) > serv_callback;
-
-      serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
-                                  this, _1, _2, _observation_buffers.back(),  \
-                                  _observation_subscribers.back());
-
-      std::string topic = source +  "/toggle_enabled";
-      server = nh.advertiseService(topic, serv_callback);
-
-      _buffer_enabler_servers.push_back(server);
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
     }
+
+    ros::ServiceServer server;
+    boost::function < bool(std_srvs::SetBool::Request&, \
+                           std_srvs::SetBool::Response&) > serv_callback;
+
+    serv_callback = boost::bind(&SpatioTemporalVoxelLayer::BufferEnablerCallback, \
+                                this, _1, _2, _observation_buffers.back(),  \
+                                _observation_subscribers.back());
+
+    std::string topic = source +  "/toggle_enabled";
+    server = nh.advertiseService(topic, serv_callback);
+
+    _buffer_enabler_servers.push_back(server);
 
     if (sensor_frame != "")
     {
