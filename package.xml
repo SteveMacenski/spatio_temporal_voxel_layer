@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format ="3">
   <name>spatio_temporal_voxel_layer</name>
-  <version>2.1.0</version>
+  <version>2.1.1</version>
   <description>The spatio-temporal 3D obstacle costmap package</description>
 
   <maintainer email="stevenmacenski@gmail.com">Steve Macenski</maintainer>
@@ -23,7 +23,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>laser_geometry</depend>
-  <depend>pcl</depend>
+  <depend>libpcl-all</depend>
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>message_filters</depend>
