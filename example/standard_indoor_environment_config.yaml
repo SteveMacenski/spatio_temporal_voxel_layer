@@ -3,7 +3,7 @@ global_costmap:
     ros__parameters:
       rgbd_obstacle_layer:
         enabled:                  true
-        voxel_decay:              15    # seconds if linear, e^n if exponential
+        voxel_decay:              15.0  # seconds if linear, e^n if exponential
         decay_model:              0     # 0=linear, 1=exponential, -1=persistent
         voxel_size:               0.05  # meters
         track_unknown_space:      true  # default space is known
@@ -17,7 +17,7 @@ global_costmap:
         publish_voxel_map:        false # default off
         transform_tolerance:      0.2   # seconds
         mapping_mode:             false # default off, saves map not for navigation
-        map_save_duration:        60    # default 60s, how often to autosave
+        map_save_duration:        60.0  # default 60s, how often to autosave
         observation_sources:      rgbd1_mark rgbd1_clear
         rgbd1_mark:
           data_type: PointCloud2

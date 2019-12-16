@@ -89,7 +89,7 @@ include_directories(
     ${TBB_INCLUDE_DIRS}
 )
 
-add_library(${library_name}
+add_library(${library_name} SHARED
             src/spatio_temporal_voxel_layer.cpp
             src/spatio_temporal_voxel_grid.cpp
             src/measurement_buffer.cpp
@@ -99,6 +99,7 @@ add_library(${library_name}
 )
 
 rosidl_target_interfaces(${library_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_compile_definitions(${library_name} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
@@ -116,10 +117,16 @@ if(BUILD_TESTING)
 endif()
 
 install(TARGETS ${library_name}
-  DESTINATION share
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY example
+  DESTINATION share
+)
+
+install(FILES costmap_plugins.xml
   DESTINATION share
 )
 
