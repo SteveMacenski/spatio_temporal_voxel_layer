@@ -26,6 +26,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
+find_package(std_srvs REQUIRED)
 
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
@@ -56,6 +57,7 @@ set(dependencies
   pluginlib
   sensor_msgs
   std_msgs
+  std_srvs
   laser_geometry
   message_filters
   pcl_conversions
