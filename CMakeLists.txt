@@ -27,6 +27,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(ament_cmake_cpplint REQUIRED)
 
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
