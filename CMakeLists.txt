@@ -27,7 +27,6 @@ find_package(visualization_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(ament_cmake_cpplint REQUIRED)
 
 find_package(OpenVDB REQUIRED)
 find_package(TBB REQUIRED)
@@ -77,7 +76,6 @@ set(srv_files "srv/SaveGrid.srv")
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${srv_files}
   DEPENDENCIES builtin_interfaces std_msgs
-  ADD_LINTER_TESTS
 )
 
 include_directories(
