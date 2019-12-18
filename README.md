@@ -1,4 +1,4 @@
-# Spatio-Temporal Voxel Layer [![Build Status](http://build.ros2.org/job/Ddev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/badge/icon)](http://build.ros2.org/job/Ddev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/)
+# Spatio-Temporal Voxel Layer [![Build Status](http://build.ros2.org/job/Edev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/badge/icon)](http://build.ros2.org/job/Edev__spatio_temporal_voxel_layer__ubuntu_bionic_amd64/)
 
 This is a drop in replacement for the voxel_grid voxel representation of the environment. This package does a number of things to improve on the voxel grid package and extend the capabilities offered to the users, under a LGPL v2.1 license. Developed and maintained by [Steven Macenski](https://www.linkedin.com/in/steven-macenski-41a985101/) at [Simbe Robotics](http://www.simberobotics.com/).
 
