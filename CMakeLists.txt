@@ -76,7 +76,6 @@ set(srv_files "srv/SaveGrid.srv")
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${srv_files}
   DEPENDENCIES builtin_interfaces std_msgs
-  ADD_LINTER_TESTS
 )
 
 include_directories(
