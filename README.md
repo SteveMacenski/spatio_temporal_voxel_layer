@@ -22,6 +22,7 @@ We've received feedback from users and have robots operating in the following en
 - Hospitals
 - Hospitality
 - RoboCup@Home
+- Oil and Gas
 
 Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](https://vimeo.com/292699571) (or click on image). 
 
