@@ -122,11 +122,11 @@ install(TARGETS ${library_name}
 )
 
 install(DIRECTORY example
-  DESTINATION share
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(FILES costmap_plugins.xml
-  DESTINATION share
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_dependencies(rosidl_default_runtime)
