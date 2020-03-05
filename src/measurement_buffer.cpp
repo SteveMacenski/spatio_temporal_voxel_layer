@@ -57,8 +57,8 @@ MeasurementBuffer::MeasurementBuffer(
   const double & vFOVPadding, const double & hFOV,
   const double & decay_acceleration, const bool & marking,
   const bool & clearing, const double & voxel_size, const bool & voxel_filter,
-  const bool & enabled, const bool & clear_buffer_after_reading,
-  const ModelType & model_type,
+  const int & voxel_min_points, const bool & enabled,
+  const bool & clear_buffer_after_reading, const ModelType & model_type,
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node)
 : _buffer(tf), _observation_keep_time(observation_keep_time),
   _expected_update_rate(expected_update_rate), _last_updated(node->now()),
@@ -69,7 +69,7 @@ MeasurementBuffer::MeasurementBuffer(
   _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
   _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
-  _voxel_filter(voxel_filter),
+  _voxel_filter(voxel_filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
   _enabled(enabled), _model_type(model_type), node_(node)
 /*****************************************************************************/
@@ -154,6 +154,7 @@ void MeasurementBuffer::BufferROSCloud(
       sor.setDownsampleAllData(false);
       float v_s = static_cast<float>(_voxel_size);
       sor.setLeafSize(v_s, v_s, v_s);
+      sor.setMinimumPointsNumberPerVoxel((unsigned int) _voxel_min_points);
       sor.filter(*cloud_filtered);
     } else {
       pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
