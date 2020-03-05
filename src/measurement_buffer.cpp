@@ -62,6 +62,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const bool& clearing,                   \
                                      const double& voxel_size,               \
                                      const bool& voxel_filter,               \
+                                     const int& voxel_min_points,            \
                                      const bool& enabled,                    \
                                      const bool& clear_buffer_after_reading, \
                                      const ModelType& model_type) :
@@ -75,8 +76,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
-    _voxel_filter(voxel_filter), _enabled(enabled),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _voxel_filter(voxel_filter), _voxel_min_points(voxel_min_points),
+    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
     _model_type(model_type)
 {
 }
@@ -160,6 +161,7 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
       sor.setLeafSize ((float)_voxel_size,
                        (float)_voxel_size,
                        (float)_voxel_size);
+      sor.setMinimumPointsNumberPerVoxel((unsigned int) _voxel_min_points);
       sor.filter(*cloud_filtered);
     }
     else

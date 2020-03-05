@@ -95,6 +95,7 @@ public:
                     const bool& clearing,                   \
                     const double& voxel_size,               \
                     const bool& voxel_filter,               \
+                    const int& voxel_min_points,            \
                     const bool& enabled,                    \
                     const bool& clear_buffer_after_reading, \
                     const ModelType& model_type);
@@ -135,6 +136,7 @@ private:
   double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;
   double  _decay_acceleration, _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
+  int _voxel_min_points;
   ModelType _model_type;
 };
 
