@@ -161,7 +161,7 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
       sor.setLeafSize ((float)_voxel_size,
                        (float)_voxel_size,
                        (float)_voxel_size);
-      sor.setMinimumPointsNumberPerVoxel((unsigned int) _voxel_min_points);
+      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
       sor.filter(*cloud_filtered);
     }
     else
