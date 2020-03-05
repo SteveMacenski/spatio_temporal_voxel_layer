@@ -154,7 +154,7 @@ void MeasurementBuffer::BufferROSCloud(
       sor.setDownsampleAllData(false);
       float v_s = static_cast<float>(_voxel_size);
       sor.setLeafSize(v_s, v_s, v_s);
-      sor.setMinimumPointsNumberPerVoxel((unsigned int) _voxel_min_points);
+      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
       sor.filter(*cloud_filtered);
     } else {
       pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
