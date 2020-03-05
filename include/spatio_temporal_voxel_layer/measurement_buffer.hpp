@@ -139,8 +139,9 @@ private:
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;
   double _decay_acceleration, _voxel_size;
-  bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
+  bool _marking, _clearing, _voxel_filter;
   int _voxel_min_points;
+  bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
   std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
 };
