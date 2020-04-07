@@ -58,101 +58,52 @@ DepthCameraFrustum::DepthCameraFrustum(const double& vFOV, const double& hFOV,
 }
 
 /*****************************************************************************/
-DepthCameraFrustum::~DepthCameraFrustum(void)
-/*****************************************************************************/
-{
-}
-
-/*****************************************************************************/
 void DepthCameraFrustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
   // give ability to construct with bogus values
-  if (_vFOV == 0 && _hFOV == 0)
+  if (_vFOV <= 0 || _hFOV <= 0)
   {
     _valid_frustum = false;
     return;
   }
 
-  // Z vector and deflected vector capture
-  std::vector<Eigen::Vector3d> deflected_vecs;
-  deflected_vecs.reserve(4);
-  Eigen::Vector3d Z = Eigen::Vector3d::UnitZ();
+  const double cosH = std::cos(_hFOV/2);
+  const double cosV = std::cos(_vFOV/2);
 
-  // rotate going CCW
-  Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2.,Eigen::Vector3d::UnitX()));
-  Eigen::Affine3d ry =
-    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2.,Eigen::Vector3d::UnitY()));
-  deflected_vecs.push_back(rx * ry * Z);
+  const double sinH = std::sin(_hFOV/2);
+  const double sinV = std::sin(_vFOV/2);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2.,Eigen::Vector3d::UnitX()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2.,Eigen::Vector3d::UnitY()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  rx = Eigen::Affine3d(Eigen::AngleAxisd( _vFOV/2.,Eigen::Vector3d::UnitX()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  // get and store CCW 4 corners for each 2 planes at ends
-  std::vector<Eigen::Vector3d> pt_;
-  pt_.reserve(2*deflected_vecs.size());
-  std::vector<Eigen::Vector3d>::iterator it;
-  for (it = deflected_vecs.begin(); it != deflected_vecs.end(); ++it)
-  {
-    pt_.push_back(*(it) * _min_d);
-    pt_.push_back(*(it) * _max_d);
-  }
-
-  assert(pt_.size() == 8);
-
-  // cross each plane and get normals
-  const Eigen::Vector3d v_01(pt_[1][0]-pt_[0][0], \
-                    pt_[1][1]-pt_[0][1], pt_[1][2]-pt_[0][2]);
-  const Eigen::Vector3d v_13(pt_[3][0]-pt_[1][0], \
-                    pt_[3][1]-pt_[1][1], pt_[3][2]-pt_[1][2]);
-  Eigen::Vector3d T_n(v_13.cross(v_01));
-  T_n.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_n[0],T_n[1],T_n[2],pt_[0]));
-
-  const Eigen::Vector3d v_23(pt_[3][0]-pt_[2][0], \
-                    pt_[3][1]-pt_[2][1], pt_[3][2]-pt_[2][2]);
-  const Eigen::Vector3d v_35(pt_[5][0]-pt_[3][0], \
-                    pt_[5][1]-pt_[3][1], pt_[5][2]-pt_[3][2]);
-  Eigen::Vector3d T_l(v_35.cross(v_23));
-  T_l.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_l[0],T_l[1],T_l[2],pt_[2]));
-
-  const Eigen::Vector3d v_45(pt_[5][0]-pt_[4][0], \
-                    pt_[5][1]-pt_[4][1], pt_[5][2]-pt_[4][2]);
-  const Eigen::Vector3d v_57(pt_[7][0]-pt_[5][0], \
-                    pt_[7][1]-pt_[5][1], pt_[7][2]-pt_[5][2]);
-  Eigen::Vector3d T_b(v_57.cross(v_45));
-  T_b.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_b[0],T_b[1],T_b[2],pt_[4]));
-
-  const Eigen::Vector3d v_67(pt_[7][0]-pt_[6][0], \
-                    pt_[7][1]-pt_[6][1], pt_[7][2]-pt_[6][2]);
-  const Eigen::Vector3d v_71(pt_[1][0]-pt_[7][0], \
-                    pt_[1][1]-pt_[7][1], pt_[1][2]-pt_[7][2]);
-  Eigen::Vector3d T_r(v_71.cross(v_67));
-  T_r.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_r[0],T_r[1],T_r[2],pt_[6]));
-
-  // far plane
-  Eigen::Vector3d T_1(v_57.cross(v_71));
-  T_1.normalize();
-  _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[7]));
-
-  // near plane
-  _plane_normals.push_back(VectorWithPt3D(T_1[0],T_1[1],T_1[2],pt_[2]) * -1);
+  // min distance plane
+  _plane_normals[0] = VectorWithPt3D(0, 0,  1.0, Eigen::Vector3d(0, 0, _min_d) );
+  // max distance plane
+  _plane_normals[1] = VectorWithPt3D(0, 0, -1.0, Eigen::Vector3d(0, 0, _max_d) );
+  // left plane
+  _plane_normals[2] = VectorWithPt3D( cosH, 0.0, sinH, Eigen::Vector3d::Zero() );
+  // right plane
+  _plane_normals[3] = VectorWithPt3D( -cosH, 0.0, sinH, Eigen::Vector3d::Zero() );
+  // bottom plane
+  _plane_normals[4] = VectorWithPt3D( 0.0, cosV, sinV, Eigen::Vector3d::Zero() );
+  // top plane
+  _plane_normals[5] = VectorWithPt3D( 0.0, -cosV, sinV, Eigen::Vector3d::Zero() );
 
   #if VISUALIZE_FRUSTUM
-    _frustum_pts = pt_;
+  const double tanH = std::tan(_hFOV/2);
+  const double tanV = std::tan(_vFOV/2);
+
+  Eigen::Vector3d pt_direction[4] = {
+    Eigen::Vector3d(  tanH,  tanV, 1.0 ),
+    Eigen::Vector3d(  tanH, -tanV, 1.0 ),
+    Eigen::Vector3d( -tanH, -tanV, 1.0 ),
+    Eigen::Vector3d( -tanH,  tanV, 1.0 )
+  };
+  for (int i=0; i<4; i++)
+  {
+    _frustum_pts[i]   = pt_direction[i] * _min_d;
+    _frustum_pts[i+4] = pt_direction[i] * _max_d;
+  }
   #endif
 
-  assert(_plane_normals.size() == 6);
   _valid_frustum = true;
   return;
 }
@@ -300,12 +251,12 @@ bool DepthCameraFrustum::IsInside(const openvdb::Vec3d& pt)
   std::vector<VectorWithPt3D>::iterator it;
   for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
   {
-    Eigen::Vector3d p_delta(pt[0] - it->initial_point[0], \
-                            pt[1] - it->initial_point[1], \
+    Eigen::Vector3d p_delta(pt[0] - it->initial_point[0],
+                            pt[1] - it->initial_point[1],
                             pt[2] - it->initial_point[2]);
-    p_delta.normalize();
+    //p_delta.normalize();
 
-    if (Dot(*it, p_delta) > 0.)
+    if (Dot(*it, p_delta) < 0.)
     {
       return false;
     } 
