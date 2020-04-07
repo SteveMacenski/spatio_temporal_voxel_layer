@@ -121,10 +121,9 @@ void DepthCameraFrustum::TransformModel(void)
   T.pretranslate(_orientation.inverse()*_position);
   T.prerotate(_orientation);
 
-  std::vector<VectorWithPt3D>::iterator it;
-  for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
+  for (auto& plane: _plane_normals)
   {
-    it->TransformFrames(T);
+    plane.TransformFrames(T);
   }
 
   #if VISUALIZE_FRUSTUM
@@ -248,15 +247,15 @@ bool DepthCameraFrustum::IsInside(const openvdb::Vec3d& pt)
     return false;
   }
 
-  std::vector<VectorWithPt3D>::iterator it;
-  for (it = _plane_normals.begin(); it != _plane_normals.end(); ++it)
+  for (auto& plane: _plane_normals)
   {
-    Eigen::Vector3d p_delta(pt[0] - it->initial_point[0],
-                            pt[1] - it->initial_point[1],
-                            pt[2] - it->initial_point[2]);
-    //p_delta.normalize();
+    Eigen::Vector3d p_delta(pt[0] - plane.initial_point[0],
+                            pt[1] - plane.initial_point[1],
+                            pt[2] - plane.initial_point[2]);
 
-    if (Dot(*it, p_delta) < 0.)
+    //p_delta.normalize(); // not needed. prove me wrong
+
+    if (Dot(plane, p_delta) < 0.)
     {
       return false;
     } 
