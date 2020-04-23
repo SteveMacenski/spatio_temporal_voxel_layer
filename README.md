@@ -28,6 +28,22 @@ Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](http
 
 [![IMAGE ALT TEXT](https://user-images.githubusercontent.com/14944147/46768837-987c9280-cc9e-11e8-99ea-788d3d590dd8.png)](https://vimeo.com/292699571)
 
+### Cite This Work
+
+```
+@article{doi:10.1177/1729881420910530,
+    author = {Steve Macenski and David Tsai and Max Feinberg},
+    title ={Spatio-temporal voxel layer: A view on robot perception for the dynamic world},
+    journal = {International Journal of Advanced Robotic Systems},
+    volume = {17},
+    number = {2},
+    pages = {1729881420910530},
+    year = {2020},
+    doi = {10.1177/1729881420910530},
+    URL = {https://doi.org/10.1177/1729881420910530}
+}
+```
+
 ## **Spatio**-
 The Spatio in this package is the representation of the environment in a configurable `voxel_size` voxel grid stored and searched by OpenVDB. 
 
