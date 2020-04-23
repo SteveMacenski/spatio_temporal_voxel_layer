@@ -37,7 +37,6 @@ Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](http
     journal = {International Journal of Advanced Robotic Systems},
     volume = {17},
     number = {2},
-    pages = {1729881420910530},
     year = {2020},
     doi = {10.1177/1729881420910530},
     URL = {https://doi.org/10.1177/1729881420910530}
