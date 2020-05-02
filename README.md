@@ -30,6 +30,8 @@ Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](http
 
 ### Cite This Work
 
+You can find this work [here](https://journals.sagepub.com/doi/10.1177/1729881420910530).
+
 ```
 @article{doi:10.1177/1729881420910530,
     author = {Steve Macenski and David Tsai and Max Feinberg},
