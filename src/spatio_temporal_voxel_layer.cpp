@@ -493,6 +493,7 @@ bool SpatioTemporalVoxelLayer::updateFootprint(double robot_x, double robot_y, \
     touch(_transformed_footprint[i].x, _transformed_footprint[i].y, \
           min_x, min_y, max_x, max_y);
   }
+  return true;
 }
 
 /*****************************************************************************/
