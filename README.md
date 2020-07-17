@@ -158,9 +158,11 @@ Add this plugin to your costmap params file.
 
 `roslaunch [navigation_pkg] move_base.launch`
 
-### Enabing/disabling observation_sources real-time
+### Dynamically reconfigurable parameters
 
-To enable/disable observation sources use a ros service for each source:
+Several parameters are dynamically reconfigurable.
+
+To enable/disable observation sources at runtime, use a ros service for each source:
 
 ~rgbd_obstacle_layer/$(source_name)/toggle_enabled (std_srvs/SetBool)
   -  request.data = true   // Enable observation source
@@ -171,6 +173,8 @@ To enable/disable observation sources use a ros service for each source:
  rosservice call /move_base/global_costmap/rgbd_obstacle_layer/rgbd_back/toggle_enabled "data: true"
  rosservice call /move_base/local_costmap/rgbd_obstacle_layer/rgbd_back/toggle_enabled "data: false"
  ```
+
+The minimum and maximum obstacle height parameters are set per-observation (see yaml configuration files), but a Dynamic Reconfigure parameter is made available to change these values. Please note that values set this way will apply to all observation sources, so if you need different values for different sources, then this may not be the solution you need. But remember, these minimum and maximum values are used by the built-in PCL Voxel/PassThrough filters, so you always have the option of pre-processing your sensor data separately before feeding it into STVL.
  
 ### Debug and Model Fitting
 
