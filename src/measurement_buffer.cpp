@@ -284,6 +284,16 @@ void MeasurementBuffer::SetEnabled(const bool& enabled)
 }
 
 /*****************************************************************************/
+void MeasurementBuffer::SetVerticalLimits(const double& min_obstacle_height,      \
+                                          const double& max_obstacle_height)
+  
+/*****************************************************************************/
+{
+  _min_obstacle_height = min_obstacle_height;
+  _max_obstacle_height = max_obstacle_height;
+}
+
+/*****************************************************************************/
 void MeasurementBuffer::ResetLastUpdatedTime(void)
 /*****************************************************************************/
 {

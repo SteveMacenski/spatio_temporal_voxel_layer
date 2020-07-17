@@ -597,7 +597,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
   _mapping_mode = config.mapping_mode;
   _map_save_duration = ros::Duration(config.map_save_duration);
 
-  if (level >=1) //update grid
+  if (level > 0) //update grid
   {
     auto default_value = (config.track_unknown_space) ? \
                             costmap_2d::NO_INFORMATION : costmap_2d::FREE_SPACE;
@@ -611,6 +611,15 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
     _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
       static_cast<double>(default_value_), _decay_model, \
       _voxel_decay, _publish_voxels);
+  }
+
+  if (level >1) //Override all observations' vertical range with these common parameters
+  {
+    observation_buffers_iter it = _observation_buffers.begin();
+    for (it; it != _observation_buffers.end(); ++it)
+    {
+      (*it)->SetVerticalLimits(config.general_min_obstacle_height,config.general_max_obstacle_height);
+    }
   }
 }
 
