@@ -613,12 +613,12 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
       _voxel_decay, _publish_voxels);
   }
 
-  if (level >1) //Override all observations' vertical range with these common parameters
+  if (level > 1) //Override all observations' vertical range with these common parameters
   {
     observation_buffers_iter it = _observation_buffers.begin();
     for (it; it != _observation_buffers.end(); ++it)
     {
-      (*it)->SetVerticalLimits(config.general_min_obstacle_height,config.general_max_obstacle_height);
+      (*it)->SetVerticalLimits(config.general_min_obstacle_height, config.general_max_obstacle_height);
     }
   }
 }

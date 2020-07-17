@@ -111,7 +111,7 @@ public:
   // enabler setter getter
   bool IsEnabled(void) const;
   void SetEnabled(const bool& enabled);
-  void SetVerticalLimits(const double& min_obstacle_height,const double& max_obstacle_height);
+  void SetVerticalLimits(const double& min_obstacle_height, const double& max_obstacle_height);
 
 
   // State knoweldge if sensors are operating as expected
