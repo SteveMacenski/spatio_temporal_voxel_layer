@@ -62,6 +62,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const bool& clearing,                   \
                                      const double& voxel_size,               \
                                      const bool& voxel_filter,               \
+                                     const bool& passthrough_filter,         \
                                      const int& voxel_min_points,            \
                                      const bool& enabled,                    \
                                      const bool& clear_buffer_after_reading, \
@@ -78,7 +79,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
     _voxel_filter(voxel_filter), _voxel_min_points(voxel_min_points),
     _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
-    _model_type(model_type)
+    _model_type(model_type), _passthrough_filter(passthrough_filter)
 {
 }
 
@@ -163,8 +164,9 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
                        (float)_voxel_size);
       sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
       sor.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
-    else
+    else if ( _passthrough_filter )
     {
       pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
       pass_through_filter.setInputCloud(cloud_pcl);
@@ -173,9 +175,9 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
       pass_through_filter.setFilterLimits( \
                   _min_obstacle_height,_max_obstacle_height);
       pass_through_filter.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
 
-    pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     _observation_list.front()._cloud = cld_global;
   }
   catch (tf::TransformException& ex)

@@ -148,7 +148,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
-    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled;
+    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading;
+    bool enabled, passthrough_filter;
     int voxel_min_points;
 
     source_node.param("topic", topic, source);
@@ -175,6 +176,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("decay_acceleration", decay_acceleration, 0.);
     // performs an approximate voxel filter over the data to reduce
     source_node.param("voxel_filter", voxel_filter, false);
+    // Skips built-in pcl filtering altogether (BYO filtering)
+    source_node.param("passthrough_filter", passthrough_filter, true);
     // minimum points per voxel for voxel filter
     source_node.param("voxel_min_points", voxel_min_points, 0);
     // clears measurement buffer after reading values from it
@@ -213,7 +216,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,       \
         decay_acceleration, marking, clearing, _voxel_size,               \
         voxel_filter, voxel_min_points, enabled, clear_after_reading,     \
-        model_type)));
+        passthrough_filter, model_type)));
 
     // Add buffer to marking observation buffers
     if (marking == true)
