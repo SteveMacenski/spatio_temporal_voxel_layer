@@ -77,9 +77,10 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
-    _voxel_filter(voxel_filter), _voxel_min_points(voxel_min_points),
-    _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
-    _model_type(model_type), _passthrough_filter(passthrough_filter)
+    _voxel_filter(voxel_filter), _passthrough_filter(passthrough_filter), 
+    _voxel_min_points(voxel_min_points), _enabled(enabled),
+    _clear_buffer_after_reading(clear_buffer_after_reading),
+    _model_type(model_type), 
 {
 }
 
