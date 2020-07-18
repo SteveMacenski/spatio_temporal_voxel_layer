@@ -80,7 +80,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _voxel_filter(voxel_filter), _passthrough_filter(passthrough_filter), 
     _voxel_min_points(voxel_min_points), _enabled(enabled),
     _clear_buffer_after_reading(clear_buffer_after_reading),
-    _model_type(model_type), 
+    _model_type(model_type) 
 {
 }
 
