@@ -176,7 +176,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("decay_acceleration", decay_acceleration, 0.);
     // performs an approximate voxel filter over the data to reduce
     source_node.param("voxel_filter", voxel_filter, false);
-    // Skips built-in pcl filtering altogether (BYO filtering)
+    // crops data vertically using min and max obstacle height
     source_node.param("passthrough_filter", passthrough_filter, true);
     // minimum points per voxel for voxel filter
     source_node.param("voxel_min_points", voxel_min_points, 0);

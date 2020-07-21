@@ -131,6 +131,7 @@ rgbd_obstacle_layer:
     inf_is_valid: false          #default false, for laser scans
     clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
     voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
+    passthrough_filter: true     #default true, crop data by min & max height if voxel_filter off
     voxel_min_points: 0          #default 0, minimum points per voxel for voxel filter
   rgbd1_clear:
     enabled: true                #default true, can be toggled on/off with associated service call
