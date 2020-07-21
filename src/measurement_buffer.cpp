@@ -146,36 +146,38 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
                  _global_frame, cloud.header.frame_id, cloud.header.stamp);
     tf2::doTransform (cloud, *cld_global, tf_stamped);
 
-    pcl::PCLPointCloud2::Ptr cloud_pcl (new pcl::PCLPointCloud2 ());
-    pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2 ());
-
-    pcl_conversions::toPCL(*cld_global, *cloud_pcl);
-
-    // remove points that are below or above our height restrictions, and
-    // in the same time, remove NaNs and if user wants to use it, combine with a
-    if ( _voxel_filter )
+    if ( _voxel_filter || _passthrough_filter )
     {
-      pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-      sor.setInputCloud (cloud_pcl);
-      sor.setFilterFieldName("z");
-      sor.setFilterLimits(_min_obstacle_height,_max_obstacle_height);
-      sor.setDownsampleAllData(false);
-      sor.setLeafSize ((float)_voxel_size,
-                       (float)_voxel_size,
-                       (float)_voxel_size);
-      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
-      sor.filter(*cloud_filtered);
-      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
-    }
-    else if ( _passthrough_filter )
-    {
-      pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
-      pass_through_filter.setInputCloud(cloud_pcl);
-      pass_through_filter.setKeepOrganized(false);
-      pass_through_filter.setFilterFieldName("z");
-      pass_through_filter.setFilterLimits( \
-                  _min_obstacle_height,_max_obstacle_height);
-      pass_through_filter.filter(*cloud_filtered);
+      pcl::PCLPointCloud2::Ptr cloud_pcl (new pcl::PCLPointCloud2 ());
+      pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2 ());
+
+      pcl_conversions::toPCL(*cld_global, *cloud_pcl);
+
+      // remove points that are below or above our height restrictions, and
+      // in the same time, remove NaNs and if user wants to use it, combine with a
+      if ( _voxel_filter )
+      {
+        pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+        sor.setInputCloud (cloud_pcl);
+        sor.setFilterFieldName("z");
+        sor.setFilterLimits(_min_obstacle_height,_max_obstacle_height);
+        sor.setDownsampleAllData(false);
+        sor.setLeafSize ((float)_voxel_size,
+                        (float)_voxel_size,
+                        (float)_voxel_size);
+        sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
+        sor.filter(*cloud_filtered);
+      }
+      else if ( _passthrough_filter )
+      {
+        pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
+        pass_through_filter.setInputCloud(cloud_pcl);
+        pass_through_filter.setKeepOrganized(false);
+        pass_through_filter.setFilterFieldName("z");
+        pass_through_filter.setFilterLimits( \
+                    _min_obstacle_height,_max_obstacle_height);
+        pass_through_filter.filter(*cloud_filtered);
+      }
       pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
 
