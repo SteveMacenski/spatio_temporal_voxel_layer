@@ -148,6 +148,10 @@ rgbd_obstacle_layer:
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
 
+### Built-in filtering
+
+STVL offers built-in PCL VoxelGrid/PassThrough filtering for a batteries-included experience. They are turned on/off with the voxel_filter and passthrough_filter parameters on a per-sensor basis. Both filters crop the data vertically (z-axis) according to the provided min_obstacle_height and max_obstacle_height parameters, but VoxelGrid additionaly downsamples the data for increased performance. VoxelGrid filtering (which is off by default but recommended on) takes precedence over PassThrough filtering (on by default) and if the first is set on, the second will be skipped. In the event that sensor data is preprocessed before it is passed on to STVL, it is possible to skip both filters by setting both parameters to false. Currently min and max_obstacle_height are not dynamically reconfigurable in STVL, but that can also be achieved with external pre-filtering.
+ 
 ### local/global_costmap_params.yaml
 
 Add this plugin to your costmap params file. 
