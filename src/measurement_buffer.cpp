@@ -61,7 +61,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const bool& marking,                    \
                                      const bool& clearing,                   \
                                      const double& voxel_size,               \
-                                     const bool& voxel_filter,               \
+                                     const Filters& filter,                  \
                                      const int& voxel_min_points,            \
                                      const bool& enabled,                    \
                                      const bool& clear_buffer_after_reading, \
@@ -76,7 +76,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
-    _voxel_filter(voxel_filter), _voxel_min_points(voxel_min_points),
+    _filter(filter), _voxel_min_points(voxel_min_points),
     _enabled(enabled), _clear_buffer_after_reading(clear_buffer_after_reading),
     _model_type(model_type)
 {
@@ -147,12 +147,11 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
     pcl::PCLPointCloud2::Ptr cloud_pcl (new pcl::PCLPointCloud2 ());
     pcl::PCLPointCloud2::Ptr cloud_filtered (new pcl::PCLPointCloud2 ());
 
-    pcl_conversions::toPCL(*cld_global, *cloud_pcl);
-
     // remove points that are below or above our height restrictions, and
     // in the same time, remove NaNs and if user wants to use it, combine with a
-    if ( _voxel_filter )
+    if (_filter == Filters::VOXEL)
     {
+      pcl_conversions::toPCL(*cld_global, *cloud_pcl);
       pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
       sor.setInputCloud (cloud_pcl);
       sor.setFilterFieldName("z");
@@ -163,9 +162,11 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
                        (float)_voxel_size);
       sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
       sor.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
-    else
+    else if (_filter == Filters::PASSTHROUGH)
     {
+      pcl_conversions::toPCL(*cld_global, *cloud_pcl);
       pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
       pass_through_filter.setInputCloud(cloud_pcl);
       pass_through_filter.setKeepOrganized(false);
@@ -173,9 +174,9 @@ void MeasurementBuffer::BufferROSCloud(const sensor_msgs::PointCloud2& cloud)
       pass_through_filter.setFilterLimits( \
                   _min_obstacle_height,_max_obstacle_height);
       pass_through_filter.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
 
-    pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     _observation_list.front()._cloud = cld_global;
   }
   catch (tf::TransformException& ex)
