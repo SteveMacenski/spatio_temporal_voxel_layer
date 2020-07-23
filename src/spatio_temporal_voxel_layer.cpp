@@ -174,7 +174,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("horizontal_fov_angle", hFOV, 1.04);
     // acceleration scales the model's decay in presence of readings
     source_node.param("decay_acceleration", decay_acceleration, 0.);
-    // performs a PCL filter, either an approximate voxel filter or passthrough filter
+    // Apply a PCL filter (Approximate VoxeGrid or PassThrough) or skip
     source_node.param("filter", filter_str, std::string("passthrough"));
     // minimum points per voxel for voxel filter
     source_node.param("voxel_min_points", voxel_min_points, 0);
