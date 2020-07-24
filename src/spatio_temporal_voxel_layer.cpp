@@ -223,17 +223,17 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     if (filter_str == "passthrough")
     {
-      ROS_INFO("Passthough filter activated.");
+      RCLCPP_INFO(node_->get_logger(), "Passthough filter activated.");
       filter = buffer::Filters::PASSTHROUGH;
     }
     else if (filter_str == "voxel")
     {
-      ROS_INFO("Voxel filter activated.");
+      RCLCPP_INFO(node_->get_logger(), "Voxel filter activated.");
       filter = buffer::Filters::VOXEL;
     }
     else
     {
-      ROS_INFO("No filters activated.");
+      RCLCPP_INFO(node_->get_logger(), "No filters activated.");
       filter = buffer::Filters::NONE;
     }
 
