@@ -67,6 +67,7 @@
 #include "openvdb/openvdb.h"
 #include "openvdb/tools/GridTransformer.h"
 #include "openvdb/tools/RayIntersector.h"
+
 // measurement struct and buffer
 #include "spatio_temporal_voxel_layer/measurement_buffer.hpp"
 #include "spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp"
