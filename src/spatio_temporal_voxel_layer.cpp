@@ -151,10 +151,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height;
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type;
+    std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
-    bool voxel_filter, clear_after_reading, enabled;
+    bool clear_after_reading, enabled;
     int voxel_min_points;
+    buffer::Filters filter;
 
     declareParameter(source + "." + "topic", rclcpp::ParameterValue(std::string("")));
     declareParameter(source + "." + "sensor_frame", rclcpp::ParameterValue(std::string("")));
@@ -175,7 +176,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "vertical_fov_padding", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "horizontal_fov_angle", rclcpp::ParameterValue(1.04));
     declareParameter(source + "." + "decay_acceleration", rclcpp::ParameterValue(0.0));
-    declareParameter(source + "." + "voxel_filter", rclcpp::ParameterValue(false));
+    declareParameter(source + "." + "filter", rclcpp::ParameterValue(std::string("passthrough")));
     declareParameter(source + "." + "voxel_min_points", rclcpp::ParameterValue(0));
     declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
@@ -208,7 +209,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // acceleration scales the model's decay in presence of readings
     node_->get_parameter(name_ + "." + source + "." + "decay_acceleration", decay_acceleration);
     // performs an approximate voxel filter over the data to reduce
-    node_->get_parameter(name_ + "." + source + "." + "voxel_filter", voxel_filter);
+    node_->get_parameter(name_ + "." + source + "." + "filter", filter_str);
     // minimum points per voxel for voxel filter
     node_->get_parameter(name_ + "." + source + "." + "voxel_min_points", voxel_min_points);
     // clears measurement buffer after reading values from it
@@ -219,6 +220,22 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     int model_type_int = 0;
     node_->get_parameter(name_ + "." + source + "." + "model_type", model_type_int);
     ModelType model_type = static_cast<ModelType>(model_type_int);
+
+    if (filter_str == "passthrough")
+    {
+      ROS_INFO("Passthough filter activated.");
+      filter = buffer::Filters::PASSTHROUGH;
+    }
+    else if (filter_str == "voxel")
+    {
+      ROS_INFO("Voxel filter activated.");
+      filter = buffer::Filters::VOXEL;
+    }
+    else
+    {
+      ROS_INFO("No filters activated.");
+      filter = buffer::Filters::NONE;
+    }
 
     if (!(data_type == "PointCloud2" || data_type == "LaserScan")) {
       throw std::runtime_error(
@@ -232,7 +249,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
-      voxel_filter, voxel_min_points, enabled, clear_after_reading, model_type,
+      filter, voxel_min_points, enabled, clear_after_reading, model_type,
       node_)));
 
     // Add buffer to marking observation buffers
