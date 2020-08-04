@@ -12,7 +12,6 @@ global_costmap:
         mark_threshold:           0     # voxel height
         update_footprint_enabled: true
         combination_method:       1     # 1=max, 0=override
-        obstacle_range:           3.0   # meters
         origin_z:                 0.0   # meters
         publish_voxel_map:        false # default off
         transform_tolerance:      0.2   # seconds
@@ -24,6 +23,7 @@ global_costmap:
           topic: camera1/depth/points
           marking: true
           clearing: false
+          obstacle_range: 3.0          # meters
           min_obstacle_height: 0.3     # default 0, meters
           max_obstacle_height: 2.0     # default 3, meters
           expected_update_rate: 0.0    # default 0, if not updating at this rate at least, remove from buffer
