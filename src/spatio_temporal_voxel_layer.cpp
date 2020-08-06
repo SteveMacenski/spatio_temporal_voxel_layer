@@ -87,6 +87,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // whether to default on
   declareParameter("enabled", rclcpp::ParameterValue(true));
   node_->get_parameter(name_ + ".enabled", _enabled);
+  enabled_ = _enabled;
   // publish the voxel grid to visualize
   declareParameter("publish_voxel_map", rclcpp::ParameterValue(false));
   node_->get_parameter(name_ + ".publish_voxel_map", _publish_voxels);
