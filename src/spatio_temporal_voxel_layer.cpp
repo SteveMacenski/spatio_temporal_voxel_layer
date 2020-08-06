@@ -80,50 +80,49 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   int decay_model_int;
   // source names
   declareParameter("observation_sources", rclcpp::ParameterValue(std::string("")));
-  node_->get_parameter(name_ + "observation_sources", topics_string);
+  node_->get_parameter(name_ + ".observation_sources", topics_string);
   // timeout in seconds for transforms
   declareParameter("transform_tolerance", rclcpp::ParameterValue(0.2));
-  node_->get_parameter(name_ + "transform_tolerance", transform_tolerance);
+  node_->get_parameter(name_ + ".transform_tolerance", transform_tolerance);
   // whether to default on
   declareParameter("enabled", rclcpp::ParameterValue(true));
-  node_->get_parameter(name_ + "enabled", _enabled);
+  node_->get_parameter(name_ + ".enabled", _enabled);
   // publish the voxel grid to visualize
   declareParameter("publish_voxel_map", rclcpp::ParameterValue(false));
-  node_->get_parameter(name_ + "publish_voxel_map", _publish_voxels);
+  node_->get_parameter(name_ + ".publish_voxel_map", _publish_voxels);
   // size of each voxel in meters
   declareParameter("voxel_size", rclcpp::ParameterValue(0.05));
-  node_->get_parameter(name_ + "voxel_size", _voxel_size);
+  node_->get_parameter(name_ + ".voxel_size", _voxel_size);
   // 1=takes highest in layers, 0=takes current layer
   declareParameter("combination_method", rclcpp::ParameterValue(1));
-  node_->get_parameter(name_ + "combination_method", _combination_method);
+  node_->get_parameter(name_ + ".combination_method", _combination_method);
   // number of voxels per vertical needed to have obstacle
   declareParameter("mark_threshold", rclcpp::ParameterValue(0));
-  node_->get_parameter(name_ + "mark_threshold", _mark_threshold);
+  node_->get_parameter(name_ + ".mark_threshold", _mark_threshold);
   // clear under robot footprint
   declareParameter("update_footprint_enabled", rclcpp::ParameterValue(true));
-  node_->get_parameter(name_ + "update_footprint_enabled", _update_footprint_enabled);
+  node_->get_parameter(name_ + ".update_footprint_enabled", _update_footprint_enabled);
   // keep tabs on unknown space
   declareParameter("track_unknown_space", rclcpp::ParameterValue(layered_costmap_->isTrackingUnknown()));
-  node_->get_parameter(name_ + "track_unknown_space", track_unknown_space);
+  node_->get_parameter(name_ + ".track_unknown_space", track_unknown_space);
   declareParameter("decay_model", rclcpp::ParameterValue(0));
-  node_->get_parameter(name_ + "decay_model", decay_model_int);
+  node_->get_parameter(name_ + ".decay_model", decay_model_int);
   _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // decay param
   declareParameter("voxel_decay", rclcpp::ParameterValue(-1));
-  node_->get_parameter(name_ + "voxel_decay", _voxel_decay);
+  node_->get_parameter(name_ + ".voxel_decay", _voxel_decay);
   // whether to map or navigate
   declareParameter("mapping_mode", rclcpp::ParameterValue(false));
-  node_->get_parameter(name_ + "mapping_mode", _mapping_mode);
+  node_->get_parameter(name_ + ".mapping_mode", _mapping_mode);
   // if mapping, how often to save a map for safety
   declareParameter("map_save_duration", rclcpp::ParameterValue(60.0));
-  node_->get_parameter(name_ + "map_save_duration", map_save_time);
+  node_->get_parameter(name_ + ".map_save_duration", map_save_time);
   RCLCPP_INFO(node_->get_logger(),
     "%s loaded parameters from parameter server.", getName().c_str());
   if (_mapping_mode) {
     _map_save_duration = std::make_unique<rclcpp::Duration>(
       map_save_time, 0.0);
   }
-
   _last_map_save_time = node_->now();
 
   if (track_unknown_space) {
