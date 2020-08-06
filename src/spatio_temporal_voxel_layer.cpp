@@ -147,9 +147,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height;
     double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration;
-    std::string topic, sensor_frame, data_type;
-    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled;
+    std::string topic, sensor_frame, data_type, filter_str;
+    bool inf_is_valid, clearing, marking, clear_after_reading, enabled;
     int voxel_min_points;
+    buffer::Filters filter;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -173,8 +174,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("horizontal_fov_angle", hFOV, 1.04);
     // acceleration scales the model's decay in presence of readings
     source_node.param("decay_acceleration", decay_acceleration, 0.);
-    // performs an approximate voxel filter over the data to reduce
-    source_node.param("voxel_filter", voxel_filter, false);
+    // Apply a PCL filter (Approximate VoxeGrid or PassThrough) or skip
+    source_node.param("filter", filter_str, std::string("passthrough"));
     // minimum points per voxel for voxel filter
     source_node.param("voxel_min_points", voxel_min_points, 0);
     // clears measurement buffer after reading values from it
@@ -185,6 +186,22 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     int model_type_int;
     source_node.param("model_type", model_type_int, 0);
     ModelType model_type = static_cast<ModelType>(model_type_int);
+
+    if (filter_str == "passthrough")
+    {
+      ROS_INFO("Passthough filter activated.");
+      filter = buffer::Filters::PASSTHROUGH;
+    }
+    else if (filter_str == "voxel")
+    {
+      ROS_INFO("Voxel filter activated.");
+      filter = buffer::Filters::VOXEL;
+    }
+    else
+    {
+      ROS_INFO("No filters activated.");
+      filter = buffer::Filters::NONE;
+    }
 
     if (!sensor_frame.empty())
     {
@@ -212,7 +229,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         obstacle_range, *tf_, _global_frame, sensor_frame,                \
         transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,       \
         decay_acceleration, marking, clearing, _voxel_size,               \
-        voxel_filter, voxel_min_points, enabled, clear_after_reading,     \
+        filter, voxel_min_points, enabled, clear_after_reading,           \
         model_type)));
 
     // Add buffer to marking observation buffers
