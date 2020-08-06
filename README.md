@@ -101,6 +101,8 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 An example fully-described configuration is shown below.
 
+Note: We supply two PCL filters within STVL to massage the data to lower compute overhead. STVL has an approximate voxel filter to make the data more sparse if very dense. It also has a passthrough filter to limit processing data within the valid minimum to maximum height bounds. The voxel filter is recommended if it lowers CPU overhead, otherwise, passthrough filter. No filter is also available if you pre-process your data or are not interested in performance optimizations. 
+
 ```
 rgbd_obstacle_layer:
   enabled:               true
@@ -132,7 +134,7 @@ rgbd_obstacle_layer:
     observation_persistence: 0.0 #default 0, use all measurements taken during now-value, 0=latest 
     inf_is_valid: false          #default false, for laser scans
     clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
-    voxel_filter: true           #default off, apply voxel filter to sensor, recommend on 
+    filter: "voxel"              #default passthrough, apply "voxel", "passthrough", or no filter to sensor data, recommended to have at one filter on
     voxel_min_points: 0          #default 0, minimum points per voxel for voxel filter
   rgbd1_clear:
     enabled: true                #default true, can be toggled on/off with associated service call
