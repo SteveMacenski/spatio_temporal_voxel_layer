@@ -69,6 +69,13 @@
 namespace buffer
 {
 
+enum class Filters
+{
+  NONE = 0,
+  VOXEL = 1,
+  PASSTHROUGH = 2
+};
+
 // conveniences for line lengths
 typedef std::list<observation::MeasurementReading>::iterator readings_iter;
 typedef std::unique_ptr<sensor_msgs::msg::PointCloud2> point_cloud_ptr;
@@ -97,7 +104,7 @@ public:
     const bool & marking,
     const bool & clearing,
     const double & voxel_size,
-    const bool & voxel_filter,
+    const Filters & filter,
     const int & voxel_min_points,
     const bool & enabled,
     const bool & clear_buffer_after_reading,
@@ -139,7 +146,8 @@ private:
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;
   double _decay_acceleration, _voxel_size;
-  bool _marking, _clearing, _voxel_filter;
+  bool _marking, _clearing;
+  Filters _filter;
   int _voxel_min_points;
   bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
