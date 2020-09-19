@@ -59,7 +59,7 @@ MeasurementBuffer::MeasurementBuffer(
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
-  std::shared_ptr<rclcpp::Clock> clock, rclcpp::Logger logger)
+  rclcpp::Clock::SharedPtr clock, rclcpp::Logger logger)
 : _buffer(tf), _observation_keep_time(observation_keep_time),
   _expected_update_rate(expected_update_rate), _last_updated(clock->now()),
   _global_frame(global_frame), _sensor_frame(sensor_frame),

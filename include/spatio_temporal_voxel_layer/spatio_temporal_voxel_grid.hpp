@@ -130,7 +130,7 @@ public:
   SpatioTemporalVoxelGrid(
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
-    const bool & pub_voxels, std::shared_ptr<rclcpp::Clock> clock);
+    const bool & pub_voxels, rclcpp::Clock::SharedPtr clock);
   ~SpatioTemporalVoxelGrid(void);
 
   // Core making and clearing functions
@@ -179,7 +179,7 @@ protected:
   std::unique_ptr<std::vector<geometry_msgs::msg::Point32>> _grid_points;
   std::unordered_map<occupany_cell, uint> * _cost_map;
   boost::mutex _grid_lock;
-  std::shared_ptr<rclcpp::Clock> _clock;
+  rclcpp::Clock::SharedPtr _clock;
 };
 
 }  // namespace volume_grid
