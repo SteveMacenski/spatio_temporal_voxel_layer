@@ -47,13 +47,13 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node,
   const float & voxel_size, const double & background_value,
-  const int & decay_model, const double & voxel_decay, const bool & pub_voxels)
-: _node(node), _decay_model(decay_model), _background_value(background_value),
+  const int & decay_model, const double & voxel_decay, const bool & pub_voxels,
+  std::shared_ptr<rclcpp::Clock> clock)
+: _decay_model(decay_model), _background_value(background_value),
   _voxel_size(voxel_size), _voxel_decay(voxel_decay), _pub_voxels(pub_voxels),
   _grid_points(std::make_unique<std::vector<geometry_msgs::msg::Point32>>()),
-  _cost_map(new std::unordered_map<occupany_cell, uint>)
+  _cost_map(new std::unordered_map<occupany_cell, uint>), _clock(clock)
 /*****************************************************************************/
 {
   this->InitializeGrid();
@@ -147,7 +147,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
 /*****************************************************************************/
 {
   // sample time once for all clearing readings
-  const double cur_time = _node->now().seconds();
+  const double cur_time = _clock->now().seconds();
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
@@ -254,7 +254,7 @@ void SpatioTemporalVoxelGrid::operator()(
 {
   if (obs._marking) {
     float mark_range_2 = obs._obstacle_range_in_m * obs._obstacle_range_in_m;
-    const double cur_time = _node->now().seconds();
+    const double cur_time = _clock->now().seconds();
 
     const sensor_msgs::msg::PointCloud2 & cloud = *(obs._cloud);
     sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud, "x");

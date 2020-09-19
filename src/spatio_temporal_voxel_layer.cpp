@@ -151,8 +151,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     "save_grid", save_grid_callback);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
-    node, _voxel_size, static_cast<double>(default_value_), _decay_model,
-    _voxel_decay, _publish_voxels);
+    _voxel_size, static_cast<double>(default_value_), _decay_model,
+    _voxel_decay, _publish_voxels, clock);
   matchSize();
   current_ = true;
   RCLCPP_INFO(logger,
@@ -264,7 +264,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
       filter, voxel_min_points, enabled, clear_after_reading, model_type,
-      node)));
+      clock, logger)));
 
     // Add buffer to marking observation buffers
     if (marking) {

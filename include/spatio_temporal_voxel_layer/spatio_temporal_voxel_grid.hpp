@@ -128,10 +128,9 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(
-    std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node,
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
-    const bool & pub_voxels);
+    const bool & pub_voxels, std::shared_ptr<rclcpp::Clock> clock);
   ~SpatioTemporalVoxelGrid(void);
 
   // Core making and clearing functions
@@ -173,9 +172,6 @@ protected:
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d & coord) const;
   openvdb::Vec3d IndexToWorld(const openvdb::Coord & coord) const;
 
-  // :-( had to break ROS encap. to get time in ros2...
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> _node;
-
   mutable openvdb::DoubleGrid::Ptr _grid;
   int _decay_model;
   double _background_value, _voxel_size, _voxel_decay;
@@ -183,6 +179,7 @@ protected:
   std::unique_ptr<std::vector<geometry_msgs::msg::Point32>> _grid_points;
   std::unordered_map<occupany_cell, uint> * _cost_map;
   boost::mutex _grid_lock;
+  std::shared_ptr<rclcpp::Clock> _clock;
 };
 
 }  // namespace volume_grid
