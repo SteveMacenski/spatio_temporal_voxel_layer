@@ -173,6 +173,8 @@ private:
   std::vector<observation::MeasurementReading> _static_observations;
   std::unique_ptr<volume_grid::SpatioTemporalVoxelGrid> _voxel_grid;
   boost::recursive_mutex _voxel_grid_lock;
+  rclcpp::Clock::SharedPtr clock;
+  rclcpp::Logger logger{rclcpp::get_logger("spatio_temporal_voxel_layer")};
 };
 
 }  // namespace spatio_temporal_voxel_layer
