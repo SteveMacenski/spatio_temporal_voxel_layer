@@ -73,7 +73,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     throw std::runtime_error{"Failed to lock node"};
   }
   
-  clock = node->get_clock();
+  _clock = node->get_clock();
   logger = node->get_logger();
 
   RCLCPP_INFO(logger,
@@ -134,7 +134,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     _map_save_duration = std::make_unique<rclcpp::Duration>(
       map_save_time, 0.0);
   }
-  _last_map_save_time = clock->now();
+  _last_map_save_time = _clock->now();
 
   if (track_unknown_space) {
     default_value_ = nav2_costmap_2d::NO_INFORMATION;
@@ -152,7 +152,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
     _voxel_size, static_cast<double>(default_value_), _decay_model,
-    _voxel_decay, _publish_voxels, clock);
+    _voxel_decay, _publish_voxels, _clock);
   matchSize();
   current_ = true;
   RCLCPP_INFO(logger,
@@ -264,7 +264,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
       filter, voxel_min_points, enabled, clear_after_reading, model_type,
-      clock, logger)));
+      _clock, logger)));
 
     // Add buffer to marking observation buffers
     if (marking) {
@@ -705,12 +705,12 @@ void SpatioTemporalVoxelLayer::updateBounds(
   // navigation mode: clear observations, mapping mode: save maps and publish
   bool should_save = false;
   if (_map_save_duration) {
-    should_save = clock->now() - _last_map_save_time > *_map_save_duration;
+    should_save = _clock->now() - _last_map_save_time > *_map_save_duration;
   }
   if (!_mapping_mode) {
     _voxel_grid->ClearFrustums(clearing_observations);
   } else if (should_save) {
-    _last_map_save_time = clock->now();
+    _last_map_save_time = _clock->now();
     time_t rawtime;
     struct tm * timeinfo;
     char time_buffer[100];
@@ -738,7 +738,7 @@ void SpatioTemporalVoxelLayer::updateBounds(
       std::make_unique<sensor_msgs::msg::PointCloud2>();
     _voxel_grid->GetOccupancyPointCloud(pc2);
     pc2->header.frame_id = _global_frame;
-    pc2->header.stamp = clock->now();
+    pc2->header.stamp = _clock->now();
     _voxel_pub->publish(*pc2);
   }
 
