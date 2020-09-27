@@ -124,7 +124,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(const float& voxel_size, const double& background_value,
-                          const int& decay_model, const double& outside_duration_threshold, const double& voxel_decay,
+                          const int& decay_model, const double& min_age_outside_frustrum, const double& voxel_decay,
                           const bool& pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
 
@@ -169,7 +169,7 @@ protected:
 
   mutable openvdb::DoubleGrid::Ptr _grid;
   int                             _decay_model;
-  double                          _background_value, _voxel_size, _outside_duration_threshold, _voxel_decay;
+  double                          _background_value, _voxel_size, _min_age_outside_frustrum, _voxel_decay;
   bool                            _pub_voxels;
   std::vector<geometry_msgs::Point32>*   _grid_points;
   std::unordered_map<occupany_cell, uint>* _cost_map;

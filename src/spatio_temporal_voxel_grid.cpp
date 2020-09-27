@@ -43,12 +43,12 @@ namespace volume_grid
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(const float& voxel_size, \
                    const double& background_value, const int& decay_model,\
-                   const double& outside_duration_threshold,              \
+                   const double& min_age_outside_frustrum,              \
                    const double& voxel_decay, const bool& pub_voxels) :
                    _background_value(background_value),                   \
                    _voxel_size(voxel_size),                               \
                    _decay_model(decay_model),                             \
-                   _outside_duration_threshold(outside_duration_threshold), \
+                   _min_age_outside_frustrum(min_age_outside_frustrum), \
                    _voxel_decay(voxel_decay),                             \
                    _pub_voxels(pub_voxels),                               \
                    _grid_points(new std::vector<geometry_msgs::Point32>),   \
@@ -222,13 +222,15 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       }
     }
 
-    // if not inside any, check against nominal decay model, also if
-    // too young, it means that it was marked without being in a frustrum
+    // if not inside any, check against nominal decay model, also clearing if
+    // too young.
+    // Depending on min_age_outside_frustrum value and cycle frequency,
+    // a voxel too young  means that it was marked without being in a frustrum
     // (or, edgy case, the point that marked the voxel was in a frustrum
     // but the center of that voxel was not), in that case : clearing
     if(!frustum_cycle)
     {
-      if (base_duration_to_decay < 0. || time_since_marking < _outside_duration_threshold)
+      if (base_duration_to_decay < 0. || time_since_marking < _min_age_outside_frustrum)
       {
         // expired by temporal clearing
         if(!this->ClearGridPoint(pt_index))
