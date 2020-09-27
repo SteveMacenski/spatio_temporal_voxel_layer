@@ -99,6 +99,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
                                   layered_costmap_->isTrackingUnknown());
   nh.param("decay_model", decay_model_int, 0);
   _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
+  // outside_duration_threshold param
+  nh.param("outside_duration_threshold", _outside_duration_threshold, 0.05);
   // decay param
   nh.param("voxel_decay", _voxel_decay, -1.);
   // whether to map or navigate
@@ -130,6 +132,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
                                                         (double)default_value_, \
                                                         _decay_model, \
+                                                        _outside_duration_threshold, \
                                                         _voxel_decay, \
                                                         _publish_voxels);
   matchSize();
@@ -620,6 +623,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
                             costmap_2d::NO_INFORMATION : costmap_2d::FREE_SPACE;
     default_value_ = default_value;
     _voxel_size = config.voxel_size;
+    _outside_duration_threshold = config.outside_duration_threshold;
     _voxel_decay = config.voxel_decay;
     _decay_model = static_cast<volume_grid::GlobalDecayModel>(config.decay_model);
     _publish_voxels = config.publish_voxel_map;
@@ -627,7 +631,7 @@ void SpatioTemporalVoxelLayer::DynamicReconfigureCallback( \
     delete _voxel_grid;
     _voxel_grid = new volume_grid::SpatioTemporalVoxelGrid(_voxel_size, \
       static_cast<double>(default_value_), _decay_model, \
-      _voxel_decay, _publish_voxels);
+      _outside_duration_threshold, _voxel_decay, _publish_voxels);
   }
 }
 
