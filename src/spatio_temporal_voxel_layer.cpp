@@ -100,7 +100,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   nh.param("decay_model", decay_model_int, 0);
   _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // min_age_outside_frustum param
-  nh.param("min_age_outside_frustum", _min_age_outside_frustum, 0.05);
+  nh.param("min_age_outside_frustum", _min_age_outside_frustum, 0.0);
   // decay param
   nh.param("voxel_decay", _voxel_decay, -1.);
   // whether to map or navigate

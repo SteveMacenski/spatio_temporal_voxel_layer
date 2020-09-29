@@ -170,8 +170,6 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
   // sample time once for all clearing readings
   const double cur_time = ros::WallTime::now().toSec();
 
-
-
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
   for (cit_grid; cit_grid.test(); ++cit_grid)
