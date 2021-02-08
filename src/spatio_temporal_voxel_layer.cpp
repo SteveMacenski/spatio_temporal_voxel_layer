@@ -66,13 +66,13 @@ SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 void SpatioTemporalVoxelLayer::onInitialize(void)
 /*****************************************************************************/
 {
-  RCLCPP_INFO(node_->get_logger(),
-    "%s being initialized as SpatioTemporalVoxelLayer!", getName().c_str());
+  RCLCPP_INFO_STREAM(node_->get_logger(), getName() <<
+    " being initialized as SpatioTemporalVoxelLayer!");
 
   // initialize parameters, grid, and sub/pubs
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
-  RCLCPP_INFO(node_->get_logger(), "%s's global frame is %s.",
-    getName().c_str(), _global_frame.c_str());
+  RCLCPP_INFO_STREAM(node_->get_logger(), getName() << "'s global frame is ",
+    << _global_frame.c_str() <<".");
 
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
