@@ -54,7 +54,7 @@
 #include "pcl/PCLPointCloud2.h"
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
+#include "nav2_util/lifecycle_node.hpp"
 // msgs
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/point_cloud2_iterator.hpp"
@@ -128,7 +128,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(
-    std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node,
+    const nav2_util::LifecycleNode::WeakPtr & parent,
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
     const bool & pub_voxels);
@@ -174,7 +174,7 @@ protected:
   openvdb::Vec3d IndexToWorld(const openvdb::Coord & coord) const;
 
   // :-( had to break ROS encap. to get time in ros2...
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> _node;
+  rclcpp::Clock::SharedPtr _clock;
 
   mutable openvdb::DoubleGrid::Ptr _grid;
   int _decay_model;

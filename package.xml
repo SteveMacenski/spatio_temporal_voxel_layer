@@ -17,6 +17,7 @@
   
   <depend>builtin_interfaces</depend>
   <depend>nav2_costmap_2d</depend>
+  <depend>nav2_util</depend>
   <depend>geometry_msgs</depend>
   <depend>pluginlib</depend>
   <depend>sensor_msgs</depend>
