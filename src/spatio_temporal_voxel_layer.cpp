@@ -66,6 +66,7 @@ SpatioTemporalVoxelLayer::~SpatioTemporalVoxelLayer(void)
 void SpatioTemporalVoxelLayer::onInitialize(void)
 /*****************************************************************************/
 {
+  // Should we initialize clock and logger here for STVL ?
   auto node = node_.lock();
   if (!node) {
     throw std::runtime_error{"Failed to lock node"};
