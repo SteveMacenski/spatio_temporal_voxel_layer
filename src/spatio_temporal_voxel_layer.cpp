@@ -349,11 +349,6 @@ void SpatioTemporalVoxelLayer::LaserScanCallback(
   const std::shared_ptr<buffer::MeasurementBuffer> & buffer)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
-
   // laser scan where infinity is invalid callback function
   sensor_msgs::msg::PointCloud2 cloud;
   cloud.header = message->header;
@@ -710,20 +705,15 @@ void SpatioTemporalVoxelLayer::updateBounds(
   ObservationsResetAfterReading();
   current_ = current;
 
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
-
   // navigation mode: clear observations, mapping mode: save maps and publish
   bool should_save = false;
   if (_map_save_duration) {
-    should_save = node->now() - _last_map_save_time > *_map_save_duration;
+    should_save = clock_->now() - _last_map_save_time > *_map_save_duration;
   }
   if (!_mapping_mode) {
     _voxel_grid->ClearFrustums(clearing_observations);
   } else if (should_save) {
-    _last_map_save_time = node->now();
+    _last_map_save_time = clock_->now();
     time_t rawtime;
     struct tm * timeinfo;
     char time_buffer[100];
@@ -751,7 +741,7 @@ void SpatioTemporalVoxelLayer::updateBounds(
       std::make_unique<sensor_msgs::msg::PointCloud2>();
     _voxel_grid->GetOccupancyPointCloud(pc2);
     pc2->header.frame_id = _global_frame;
-    pc2->header.stamp = node->now();
+    pc2->header.stamp = clock_->now();
     _voxel_pub->publish(*pc2);
   }
 
