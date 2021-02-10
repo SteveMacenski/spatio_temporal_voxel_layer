@@ -383,11 +383,6 @@ void SpatioTemporalVoxelLayer::LaserScanValidInfCallback(
     }
   }
 
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
-
   sensor_msgs::msg::PointCloud2 cloud;
   cloud.header = message.header;
   try {
