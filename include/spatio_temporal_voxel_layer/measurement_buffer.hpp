@@ -137,8 +137,8 @@ private:
   // Removing old observations from buffer
   void RemoveStaleObservations(void);
 
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr _clock;
+  rclcpp::Logger _logger;
   tf2_ros::Buffer & _buffer;
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
