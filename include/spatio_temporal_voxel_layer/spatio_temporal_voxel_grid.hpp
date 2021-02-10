@@ -127,7 +127,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(
-    const rclcpp::Clock::SharedPtr &,
+    const rclcpp::Clock::SharedPtr & parent_clock,
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
     const bool & pub_voxels);
@@ -174,11 +174,11 @@ protected:
 
   // :-( had to break ROS encap. to get time in ros2...
   rclcpp::Clock::SharedPtr _clock;
-
-  mutable openvdb::DoubleGrid::Ptr _grid;
+  double  _voxel_size, _background_value;
   int _decay_model;
-  double _background_value, _voxel_size, _voxel_decay;
+  double _voxel_decay;
   bool _pub_voxels;
+  mutable openvdb::DoubleGrid::Ptr _grid;
   std::unique_ptr<std::vector<geometry_msgs::msg::Point32>> _grid_points;
   std::unordered_map<occupany_cell, uint> * _cost_map;
   boost::mutex _grid_lock;

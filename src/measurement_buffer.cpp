@@ -59,7 +59,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
   const rclcpp::Clock::SharedPtr & parent_clock, const rclcpp::Logger & parent_logger)
-: _buffer(tf), _observation_keep_time(observation_keep_time),
+:  _clock(parent_clock), _logger(parent_logger),
+  _buffer(tf), _observation_keep_time(observation_keep_time),
   _expected_update_rate(expected_update_rate),
   _global_frame(global_frame), _sensor_frame(sensor_frame),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
@@ -70,8 +71,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
-  _enabled(enabled), _model_type(model_type),
-  _logger(parent_logger), _clock(parent_clock)
+  _enabled(enabled), _model_type(model_type)
+
 /*****************************************************************************/
 {
   _last_updated = _clock->now();
