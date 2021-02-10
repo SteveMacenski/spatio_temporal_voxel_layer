@@ -261,7 +261,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
       filter, voxel_min_points, enabled, clear_after_reading, model_type,
-      clock_)));
+      clock_, logger_)));
 
     // Add buffer to marking observation buffers
     if (marking) {

@@ -108,7 +108,8 @@ public:
     const bool & enabled,
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
-    const rclcpp::Clock::SharedPtr & parent_clock);
+    const rclcpp::Clock::SharedPtr & parent_clock,
+    const rclcpp::Logger & parent_logger);
 
   ~MeasurementBuffer(void);
 
