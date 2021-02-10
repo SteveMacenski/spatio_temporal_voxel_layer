@@ -58,7 +58,7 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
-  const nav2_util::LifecycleNode::WeakPtr & parent)
+  const rclcpp::Clock::SharedPtr & parent_clock)
 : _buffer(tf), _observation_keep_time(observation_keep_time),
   _expected_update_rate(expected_update_rate),
   _global_frame(global_frame), _sensor_frame(sensor_frame),
@@ -71,12 +71,10 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
   _enabled(enabled), _model_type(model_type),
-  _logger(rclcpp::get_logger("measurement_buffer"))
+  _logger(rclcpp::get_logger("measurement_buffer")), _clock(parent_clock)
 /*****************************************************************************/
 {
-  auto node = parent.lock();
-  _clock = node->get_clock();
-  _last_updated = node->now();
+  _last_updated = _clock->now();
 }
 
 /*****************************************************************************/
