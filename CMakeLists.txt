@@ -53,7 +53,6 @@ endif()
 
 set(dependencies
   nav2_costmap_2d
-  nav2_util
   geometry_msgs
   pluginlib
   sensor_msgs
