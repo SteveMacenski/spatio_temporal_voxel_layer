@@ -54,7 +54,6 @@
 #include "pcl/filters/passthrough.h"
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
 // TF
 #include "tf2_ros/buffer.h"
 #include "message_filters/subscriber.h"
@@ -109,7 +108,7 @@ public:
     const bool & enabled,
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
-    const nav2_util::LifecycleNode::WeakPtr & parent);
+    const rclcpp::Clock::SharedPtr & parent_clock);
 
   ~MeasurementBuffer(void);
 

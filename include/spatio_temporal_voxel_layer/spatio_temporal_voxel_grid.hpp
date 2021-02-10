@@ -54,7 +54,6 @@
 #include "pcl/PCLPointCloud2.h"
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "nav2_util/lifecycle_node.hpp"
 // msgs
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/point_cloud2_iterator.hpp"
