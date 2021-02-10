@@ -72,12 +72,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     throw std::runtime_error{"Failed to lock node"};
   }
 
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s being initialized as SpatioTemporalVoxelLayer!", getName().c_str());
 
   // initialize parameters, grid, and sub/pubs
   _global_frame = std::string(layered_costmap_->getGlobalFrameID());
-  RCLCPP_INFO(node->get_logger(), "%s's global frame is %s.",
+  RCLCPP_INFO(logger_, "%s's global frame is %s.",
     getName().c_str(), _global_frame.c_str());
 
   bool track_unknown_space;
@@ -125,7 +125,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // if mapping, how often to save a map for safety
   declareParameter("map_save_duration", rclcpp::ParameterValue(60.0));
   node->get_parameter(name_ + ".map_save_duration", map_save_time);
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s loaded parameters from parameter server.", getName().c_str());
   if (_mapping_mode) {
     _map_save_duration = std::make_unique<rclcpp::Duration>(
@@ -148,11 +148,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     "save_grid", save_grid_callback);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
-    node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
+    clock_, _voxel_size, static_cast<double>(default_value_), _decay_model,
     _voxel_decay, _publish_voxels);
   matchSize();
   current_ = true;
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s created underlying voxel grid.", getName().c_str());
 
   std::stringstream ss(topics_string);
@@ -234,17 +234,17 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     if (filter_str == "passthrough")
     {
-      RCLCPP_INFO(node->get_logger(), "Passthough filter activated.");
+      RCLCPP_INFO(logger_, "Passthough filter activated.");
       filter = buffer::Filters::PASSTHROUGH;
     }
     else if (filter_str == "voxel")
     {
-      RCLCPP_INFO(node->get_logger(), "Voxel filter activated.");
+      RCLCPP_INFO(logger_, "Voxel filter activated.");
       filter = buffer::Filters::VOXEL;
     }
     else
     {
-      RCLCPP_INFO(node->get_logger(), "No filters activated.");
+      RCLCPP_INFO(logger_, "No filters activated.");
       filter = buffer::Filters::NONE;
     }
 
@@ -261,7 +261,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
       decay_acceleration, marking, clearing, _voxel_size,
       filter, voxel_min_points, enabled, clear_after_reading, model_type,
-      node->get_clock())));
+      clock_)));
 
     // Add buffer to marking observation buffers
     if (marking) {
@@ -339,7 +339,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     }
   }
 
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s initialization complete!", getName().c_str());
 }
 
@@ -361,7 +361,7 @@ void SpatioTemporalVoxelLayer::LaserScanCallback(
     _laser_projector.transformLaserScanToPointCloud(
       message->header.frame_id, *message, cloud, *tf_);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(node->get_logger(),
+    RCLCPP_WARN(logger_,
       "TF returned a transform exception to frame %s: %s",
       _global_frame.c_str(), ex.what());
     _laser_projector.projectLaser(*message, cloud);
@@ -399,7 +399,7 @@ void SpatioTemporalVoxelLayer::LaserScanValidInfCallback(
     _laser_projector.transformLaserScanToPointCloud(
       message.header.frame_id, message, cloud, *tf_);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(node->get_logger(),
+    RCLCPP_WARN(logger_,
       "TF returned a transform exception to frame %s: %s",
       _global_frame.c_str(), ex.what());
     _laser_projector.projectLaser(message, cloud);
@@ -530,12 +530,8 @@ bool SpatioTemporalVoxelLayer::updateFootprint(
 void SpatioTemporalVoxelLayer::activate(void)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
   // subscribe and place info in buffers from sensor sources
-  RCLCPP_INFO(node->get_logger(), "%s was activated.", getName().c_str());
+  RCLCPP_INFO(logger_, "%s was activated.", getName().c_str());
 
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
   for (; sub_it != _observation_subscribers.end(); ++sub_it) {
@@ -552,12 +548,8 @@ void SpatioTemporalVoxelLayer::activate(void)
 void SpatioTemporalVoxelLayer::deactivate(void)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
   // unsubscribe from all sensor sources
-  RCLCPP_INFO(node->get_logger(), "%s was deactivated.", getName().c_str());
+  RCLCPP_INFO(logger_, "%s was deactivated.", getName().c_str());
 
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
   for (; sub_it != _observation_subscribers.end(); ++sub_it) {
@@ -587,19 +579,15 @@ bool SpatioTemporalVoxelLayer::AddStaticObservations(
   const observation::MeasurementReading & obs)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
   // observations to always be added to the map each update cycle not marked
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s: Adding static observation to map.", getName().c_str());
 
   try {
     _static_observations.push_back(obs);
     return true;
   } catch (...) {
-    RCLCPP_WARN(node->get_logger(),
+    RCLCPP_WARN(logger_,
       "Could not add static observations to voxel layer");
     return false;
   }
@@ -609,19 +597,15 @@ bool SpatioTemporalVoxelLayer::AddStaticObservations(
 bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
   // kill all static observations added to each update cycle
-  RCLCPP_INFO(node->get_logger(),
+  RCLCPP_INFO(logger_,
     "%s: Removing static observations to map.", getName().c_str());
 
   try {
     _static_observations.clear();
     return true;
   } catch (...) {
-    RCLCPP_WARN(node->get_logger(),
+    RCLCPP_WARN(logger_,
       "Couldn't remove static observations from %s.", getName().c_str());
     return false;
   }
@@ -631,12 +615,8 @@ bool SpatioTemporalVoxelLayer::RemoveStaticObservations(void)
 void SpatioTemporalVoxelLayer::ResetGrid(void)
 /*****************************************************************************/
 {
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
   if (!_voxel_grid->ResetGrid()) {
-    RCLCPP_WARN(node->get_logger(),
+    RCLCPP_WARN(logger_,
       "Did not clear level set in %s!", getName().c_str());
   }
 }
@@ -789,13 +769,8 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   double map_size_bytes;
 
-  auto node = node_.lock();
-  if (!node) {
-    throw std::runtime_error{"Failed to lock node"};
-  }
-
   if (_voxel_grid->SaveGrid(req->file_name, map_size_bytes) ) {
-    RCLCPP_INFO(node->get_logger(),
+    RCLCPP_INFO(logger_,
       "SpatioTemporalVoxelGrid: Saved %s grid! Has memory footprint of %f bytes.",
       req->file_name.c_str(), map_size_bytes);
     resp->map_size_bytes = map_size_bytes;
@@ -803,7 +778,7 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
     return;
   }
 
-  RCLCPP_WARN(node->get_logger(), "SpatioTemporalVoxelGrid: Failed to save grid.");
+  RCLCPP_WARN(logger_, "SpatioTemporalVoxelGrid: Failed to save grid.");
   resp->status = false;
 }
 
