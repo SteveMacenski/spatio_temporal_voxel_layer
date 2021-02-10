@@ -47,17 +47,16 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(
-  const nav2_util::LifecycleNode::WeakPtr & parent,
+  const rclcpp::Clock::SharedPtr & parent_clock,
   const float & voxel_size, const double & background_value,
   const int & decay_model, const double & voxel_decay, const bool & pub_voxels)
 : _decay_model(decay_model), _background_value(background_value),
   _voxel_size(voxel_size), _voxel_decay(voxel_decay), _pub_voxels(pub_voxels),
   _grid_points(std::make_unique<std::vector<geometry_msgs::msg::Point32>>()),
-  _cost_map(new std::unordered_map<occupany_cell, uint>)
+  _cost_map(new std::unordered_map<occupany_cell, uint>),
+  _clock(parent_clock)
 /*****************************************************************************/
 {
-  auto node = parent.lock();
-  _clock = node->get_clock();
   this->InitializeGrid();
 }
 

@@ -148,7 +148,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     "save_grid", save_grid_callback);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
-    node, _voxel_size, static_cast<double>(default_value_), _decay_model,
+    node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
     _voxel_decay, _publish_voxels);
   matchSize();
   current_ = true;

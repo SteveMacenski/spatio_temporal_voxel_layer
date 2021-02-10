@@ -128,7 +128,7 @@ public:
   typedef openvdb::math::Ray<openvdb::Real>::Vec3T Vec3Type;
 
   SpatioTemporalVoxelGrid(
-    const nav2_util::LifecycleNode::WeakPtr & parent,
+    const rclcpp::Clock::SharedPtr &,
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
     const bool & pub_voxels);
