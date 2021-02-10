@@ -60,8 +60,9 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   const bool & clear_buffer_after_reading, const ModelType & model_type,
   const rclcpp::Clock::SharedPtr & parent_clock, const rclcpp::Logger & parent_logger)
 :  _clock(parent_clock), _logger(parent_logger),
-  _buffer(tf), _observation_keep_time(observation_keep_time),
-  _expected_update_rate(expected_update_rate),
+  _buffer(tf),
+  _observation_keep_time(rclcpp::Duration::from_seconds(observation_keep_time)),
+  _expected_update_rate(rclcpp::Duration::from_seconds(expected_update_rate)),
   _global_frame(global_frame), _sensor_frame(sensor_frame),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
@@ -207,7 +208,7 @@ void MeasurementBuffer::RemoveStaleObservations(void)
   }
 
   readings_iter it = _observation_list.begin();
-  if (_observation_keep_time == rclcpp::Duration(0.0)) {
+  if (_observation_keep_time == rclcpp::Duration::from_seconds(0.0)) {
     _observation_list.erase(++it, _observation_list.end());
     return;
   }
@@ -240,7 +241,7 @@ bool MeasurementBuffer::ClearAfterReading(void)
 bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
-  if (_expected_update_rate == rclcpp::Duration(0.0)) {
+  if (_expected_update_rate == rclcpp::Duration::from_seconds(0.0)) {
     return true;
   }
 

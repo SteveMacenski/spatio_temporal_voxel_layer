@@ -299,7 +299,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_subscribers.push_back(sub);
       _observation_notifiers.push_back(filter);
 
-      _observation_notifiers.back()->setTolerance(rclcpp::Duration(50000000));  // 0.05s
+      _observation_notifiers.back()->setTolerance(rclcpp::Duration::from_seconds(0.05));  // 0.05s
     } else if (data_type == "PointCloud2") {
       std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>
       > sub(new message_filters::Subscriber<sensor_msgs::msg::PointCloud2>(
