@@ -98,7 +98,7 @@ public:
 
   // Functions to interact with other layers
   virtual void matchSize(void);
-  virtual bool isClearable() {return false;}
+  virtual bool isClearable() {return true;}
 
   // Functions for layer high level operations
   virtual void reset(void);
