@@ -70,12 +70,12 @@ MeasurementBuffer::MeasurementBuffer(const std::string & topic_name, const doubl
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
-  _enabled(enabled), _model_type(model_type)
+  _enabled(enabled), _model_type(model_type),
+  logger_(rclcpp::get_logger("measurement_buffer"))
 /*****************************************************************************/
 {
   auto node = parent.lock();
   clock_ = node->get_clock();
-  logger_ = node->get_logger();
   _last_updated = node->now();
 }
 

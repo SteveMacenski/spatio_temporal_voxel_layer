@@ -138,8 +138,7 @@ private:
   void RemoveStaleObservations(void);
 
   rclcpp::Clock::SharedPtr clock_;
-  // Measurement buffer logger initialization simlular to observation buffer ?
-  rclcpp::Logger logger_{rclcpp::get_logger("nav2_costmap_2d")};
+  rclcpp::Logger logger_;
   tf2_ros::Buffer & _buffer;
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
