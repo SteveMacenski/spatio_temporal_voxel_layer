@@ -59,9 +59,11 @@ MeasurementBuffer::MeasurementBuffer(
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node)
-: _buffer(tf), _observation_keep_time(observation_keep_time),
-  _expected_update_rate(expected_update_rate), _last_updated(node->now()),
+  const rclcpp::Clock::SharedPtr & parent_clock, const rclcpp::Logger & parent_logger)
+:  _clock(parent_clock), _logger(parent_logger),
+  _buffer(tf),
+  _observation_keep_time(rclcpp::Duration::from_seconds(observation_keep_time)),
+  _expected_update_rate(rclcpp::Duration::from_seconds(expected_update_rate)),
   _global_frame(global_frame), _sensor_frame(sensor_frame),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
@@ -71,9 +73,11 @@ MeasurementBuffer::MeasurementBuffer(
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
-  _enabled(enabled), _model_type(model_type), node_(node)
+  _enabled(enabled), _model_type(model_type)
+
 /*****************************************************************************/
 {
+  _last_updated = _clock->now();
 }
 
 /*****************************************************************************/
@@ -172,13 +176,13 @@ void MeasurementBuffer::BufferROSCloud(
   } catch (tf2::TransformException & ex) {
     // if fails, remove the empty observation
     _observation_list.pop_front();
-    RCLCPP_ERROR(node_->get_logger(),
+    RCLCPP_ERROR(_logger,
       "TF Exception for sensor frame: %s, cloud frame: %s, %s",
       _sensor_frame.c_str(), cloud.header.frame_id.c_str(), ex.what());
     return;
   }
 
-  _last_updated = node_->now();
+  _last_updated = _clock->now();
   RemoveStaleObservations();
 }
 
@@ -205,7 +209,7 @@ void MeasurementBuffer::RemoveStaleObservations(void)
   }
 
   readings_iter it = _observation_list.begin();
-  if (_observation_keep_time == rclcpp::Duration(0.0)) {
+  if (_observation_keep_time == rclcpp::Duration::from_seconds(0.0)) {
     _observation_list.erase(++it, _observation_list.end());
     return;
   }
@@ -238,14 +242,14 @@ bool MeasurementBuffer::ClearAfterReading(void)
 bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
 /*****************************************************************************/
 {
-  if (_expected_update_rate == rclcpp::Duration(0.0)) {
+  if (_expected_update_rate == rclcpp::Duration::from_seconds(0.0)) {
     return true;
   }
 
-  const rclcpp::Duration update_time = node_->now() - _last_updated;
+  const rclcpp::Duration update_time = _clock->now() - _last_updated;
   bool current = update_time.seconds() <= _expected_update_rate.seconds();
   if (!current) {
-    RCLCPP_WARN(node_->get_logger(),
+    RCLCPP_WARN(_logger,
       "%s buffer updated in %.2fs, it should be updated every %.2fs.",
       _topic_name.c_str(), update_time.seconds(),
       _expected_update_rate.seconds());
@@ -271,7 +275,7 @@ void MeasurementBuffer::SetEnabled(const bool & enabled)
 void MeasurementBuffer::ResetLastUpdatedTime(void)
 /*****************************************************************************/
 {
-  _last_updated = node_->now();
+  _last_updated = _clock->now();
 }
 
 /*****************************************************************************/

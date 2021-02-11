@@ -54,7 +54,6 @@
 #include "pcl/filters/passthrough.h"
 // ROS
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_lifecycle/lifecycle_node.hpp"
 // TF
 #include "tf2_ros/buffer.h"
 #include "message_filters/subscriber.h"
@@ -109,7 +108,8 @@ public:
     const bool & enabled,
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
-    std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node);
+    const rclcpp::Clock::SharedPtr & parent_clock,
+    const rclcpp::Logger & parent_logger);
 
   ~MeasurementBuffer(void);
 
@@ -137,6 +137,8 @@ private:
   // Removing old observations from buffer
   void RemoveStaleObservations(void);
 
+  rclcpp::Clock::SharedPtr _clock;
+  rclcpp::Logger _logger;
   tf2_ros::Buffer & _buffer;
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
@@ -151,7 +153,6 @@ private:
   int _voxel_min_points;
   bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
 };
 
 }  // namespace buffer
