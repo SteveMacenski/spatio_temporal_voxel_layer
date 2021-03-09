@@ -190,3 +190,4 @@ To counter this I include a service to save the grid in the .vdb format for late
 
 ![openvdb2](https://user-images.githubusercontent.com/14944147/37010656-8ce4ff4c-20ba-11e8-9c35-1ce3e3039f77.png)
 
+**NOTE:** If used on Ubuntu 20.04 (`Foxy` or `Noetic`), you must set your `LD_PRELOAD` path to include `jemalloc` due to a known compiler flag issue in the 20.04 binaries of OpenVDB (e.x. `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2`). If you see the error: `Could not load library LoadLibrary error: /usr/lib/x86_64-linux-gnu/libjemalloc.so.2: cannot allocate memory in static TLS block`, this is your issue.
