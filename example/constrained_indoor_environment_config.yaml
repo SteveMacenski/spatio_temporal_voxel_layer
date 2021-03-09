@@ -2,6 +2,7 @@ global_costmap:
   global_costmap:
     ros__parameters:
       rgbd_obstacle_layer:
+        plugin: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
         enabled:                  true
         voxel_decay:              15.0  # seconds if linear, e^n if exponential
         decay_model:              0     # 0=linear, 1=exponential, -1=persistent
