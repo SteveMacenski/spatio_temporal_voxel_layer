@@ -109,7 +109,8 @@ public:
     const bool & enabled,
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
-    std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node);
+    rclcpp::Clock::SharedPtr clock,
+    rclcpp::Logger logger);
 
   ~MeasurementBuffer(void);
 
@@ -151,7 +152,8 @@ private:
   int _voxel_min_points;
   bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
 };
 
 }  // namespace buffer

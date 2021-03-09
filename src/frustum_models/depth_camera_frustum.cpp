@@ -139,7 +139,8 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
   _plane_normals.push_back(VectorWithPt3D(T_1[0], T_1[1], T_1[2], pt_[7]));
 
   // near plane
-  _plane_normals.push_back(VectorWithPt3D(
+  _plane_normals.push_back(
+    VectorWithPt3D(
       T_1[0], T_1[1], T_1[2], pt_[2]) * -1);
 
   assert(_plane_normals.size() == 6);

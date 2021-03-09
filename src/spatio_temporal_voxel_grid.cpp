@@ -47,10 +47,10 @@ namespace volume_grid
 
 /*****************************************************************************/
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(
-  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> node,
+  rclcpp::Clock::SharedPtr clock,
   const float & voxel_size, const double & background_value,
   const int & decay_model, const double & voxel_decay, const bool & pub_voxels)
-: _node(node), _decay_model(decay_model), _background_value(background_value),
+: _clock(clock), _decay_model(decay_model), _background_value(background_value),
   _voxel_size(voxel_size), _voxel_decay(voxel_decay), _pub_voxels(pub_voxels),
   _grid_points(std::make_unique<std::vector<geometry_msgs::msg::Point32>>()),
   _cost_map(new std::unordered_map<occupany_cell, uint>)
@@ -121,8 +121,9 @@ void SpatioTemporalVoxelGrid::ClearFrustums(
   for (; it != clearing_readings.end(); ++it) {
     geometry::Frustum * frustum;
     if (it->_model_type == DEPTH_CAMERA) {
-      frustum = new geometry::DepthCameraFrustum(it->_vertical_fov_in_rad,
-          it->_horizontal_fov_in_rad, it->_min_z_in_m, it->_max_z_in_m);
+      frustum = new geometry::DepthCameraFrustum(
+        it->_vertical_fov_in_rad,
+        it->_horizontal_fov_in_rad, it->_min_z_in_m, it->_max_z_in_m);
     } else if (it->_model_type == THREE_DIMENSIONAL_LIDAR) {
       frustum = new geometry::ThreeDimensionalLidarFrustum(
         it->_vertical_fov_in_rad, it->_vertical_fov_padding_in_m,
@@ -147,7 +148,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
 /*****************************************************************************/
 {
   // sample time once for all clearing readings
-  const double cur_time = _node->now().seconds();
+  const double cur_time = _clock->now().seconds();
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
@@ -226,7 +227,8 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(
   if (cell != _cost_map->end()) {
     cell->second += 1;
   } else {
-    _cost_map->insert(std::make_pair(
+    _cost_map->insert(
+      std::make_pair(
         occupany_cell(pose_world[0], pose_world[1]), 1));
   }
 }
@@ -240,7 +242,6 @@ void SpatioTemporalVoxelGrid::Mark(
 
   // mark the grid
   if (marking_readings.size() > 0) {
-    // tbb::parallel_do(marking_readings, *this); /*must do via merged trees*/
     for (uint i = 0; i != marking_readings.size(); i++) {
       (*this)(marking_readings.at(i));
     }
@@ -254,7 +255,7 @@ void SpatioTemporalVoxelGrid::operator()(
 {
   if (obs._marking) {
     float mark_range_2 = obs._obstacle_range_in_m * obs._obstacle_range_in_m;
-    const double cur_time = _node->now().seconds();
+    const double cur_time = _clock->now().seconds();
 
     const sensor_msgs::msg::PointCloud2 & cloud = *(obs._cloud);
     sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud, "x");
@@ -274,8 +275,10 @@ void SpatioTemporalVoxelGrid::operator()(
       openvdb::Vec3d mark_grid(this->WorldToIndex(
           openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
 
-      if (!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1],
-        mark_grid[2]), cur_time))
+      if (!this->MarkGridPoint(
+          openvdb::Coord(
+            mark_grid[0], mark_grid[1],
+            mark_grid[2]), cur_time))
       {
         std::cout << "Failed to mark point." << std::endl;
       }
@@ -327,7 +330,8 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud(
 
   sensor_msgs::PointCloud2Modifier modifier(*pc2);
 
-  modifier.setPointCloud2Fields(3,
+  modifier.setPointCloud2Fields(
+    3,
     "x", 1, sensor_msgs::msg::PointField::FLOAT32,
     "y", 1, sensor_msgs::msg::PointField::FLOAT32,
     "z", 1, sensor_msgs::msg::PointField::FLOAT32);

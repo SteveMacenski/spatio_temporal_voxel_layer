@@ -3,6 +3,7 @@
  * Software License Agreement
  *
  *  Copyright (c) 2018, Simbe Robotics, Inc.
+ *  Copyright (c) 2021, Samsung Research America
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -33,6 +34,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
+ *                         stevenmacenski@gmail.com
  * Purpose: Replace the ROS voxel grid / obstacle layers using VoxelGrid
  *          with OpenVDB's more efficient and capacble voxel library with
  *          ray tracing and knn.
@@ -104,6 +106,7 @@ public:
   virtual void activate(void);
   virtual void deactivate(void);
 
+  virtual bool isClearable() {return true;}
 
   // Functions for sensor feeds
   bool GetMarkingObservations(std::vector<observation::MeasurementReading> & marking_observations)

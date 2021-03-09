@@ -29,7 +29,6 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
 
 find_package(OpenVDB REQUIRED)
-find_package(TBB REQUIRED)
 remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
@@ -85,7 +84,6 @@ include_directories(
     ${PCL_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
     ${OpenVDB_INCLUDE_DIR}
-    ${TBB_INCLUDE_DIRS}
 )
 
 add_library(${library_name} SHARED
@@ -105,7 +103,6 @@ target_link_libraries(${library_name}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
   ${OpenVDB_LIBRARIES}
-  ${TBB_LIBRARIES}
 )
 
 ament_target_dependencies(${library_name} ${dependencies})
