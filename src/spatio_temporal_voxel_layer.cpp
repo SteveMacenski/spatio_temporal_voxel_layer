@@ -151,8 +151,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
     node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
     _voxel_decay, _publish_voxels);
+
   matchSize();
-  current_ = true;
+
   RCLCPP_INFO(logger_, "%s created underlying voxel grid.", getName().c_str());
 
   std::stringstream ss(topics_string);
@@ -341,6 +342,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_notifiers.back()->setTargetFrames(target_frames);
     }
   }
+
+  current_ = true;
+  was_reset_ = false;
 
   RCLCPP_INFO(logger_, "%s initialization complete!", getName().c_str());
 }
@@ -563,7 +567,10 @@ void SpatioTemporalVoxelLayer::reset(void)
   // reset layer
   Costmap2D::resetMaps();
   this->ResetGrid();
-  current_ = true;
+
+  current_ = false;
+  was_reset_ = true;
+
   observation_buffers_iter it = _observation_buffers.begin();
   for (; it != _observation_buffers.end(); ++it) {
     (*it)->ResetLastUpdatedTime();
@@ -637,6 +644,12 @@ void SpatioTemporalVoxelLayer::updateCosts(
   // update costs in master_grid with costmap_
   if (!_enabled) {
     return;
+  }
+
+  // if not current due to reset, set current now after clearing
+  if (!current_ && was_reset_) {
+    was_reset_ = false;
+    current_ = true;
   }
 
   if (_update_footprint_enabled) {
