@@ -117,7 +117,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   node->get_parameter(name_ + ".decay_model", decay_model_int);
   _decay_model = static_cast<volume_grid::GlobalDecayModel>(decay_model_int);
   // decay param
-  declareParameter("voxel_decay", rclcpp::ParameterValue(-1));
+  declareParameter("voxel_decay", rclcpp::ParameterValue(-1.0));
   node->get_parameter(name_ + ".voxel_decay", _voxel_decay);
   // whether to map or navigate
   declareParameter("mapping_mode", rclcpp::ParameterValue(false));
