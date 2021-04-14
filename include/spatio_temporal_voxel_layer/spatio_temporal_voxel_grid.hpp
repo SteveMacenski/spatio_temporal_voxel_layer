@@ -131,7 +131,7 @@ public:
 
   // Core making and clearing functions
   void Mark(const std::vector<observation::MeasurementReading>& marking_observations);
-  void operator()(const observation::MeasurementReading& obs) const;
+  void operator()(const observation::MeasurementReading& obs);
   void ClearFrustums(const std::vector<observation::MeasurementReading>& clearing_observations, \
                      std::unordered_set<occupany_cell>& updated_cells);
 
@@ -165,6 +165,7 @@ protected:
 
   // Populate the costmap ROS api and pointcloud with a marked point
   void PopulateCostmapAndPointcloud(const openvdb::Coord& pt);
+  void PopulateCostmapAndPointcloud(const openvdb::Vec3d& pose_world);
 
   // Utilities for tranformation
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;

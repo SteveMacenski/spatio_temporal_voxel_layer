@@ -665,24 +665,27 @@ void SpatioTemporalVoxelLayer::updateCosts( \
 void SpatioTemporalVoxelLayer::UpdateROSCostmap( \
                         double* min_x, double* min_y, \
                         double* max_x, double* max_y, \
-                        std::unordered_set<volume_grid::occupany_cell>& updated_cells)
+                        std::unordered_set<volume_grid::occupany_cell>& cleared_cells)
 /*****************************************************************************/
 {
   // grabs map of occupied cells from grid and adds to costmap_
   Costmap2D::resetMaps();
 
-  auto cost_map = _voxel_grid->GetFlattenedCostmap();
-
-  for (const auto& cell: updated_cells)
+  std::unordered_map<volume_grid::occupany_cell, uint>::iterator it;
+  for (it = _voxel_grid->GetFlattenedCostmap()->begin();
+       it != _voxel_grid->GetFlattenedCostmap()->end(); ++it)
   {
-    auto it = cost_map->find(cell);
     uint map_x, map_y;
-    if ( it != cost_map->end() && \
-         it->second >= _mark_threshold && \
+    if ( it->second >= _mark_threshold && \
          worldToMap(it->first.x, it->first.y, map_x, map_y))
     {
       costmap_[getIndex(map_x, map_y)] = costmap_2d::LETHAL_OBSTACLE;
+      touch(it->first.x, it->first.y, min_x, min_y, max_x, max_y);
     }
+  }
+
+  for (const auto& cell: cleared_cells)
+  {
     touch(cell.x, cell.y, min_x, min_y, max_x, max_y);
   }
 }
@@ -720,13 +723,12 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   ObservationsResetAfterReading();
   current_ = current;
 
-  // cells that were updated
-  std::unordered_set<volume_grid::occupany_cell> updated_cells;
+  std::unordered_set<volume_grid::occupany_cell> cleared_cells;
 
   // navigation mode: clear observations, mapping mode: save maps and publish
   if (!_mapping_mode)
   {
-    _voxel_grid->ClearFrustums(clearing_observations, updated_cells);
+    _voxel_grid->ClearFrustums(clearing_observations, cleared_cells);
   }
   else if (ros::Time::now() - _last_map_save_time > _map_save_duration)
   {
@@ -747,7 +749,7 @@ void SpatioTemporalVoxelLayer::updateBounds( \
   _voxel_grid->Mark(marking_observations);
 
   // update the ROS Layered Costmap
-  UpdateROSCostmap(min_x, min_y, max_x, max_y, updated_cells);
+  UpdateROSCostmap(min_x, min_y, max_x, max_y, cleared_cells);
 
   // publish point cloud in navigation mode
   if (_publish_voxels && !_mapping_mode)

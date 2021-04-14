@@ -100,7 +100,7 @@ void SpatioTemporalVoxelGrid::InitializeGrid(void)
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::ClearFrustums( \
       const std::vector<observation::MeasurementReading>& clearing_readings, \
-      std::unordered_set<occupany_cell>& updated_cells)
+      std::unordered_set<occupany_cell>& cleared_cells)
 /*****************************************************************************/
 {
   boost::unique_lock<boost::mutex> lock(_grid_lock);
@@ -118,7 +118,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums( \
 
   if(clearing_readings.size() == 0)
   {
-    TemporalClearAndGenerateCostmap(obs_frustums, updated_cells);
+    TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
     return;
   }
 
@@ -157,14 +157,14 @@ void SpatioTemporalVoxelGrid::ClearFrustums( \
     frustum->TransformModel();
     obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
-  TemporalClearAndGenerateCostmap(obs_frustums, updated_cells);
+  TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
   return;
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
                               std::vector<frustum_model>& frustums,           \
-                              std::unordered_set<occupany_cell>& updated_cells)
+                              std::unordered_set<occupany_cell>& cleared_cells)
 /*****************************************************************************/
 {
   // sample time once for all clearing readings
@@ -175,7 +175,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
   for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
-    const openvdb::Vec3d pose_world = _grid->indexToWorld(pt_index);
+    const openvdb::Vec3d pose_world = this->IndexToWorld(pt_index);
 
     std::vector<frustum_model>::iterator frustum_it = frustums.begin();
     bool frustum_cycle = false;
@@ -203,13 +203,10 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         if (time_until_decay < 0.)
         {
           // expired by acceleration
+          cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
           if(!this->ClearGridPoint(pt_index))
           {
             std::cout << "Failed to clear point." << std::endl;
-          }
-          else
-          {
-            updated_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
           }
         }
         else
@@ -231,20 +228,16 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       if (base_duration_to_decay < 0.)
       {
         // expired by temporal clearing
+        cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
-        }
-        else
-        {
-          updated_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
         }
         continue;
       }
     }
     // if here, we can add to costmap and PC2
     PopulateCostmapAndPointcloud(pt_index);
-    updated_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
   }
 }
 
@@ -254,7 +247,7 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
 /*****************************************************************************/
 {
   // add pt to the pointcloud and costmap
-  openvdb::Vec3d pose_world = _grid->indexToWorld(pt);
+  openvdb::Vec3d pose_world = this->IndexToWorld(pt);
 
   if (_pub_voxels)
   {
@@ -279,6 +272,33 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
 }
 
 /*****************************************************************************/
+void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
+                                                    openvdb::Vec3d& pose_world)
+/*****************************************************************************/
+{
+  std::unordered_map<occupany_cell, uint>::iterator cell;
+  cell = _cost_map->find(occupany_cell(pose_world[0], pose_world[1]));
+  if (cell != _cost_map->end())
+  {
+    cell->second += 1;
+  }
+  else
+  {
+    _cost_map->insert(std::make_pair( \
+                              occupany_cell(pose_world[0], pose_world[1]), 1));
+
+    if (_pub_voxels)
+    {
+      geometry_msgs::Point32 point;
+      point.x = pose_world[0];
+      point.y = pose_world[1];
+      point.z = pose_world[2];
+      _grid_points->push_back(point);
+    }
+  }
+}
+
+/*****************************************************************************/
 void SpatioTemporalVoxelGrid::Mark(const \
                 std::vector<observation::MeasurementReading>& marking_readings)
 /*****************************************************************************/
@@ -299,7 +319,7 @@ void SpatioTemporalVoxelGrid::Mark(const \
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::operator()(const \
-                                    observation::MeasurementReading& obs) const
+                                    observation::MeasurementReading& obs)
 /*****************************************************************************/
 {
   if (obs._marking)
@@ -323,8 +343,9 @@ void SpatioTemporalVoxelGrid::operator()(const \
       {
         continue;
       }
-      openvdb::Vec3d mark_grid(this->WorldToIndex( \
-                                 openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
+      openvdb::Vec3d pose_world(*iter_x, *iter_y, *iter_z);      
+      PopulateCostmapAndPointcloud(pose_world);
+      openvdb::Vec3d mark_grid(this->WorldToIndex(pose_world));
 
       if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
                                              mark_grid[2]), cur_time))
