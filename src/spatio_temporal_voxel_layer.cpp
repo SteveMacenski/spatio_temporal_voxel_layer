@@ -684,9 +684,10 @@ void SpatioTemporalVoxelLayer::UpdateROSCostmap( \
     }
   }
 
-  for (const auto& cell: cleared_cells)
+  std::unordered_set<volume_grid::occupany_cell>::iterator cell;
+  for (cell = cleared_cells.begin(); cell != cleared_cells.end(); ++cell)
   {
-    touch(cell.x, cell.y, min_x, min_y, max_x, max_y);
+    touch(cell->x, cell->y, min_x, min_y, max_x, max_y);
   }
 }
 
