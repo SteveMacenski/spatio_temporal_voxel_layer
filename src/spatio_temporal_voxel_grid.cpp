@@ -237,19 +237,20 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       }
     }
     // if here, we can add to costmap and PC2
-    PopulateCostmapAndPointcloud(pt_index);
+    PopulateCostmapAndPointcloud(pt_index, true);
   }
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
-                                                            openvdb::Coord& pt)
+void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(                   \
+                                                   const openvdb::Coord& pt,  \
+                                                   const bool& pub_every_voxel)
 /*****************************************************************************/
 {
   // add pt to the pointcloud and costmap
   openvdb::Vec3d pose_world = this->IndexToWorld(pt);
 
-  if (_pub_voxels)
+  if (_pub_voxels && pub_every_voxel)
   {
     geometry_msgs::Point32 point;
     point.x = pose_world[0];
@@ -268,26 +269,8 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
   {
     _cost_map->insert(std::make_pair( \
                               occupany_cell(pose_world[0], pose_world[1]), 1));
-  }
-}
 
-/*****************************************************************************/
-void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(const \
-                                                    openvdb::Vec3d& pose_world)
-/*****************************************************************************/
-{
-  std::unordered_map<occupany_cell, uint>::iterator cell;
-  cell = _cost_map->find(occupany_cell(pose_world[0], pose_world[1]));
-  if (cell != _cost_map->end())
-  {
-    cell->second += 1;
-  }
-  else
-  {
-    _cost_map->insert(std::make_pair( \
-                              occupany_cell(pose_world[0], pose_world[1]), 1));
-
-    if (_pub_voxels)
+    if (_pub_voxels && !pub_every_voxel)
     {
       geometry_msgs::Point32 point;
       point.x = pose_world[0];
@@ -343,12 +326,13 @@ void SpatioTemporalVoxelGrid::operator()(const \
       {
         continue;
       }
-      openvdb::Vec3d pose_world(*iter_x, *iter_y, *iter_z);      
-      PopulateCostmapAndPointcloud(pose_world);
-      openvdb::Vec3d mark_grid(this->WorldToIndex(pose_world));
+      openvdb::Vec3d mark_grid(this->WorldToIndex( \
+                                 openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
 
-      if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
-                                             mark_grid[2]), cur_time))
+      openvdb::Coord pt_index(mark_grid[0], mark_grid[1], mark_grid[2]);
+      PopulateCostmapAndPointcloud(pt_index, false);
+      
+      if(!this->MarkGridPoint(pt_index, cur_time))
       {
         std::cout << "Failed to mark point." << std::endl;
       }
