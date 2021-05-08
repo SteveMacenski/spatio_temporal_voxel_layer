@@ -179,6 +179,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 
     std::vector<frustum_model>::iterator frustum_it = frustums.begin();
     bool frustum_cycle = false;
+    bool cleared_point = false;
 
     const double time_since_marking = cur_time - cit_grid.getValue();
     const double base_duration_to_decay = GetTemporalClearingDuration( \
@@ -203,6 +204,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         if (time_until_decay < 0.)
         {
           // expired by acceleration
+          cleared_point = true;
           cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
           if(!this->ClearGridPoint(pt_index))
           {
@@ -228,16 +230,19 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       if (base_duration_to_decay < 0.)
       {
         // expired by temporal clearing
+        cleared_point = true;
         cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
-        continue;
       }
     }
     // if here, we can add to costmap and PC2
-    PopulateCostmapAndPointcloud(pt_index, true);
+    if (!cleared_point)
+    {
+      PopulateCostmapAndPointcloud(pt_index, true);
+    }
   }
 }
 
