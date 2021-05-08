@@ -205,7 +205,6 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         {
           // expired by acceleration
           cleared_point = true;
-          cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
           if(!this->ClearGridPoint(pt_index))
           {
             std::cout << "Failed to clear point." << std::endl;
@@ -231,16 +230,20 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       {
         // expired by temporal clearing
         cleared_point = true;
-        cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
       }
     }
-    // if here, we can add to costmap and PC2
-    if (!cleared_point)
+    
+    if (cleared_point)
     {
+      cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
+    }
+    else
+    {
+      // if here, we can add to costmap and PC2
       PopulateCostmapAndPointcloud(pt_index, true);
     }
   }
