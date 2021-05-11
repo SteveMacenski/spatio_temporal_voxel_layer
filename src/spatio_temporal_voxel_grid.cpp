@@ -301,7 +301,7 @@ void SpatioTemporalVoxelGrid::Mark(const \
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::operator()(const \
-                                    observation::MeasurementReading& obs)
+                                    observation::MeasurementReading& obs) const
 /*****************************************************************************/
 {
   if (obs._marking)
@@ -328,10 +328,8 @@ void SpatioTemporalVoxelGrid::operator()(const \
       openvdb::Vec3d mark_grid(this->WorldToIndex( \
                                  openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
 
-      openvdb::Coord pt_index(mark_grid[0], mark_grid[1], mark_grid[2]);
-      PopulateCostmapAndPointcloud(pt_index);
-      
-      if(!this->MarkGridPoint(pt_index, cur_time))
+      if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
+                                             mark_grid[2]), cur_time))
       {
         std::cout << "Failed to mark point." << std::endl;
       }
