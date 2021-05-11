@@ -164,8 +164,7 @@ protected:
                                        std::unordered_set<occupany_cell>& cleared_cells);
 
   // Populate the costmap ROS api and pointcloud with a marked point
-  void PopulateCostmapAndPointcloud(const openvdb::Coord& pt, \
-                                    const bool& pub_every_voxel);
+  void PopulateCostmapAndPointcloud(const openvdb::Coord& pt);
 
   // Utilities for tranformation
   openvdb::Vec3d WorldToIndex(const openvdb::Vec3d& coord) const;
