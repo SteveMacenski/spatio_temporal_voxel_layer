@@ -43,6 +43,7 @@
 // STL
 #include <math.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <ctime>
 #include <iostream>
 #include <utility>
@@ -137,7 +138,9 @@ public:
   // Core making and clearing functions
   void Mark(const std::vector<observation::MeasurementReading> & marking_observations);
   void operator()(const observation::MeasurementReading & obs) const;
-  void ClearFrustums(const std::vector<observation::MeasurementReading> & clearing_observations);
+  void ClearFrustums(
+    const std::vector<observation::MeasurementReading> & clearing_observations,
+    std::unordered_set<occupany_cell> & cleared_cells);
 
   // Get the pointcloud of the underlying occupancy grid
   void GetOccupancyPointCloud(std::unique_ptr<sensor_msgs::msg::PointCloud2> & pc2);
@@ -164,7 +167,9 @@ protected:
   double GetTemporalClearingDuration(const double & time_delta);
   double GetFrustumAcceleration(
     const double & time_delta, const double & acceleration_factor);
-  void TemporalClearAndGenerateCostmap(std::vector<frustum_model> & frustums);
+  void TemporalClearAndGenerateCostmap(
+    std::vector<frustum_model> & frustums,
+    std::unordered_set<occupany_cell> & cleared_cells);
 
   // Populate the costmap ROS api and pointcloud with a marked point
   void PopulateCostmapAndPointcloud(const openvdb::Coord & pt);
