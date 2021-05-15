@@ -98,8 +98,9 @@ void SpatioTemporalVoxelGrid::InitializeGrid(void)
 }
 
 /*****************************************************************************/
-void SpatioTemporalVoxelGrid::ClearFrustums(const \
-               std::vector<observation::MeasurementReading>& clearing_readings)
+void SpatioTemporalVoxelGrid::ClearFrustums( \
+      const std::vector<observation::MeasurementReading>& clearing_readings, \
+      std::unordered_set<occupany_cell>& cleared_cells)
 /*****************************************************************************/
 {
   boost::unique_lock<boost::mutex> lock(_grid_lock);
@@ -117,7 +118,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
 
   if(clearing_readings.size() == 0)
   {
-    TemporalClearAndGenerateCostmap(obs_frustums);
+    TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
     return;
   }
 
@@ -156,13 +157,14 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
     frustum->TransformModel();
     obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
-  TemporalClearAndGenerateCostmap(obs_frustums);
+  TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
   return;
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
-                                          std::vector<frustum_model>& frustums)
+                              std::vector<frustum_model>& frustums,           \
+                              std::unordered_set<occupany_cell>& cleared_cells)
 /*****************************************************************************/
 {
   // sample time once for all clearing readings
@@ -173,9 +175,11 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
   for (cit_grid; cit_grid.test(); ++cit_grid)
   {
     const openvdb::Coord pt_index(cit_grid.getCoord());
+    const openvdb::Vec3d pose_world = this->IndexToWorld(pt_index);
 
     std::vector<frustum_model>::iterator frustum_it = frustums.begin();
     bool frustum_cycle = false;
+    bool cleared_point = false;
 
     const double time_since_marking = cur_time - cit_grid.getValue();
     const double base_duration_to_decay = GetTemporalClearingDuration( \
@@ -188,7 +192,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         continue;
       }
 
-      if ( frustum_it->frustum->IsInside(this->IndexToWorld(pt_index)) )
+      if ( frustum_it->frustum->IsInside(pose_world) )
       {
         frustum_cycle = true;
 
@@ -200,10 +204,12 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         if (time_until_decay < 0.)
         {
           // expired by acceleration
+          cleared_point = true;
           if(!this->ClearGridPoint(pt_index))
           {
             std::cout << "Failed to clear point." << std::endl;
           }
+          break;
         }
         else
         {
@@ -224,15 +230,23 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
       if (base_duration_to_decay < 0.)
       {
         // expired by temporal clearing
+        cleared_point = true;
         if(!this->ClearGridPoint(pt_index))
         {
           std::cout << "Failed to clear point." << std::endl;
         }
-        continue;
       }
     }
-    // if here, we can add to costmap and PC2
-    PopulateCostmapAndPointcloud(pt_index);
+    
+    if (cleared_point)
+    {
+      cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
+    }
+    else
+    {
+      // if here, we can add to costmap and PC2
+      PopulateCostmapAndPointcloud(pt_index);
+    }
   }
 }
 
