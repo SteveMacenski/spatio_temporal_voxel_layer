@@ -42,6 +42,7 @@
 
 // STVL
 #include <spatio_temporal_voxel_layer/frustum_models/frustum.hpp>
+#include <array>
 
 namespace geometry
 {
@@ -55,7 +56,8 @@ class DepthCameraFrustum : public Frustum
 public:
   DepthCameraFrustum(const double& vFOV, const double& hFOV,
           const double& min_dist, const double& max_dist);
-  virtual ~DepthCameraFrustum(void);
+
+  virtual ~DepthCameraFrustum(void) = default;
 
   // transform plane normals by depth camera pose
   virtual void TransformModel(void);
@@ -74,13 +76,13 @@ private:
   double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
   double _vFOV, _hFOV, _min_d, _max_d;
-  std::vector<VectorWithPt3D> _plane_normals;
+  std::array<VectorWithPt3D,6> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
 
   #if VISUALIZE_FRUSTUM
-    std::vector<Eigen::Vector3d> _frustum_pts;
+    std::array<Eigen::Vector3d,8> _frustum_pts;
     ros::Publisher _frustumPub;
   #endif
 };
