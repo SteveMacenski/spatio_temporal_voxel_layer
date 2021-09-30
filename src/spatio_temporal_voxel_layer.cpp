@@ -50,6 +50,7 @@ namespace spatio_temporal_voxel_layer
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
+using rcl_interfaces::msg::ParameterType;
 
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
@@ -80,7 +81,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
-  std::string topics_string;
   int decay_model_int;
   // source names
   auto node = node_.lock();
@@ -206,6 +206,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "data_type", data_type);
     node->get_parameter(name_ + "." + source + "." + "min_obstacle_height", min_obstacle_height);
     node->get_parameter(name_ + "." + source + "." + "max_obstacle_height", max_obstacle_height);
+    _max_obstacle_heights.push_back(std::make_shared<double>(max_obstacle_height));
     node->get_parameter(name_ + "." + source + "." + "inf_is_valid", inf_is_valid);
     node->get_parameter(name_ + "." + source + "." + "marking", marking);
     node->get_parameter(name_ + "." + source + "." + "clearing", clearing);
@@ -258,7 +259,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         new buffer::MeasurementBuffer(
           topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
-          max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
+          _max_obstacle_heights.back(), obstacle_range, *tf_, _global_frame, sensor_frame,
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
@@ -345,6 +346,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   current_ = true;
   was_reset_ = false;
+
+  // Add callback for dynamic parametrs
+  dyn_params_handler = node->add_on_set_parameters_callback(
+    std::bind(&SpatioTemporalVoxelLayer::dynamicParametersCallback, this, _1));
 
   RCLCPP_INFO(logger_, "%s initialization complete!", getName().c_str());
 }
@@ -799,6 +804,32 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
 
   RCLCPP_WARN(logger_, "SpatioTemporalVoxelLayer: Failed to save grid.");
   resp->status = false;
+}
+
+rcl_interfaces::msg::SetParametersResult
+SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
+{
+    auto result = rcl_interfaces::msg::SetParametersResult();
+
+    for (auto parameter : parameters) {
+      const auto & type = parameter.get_type();
+      const auto & name = parameter.get_name();
+
+      std::stringstream ss(topics_string);
+      std::string source;
+      std::size_t i = 0;
+      while (ss >> source) {
+        if (type == ParameterType::PARAMETER_DOUBLE) {
+          if (name == name_ + "." + source + "." + "max_obstacle_height") {
+            _max_obstacle_heights[i] = std::make_shared<double>(parameter.as_double());
+          }
+        }
+        i++;
+      }
+    }
+
+    result.successful = true;
+    return result;
 }
 
 }  // namespace spatio_temporal_voxel_layer

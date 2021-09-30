@@ -50,7 +50,7 @@ using namespace std::chrono_literals;
 MeasurementBuffer::MeasurementBuffer(
   const std::string & topic_name, const double & observation_keep_time,
   const double & expected_update_rate, const double & min_obstacle_height,
-  const double & max_obstacle_height, const double & obstacle_range,
+  std::shared_ptr<double> max_obstacle_height, const double & obstacle_range,
   tf2_ros::Buffer & tf, const std::string & global_frame,
   const std::string & sensor_frame, const double & tf_tolerance,
   const double & min_d, const double & max_d, const double & vFOV,
@@ -153,7 +153,7 @@ void MeasurementBuffer::BufferROSCloud(
       pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
       sor.setInputCloud(cloud_pcl);
       sor.setFilterFieldName("z");
-      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
+      sor.setFilterLimits(_min_obstacle_height, *_max_obstacle_height.get());
       sor.setDownsampleAllData(false);
       float v_s = static_cast<float>(_voxel_size);
       sor.setLeafSize(v_s, v_s, v_s);
@@ -167,7 +167,7 @@ void MeasurementBuffer::BufferROSCloud(
       pass_through_filter.setKeepOrganized(false);
       pass_through_filter.setFilterFieldName("z");
       pass_through_filter.setFilterLimits(
-        _min_obstacle_height, _max_obstacle_height);
+        _min_obstacle_height, *_max_obstacle_height.get());
       pass_through_filter.filter(*cloud_filtered);
       pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }

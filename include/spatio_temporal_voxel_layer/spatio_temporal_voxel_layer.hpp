@@ -53,6 +53,7 @@
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp"
 // ROS
 #include "rclcpp/rclcpp.hpp"
+#include "rcl_interfaces/msg/set_parameters_result.hpp"
 // costmap
 #include "nav2_costmap_2d/layer.hpp"
 #include "nav2_costmap_2d/layered_costmap.hpp"
@@ -154,6 +155,12 @@ private:
     const std::shared_ptr<buffer::MeasurementBuffer> buffer,
     const std::shared_ptr<message_filters::SubscriberBase> & subcriber);
 
+  /**
+   * @brief Callback executed when a paramter change is detected
+   * @param parameters list of changed parameters
+   */
+  rcl_interfaces::msg::SetParametersResult
+    dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
   laser_geometry::LaserProjection _laser_projector;
   std::vector<std::shared_ptr<message_filters::SubscriberBase>> _observation_subscribers;
@@ -162,6 +169,8 @@ private:
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _marking_buffers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _clearing_buffers;
   std::vector<rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr> _buffer_enabler_servers;
+
+  std::vector<std::shared_ptr<double>> _max_obstacle_heights;
 
   bool _publish_voxels, _mapping_mode, was_reset_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
@@ -177,6 +186,11 @@ private:
   std::vector<observation::MeasurementReading> _static_observations;
   std::unique_ptr<volume_grid::SpatioTemporalVoxelGrid> _voxel_grid;
   boost::recursive_mutex _voxel_grid_lock;
+
+  std::string topics_string;
+
+  // Dynamic parameters handler
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr dyn_params_handler;
 };
 
 }  // namespace spatio_temporal_voxel_layer
