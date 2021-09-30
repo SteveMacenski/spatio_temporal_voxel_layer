@@ -809,27 +809,28 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
 rcl_interfaces::msg::SetParametersResult
 SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
-    auto result = rcl_interfaces::msg::SetParametersResult();
+  auto result = rcl_interfaces::msg::SetParametersResult();
+  for (auto parameter : parameters) {
+    const auto & type = parameter.get_type();
+    const auto & name = parameter.get_name();
 
-    for (auto parameter : parameters) {
-      const auto & type = parameter.get_type();
-      const auto & name = parameter.get_name();
-
-      std::stringstream ss(topics_string);
-      std::string source;
-      std::size_t i = 0;
-      while (ss >> source) {
-        if (type == ParameterType::PARAMETER_DOUBLE) {
-          if (name == name_ + "." + source + "." + "max_obstacle_height") {
-            _max_obstacle_heights[i] = std::make_shared<double>(parameter.as_double());
-          }
+    std::stringstream ss(topics_string);
+    std::string source;
+    std::size_t i = 0;
+    while (ss >> source) {
+      if (type == ParameterType::PARAMETER_DOUBLE) {
+        if (name == name_ + "." + source + "." + "max_obstacle_height") {
+          _observation_buffers[i]->Lock();
+          _max_obstacle_heights[i] = std::make_shared<double>(parameter.as_double());
+          _observation_buffers[i]->Unlock();
         }
-        i++;
       }
+      i++;
     }
+  }
 
-    result.successful = true;
-    return result;
+  result.successful = true;
+  return result;
 }
 
 }  // namespace spatio_temporal_voxel_layer
