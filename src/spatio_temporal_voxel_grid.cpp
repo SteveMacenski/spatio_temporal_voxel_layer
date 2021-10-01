@@ -355,7 +355,7 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud(
   sensor_msgs::PointCloud2Iterator<float> iter_y(*pc2, "y");
   sensor_msgs::PointCloud2Iterator<float> iter_z(*pc2, "z");
 
-  double center_offset = _voxel_size/2;
+  const double & center_offset = _voxel_size / 2.0;
   for (std::vector<geometry_msgs::msg::Point32>::iterator it =
     _grid_points->begin();
     it != _grid_points->end(); ++it)
