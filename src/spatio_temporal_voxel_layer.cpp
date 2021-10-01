@@ -821,7 +821,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
       if (type == ParameterType::PARAMETER_DOUBLE) {
         if (name == name_ + "." + source + "." + "max_obstacle_height") {
           _observation_buffers[i]->Lock();
-          _max_obstacle_heights[i] = std::make_shared<double>(parameter.as_double());
+          *_max_obstacle_heights[i].get() = parameter.as_double();
           _observation_buffers[i]->Unlock();
         }
       }
