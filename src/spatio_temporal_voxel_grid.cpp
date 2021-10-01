@@ -360,8 +360,8 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud(
     it != _grid_points->end(); ++it)
   {
     const geometry_msgs::msg::Point32 & pt = *it;
-    *iter_x = pt.x;
-    *iter_y = pt.y;
+    *iter_x = pt.x + 0.025;
+    *iter_y = pt.y + 0.025;
     *iter_z = pt.z;
     ++iter_x; ++iter_y; ++iter_z;
   }
