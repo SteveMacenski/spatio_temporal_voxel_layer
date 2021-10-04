@@ -160,8 +160,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   std::string source;
   while (ss >> source) {
     // get the parameters for the specific topic
-    double observation_keep_time, expected_update_rate, min_obstacle_height;
-    double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
+    double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
+    double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
     std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
@@ -206,7 +206,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "data_type", data_type);
     node->get_parameter(name_ + "." + source + "." + "min_obstacle_height", min_obstacle_height);
     node->get_parameter(name_ + "." + source + "." + "max_obstacle_height", max_obstacle_height);
-    _max_obstacle_heights.push_back(std::make_shared<double>(max_obstacle_height));
     node->get_parameter(name_ + "." + source + "." + "inf_is_valid", inf_is_valid);
     node->get_parameter(name_ + "." + source + "." + "marking", marking);
     node->get_parameter(name_ + "." + source + "." + "clearing", clearing);
@@ -257,9 +256,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     _observation_buffers.push_back(
       std::shared_ptr<buffer::MeasurementBuffer>(
         new buffer::MeasurementBuffer(
-          topic,
+          source, topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
-          _max_obstacle_heights.back(), obstacle_range, *tf_, _global_frame, sensor_frame,
+          max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
@@ -816,16 +815,66 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
 
     std::stringstream ss(topics_string);
     std::string source;
-    std::size_t i = 0;
     while (ss >> source) {
       if (type == ParameterType::PARAMETER_DOUBLE) {
-        if (name == name_ + "." + source + "." + "max_obstacle_height") {
-          _observation_buffers[i]->Lock();
-          *_max_obstacle_heights[i].get() = parameter.as_double();
-          _observation_buffers[i]->Unlock();
+        if (name == name_ + "." + source + "." + "min_obstacle_height") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMinObstacleHeight(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "max_obstacle_height") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMaxObstacleHeight(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "min_z") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMinZ(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "max_z") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMaxZ(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "vertical_fov_angle") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetVerticalFovAngle(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "vertical_fov_padding") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetVerticalFovPadding(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "horizontal_fov_angle") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetHorizontalFovAngle(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
         }
       }
-      i++;
     }
   }
 

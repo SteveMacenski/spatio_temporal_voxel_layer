@@ -170,8 +170,6 @@ private:
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _clearing_buffers;
   std::vector<rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr> _buffer_enabler_servers;
 
-  std::vector<std::shared_ptr<double>> _max_obstacle_heights;
-
   bool _publish_voxels, _mapping_mode, was_reset_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
   rclcpp::Service<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
