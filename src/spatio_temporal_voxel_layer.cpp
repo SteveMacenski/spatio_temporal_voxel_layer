@@ -346,10 +346,6 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   current_ = true;
   was_reset_ = false;
 
-  // Add callback for dynamic parametrs
-  dyn_params_handler = node->add_on_set_parameters_callback(
-    std::bind(&SpatioTemporalVoxelLayer::dynamicParametersCallback, this, _1));
-
   RCLCPP_INFO(logger_, "%s initialization complete!", getName().c_str());
 }
 
@@ -546,6 +542,11 @@ void SpatioTemporalVoxelLayer::activate(void)
   for (; buf_it != _observation_buffers.end(); ++buf_it) {
     (*buf_it)->ResetLastUpdatedTime();
   }
+
+  // Add callback for dynamic parametrs
+  auto node = node_.lock();
+  dyn_params_handler = node->add_on_set_parameters_callback(
+    std::bind(&SpatioTemporalVoxelLayer::dynamicParametersCallback, this, _1));
 }
 
 /*****************************************************************************/
@@ -561,6 +562,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
       (*sub_it)->unsubscribe();
     }
   }
+  dyn_params_handler.reset();
 }
 
 /*****************************************************************************/
