@@ -85,7 +85,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // source names
   auto node = node_.lock();
   declareParameter("observation_sources", rclcpp::ParameterValue(std::string("")));
-  node->get_parameter(name_ + ".observation_sources", topics_string);
+  node->get_parameter(name_ + ".observation_sources", _topics_string);
   // timeout in seconds for transforms
   declareParameter("transform_tolerance", rclcpp::ParameterValue(0.2));
   node->get_parameter(name_ + ".transform_tolerance", transform_tolerance);
@@ -156,7 +156,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   RCLCPP_INFO(logger_, "%s created underlying voxel grid.", getName().c_str());
 
-  std::stringstream ss(topics_string);
+  std::stringstream ss(_topics_string);
   std::string source;
   while (ss >> source) {
     // get the parameters for the specific topic
@@ -815,7 +815,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
     const auto & type = parameter.get_type();
     const auto & name = parameter.get_name();
 
-    std::stringstream ss(topics_string);
+    std::stringstream ss(_topics_string);
     std::string source;
     while (ss >> source) {
       if (type == ParameterType::PARAMETER_DOUBLE) {
