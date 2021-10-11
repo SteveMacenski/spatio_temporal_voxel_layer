@@ -47,11 +47,10 @@ namespace buffer
 using namespace std::chrono_literals;
 
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(
-  const std::string & topic_name, const double & observation_keep_time,
-  const double & expected_update_rate, const double & min_obstacle_height,
-  const double & max_obstacle_height, const double & obstacle_range,
-  tf2_ros::Buffer & tf, const std::string & global_frame,
+MeasurementBuffer::MeasurementBuffer(const std::string & source_name, const std::string & topic_name,
+  const double & observation_keep_time, const double & expected_update_rate,
+  const double & min_obstacle_height, const double & max_obstacle_height,
+  const double & obstacle_range, tf2_ros::Buffer & tf, const std::string & global_frame,
   const std::string & sensor_frame, const double & tf_tolerance,
   const double & min_d, const double & max_d, const double & vFOV,
   const double & vFOVPadding, const double & hFOV,
@@ -64,7 +63,7 @@ MeasurementBuffer::MeasurementBuffer(
   _observation_keep_time(rclcpp::Duration::from_seconds(observation_keep_time)),
   _expected_update_rate(rclcpp::Duration::from_seconds(expected_update_rate)),
   _last_updated(clock->now()),
-  _global_frame(global_frame), _sensor_frame(sensor_frame),
+  _global_frame(global_frame), _sensor_frame(sensor_frame), _source_name(source_name),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
   _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
@@ -271,6 +270,62 @@ void MeasurementBuffer::SetEnabled(const bool & enabled)
 /*****************************************************************************/
 {
   _enabled = enabled;
+}
+
+/*****************************************************************************/
+std::string MeasurementBuffer::GetSourceName(void) const
+/*****************************************************************************/
+{
+  return _source_name;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetMinObstacleHeight(const double & min_obstacle_height)
+/*****************************************************************************/
+{
+  _min_obstacle_height = min_obstacle_height;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetMaxObstacleHeight(const double & max_obstacle_height)
+/*****************************************************************************/
+{
+  _max_obstacle_height = max_obstacle_height;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetMinZ(const double & min_z)
+/*****************************************************************************/
+{
+  _min_z = min_z;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetMaxZ(const double & max_z)
+/*****************************************************************************/
+{
+  _max_z = max_z;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetVerticalFovAngle(const double & vertical_fov_angle)
+/*****************************************************************************/
+{
+  _vertical_fov = vertical_fov_angle;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetVerticalFovPadding(const double & vertical_fov_padding)
+/*****************************************************************************/
+{
+  _vertical_fov_padding = vertical_fov_padding;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetHorizontalFovAngle(const double & horizontal_fov_angle)
+/*****************************************************************************/
+{
+  _horizontal_fov = horizontal_fov_angle;
 }
 
 /*****************************************************************************/

@@ -85,6 +85,7 @@ class MeasurementBuffer
 {
 public:
   MeasurementBuffer(
+    const std::string & source_name,
     const std::string & topic_name,
     const double & observation_keep_time,
     const double & expected_update_rate,
@@ -124,6 +125,18 @@ public:
   bool IsEnabled(void) const;
   void SetEnabled(const bool & enabled);
 
+  // Source name getter
+  std::string GetSourceName(void) const;
+
+  // params setters
+  void SetMinObstacleHeight(const double & min_obstacle_height);
+  void SetMaxObstacleHeight(const double & max_obstacle_height);
+  void SetMinZ(const double & min_z);
+  void SetMaxZ(const double & max_z);
+  void SetVerticalFovPadding(const double & vertical_fov_padding);
+  void SetHorizontalFovAngle(const double & horizontal_fov_angle);
+  void SetVerticalFovAngle(const double & vertical_fov_angle);
+
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
   void ResetLastUpdatedTime(void);
@@ -142,7 +155,7 @@ private:
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
   boost::recursive_mutex _lock;
-  std::string _global_frame, _sensor_frame, _topic_name;
+  std::string _global_frame, _sensor_frame, _source_name, _topic_name;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;

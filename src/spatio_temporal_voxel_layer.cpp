@@ -50,6 +50,7 @@ namespace spatio_temporal_voxel_layer
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
+using rcl_interfaces::msg::ParameterType;
 
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
@@ -80,12 +81,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
-  std::string topics_string;
   int decay_model_int;
   // source names
   auto node = node_.lock();
   declareParameter("observation_sources", rclcpp::ParameterValue(std::string("")));
-  node->get_parameter(name_ + ".observation_sources", topics_string);
+  node->get_parameter(name_ + ".observation_sources", _topics_string);
   // timeout in seconds for transforms
   declareParameter("transform_tolerance", rclcpp::ParameterValue(0.2));
   node->get_parameter(name_ + ".transform_tolerance", transform_tolerance);
@@ -156,12 +156,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   RCLCPP_INFO(logger_, "%s created underlying voxel grid.", getName().c_str());
 
-  std::stringstream ss(topics_string);
+  std::stringstream ss(_topics_string);
   std::string source;
   while (ss >> source) {
     // get the parameters for the specific topic
-    double observation_keep_time, expected_update_rate, min_obstacle_height;
-    double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
+    double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
+    double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
     std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
@@ -256,7 +256,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     _observation_buffers.push_back(
       std::shared_ptr<buffer::MeasurementBuffer>(
         new buffer::MeasurementBuffer(
-          topic,
+          source, topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
           max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
@@ -542,6 +542,11 @@ void SpatioTemporalVoxelLayer::activate(void)
   for (; buf_it != _observation_buffers.end(); ++buf_it) {
     (*buf_it)->ResetLastUpdatedTime();
   }
+
+  // Add callback for dynamic parametrs
+  auto node = node_.lock();
+  dyn_params_handler = node->add_on_set_parameters_callback(
+    std::bind(&SpatioTemporalVoxelLayer::dynamicParametersCallback, this, _1));
 }
 
 /*****************************************************************************/
@@ -557,6 +562,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
       (*sub_it)->unsubscribe();
     }
   }
+  dyn_params_handler.reset();
 }
 
 /*****************************************************************************/
@@ -799,6 +805,83 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
 
   RCLCPP_WARN(logger_, "SpatioTemporalVoxelLayer: Failed to save grid.");
   resp->status = false;
+}
+
+rcl_interfaces::msg::SetParametersResult
+SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
+{
+  auto result = rcl_interfaces::msg::SetParametersResult();
+  for (auto parameter : parameters) {
+    const auto & type = parameter.get_type();
+    const auto & name = parameter.get_name();
+
+    std::stringstream ss(_topics_string);
+    std::string source;
+    while (ss >> source) {
+      if (type == ParameterType::PARAMETER_DOUBLE) {
+        if (name == name_ + "." + source + "." + "min_obstacle_height") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMinObstacleHeight(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "max_obstacle_height") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMaxObstacleHeight(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "min_z") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMinZ(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "max_z") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMaxZ(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "vertical_fov_angle") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetVerticalFovAngle(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "vertical_fov_padding") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetVerticalFovPadding(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "horizontal_fov_angle") {
+          for (auto & buffer:_observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetHorizontalFovAngle(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        }
+      }
+    }
+  }
+
+  result.successful = true;
+  return result;
 }
 
 }  // namespace spatio_temporal_voxel_layer
