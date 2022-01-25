@@ -463,9 +463,6 @@ void SpatioTemporalVoxelGrid::ClearGridExceptRegion(
     return;
   }
 
-  _grid_points->clear();
-  _cost_map->clear();
-
   double start_point_x = robot_x - reset_distance / 2;
   double start_point_y = robot_y - reset_distance / 2;
   double end_point_x = start_point_x + reset_distance;
@@ -490,10 +487,6 @@ void SpatioTemporalVoxelGrid::ClearGridExceptRegion(
       else {
         std::cout << "Failed to clear point." << std::endl;
       }
-    }
-    else {
-      // if here, we can add to costmap and PC2
-      PopulateCostmapAndPointcloud(pt_index);
     }
   }
 }

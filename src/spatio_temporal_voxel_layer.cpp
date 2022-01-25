@@ -708,14 +708,13 @@ void SpatioTemporalVoxelLayer::updateBounds(
 
   std::unordered_set<volume_grid::occupany_cell> cleared_cells;
 
-  ClearGridExceptRegion(robot_x, robot_y, cleared_cells);
-
   // navigation mode: clear observations, mapping mode: save maps and publish
   bool should_save = false;
   if (_map_save_duration) {
     should_save = node_->now() - _last_map_save_time > *_map_save_duration;
   }
   if (!_mapping_mode) {
+    ClearGridExceptRegion(robot_x, robot_y, cleared_cells);
     _voxel_grid->ClearFrustums(clearing_observations, cleared_cells);
   } else if (should_save) {
     _last_map_save_time = node_->now();
@@ -784,6 +783,12 @@ void SpatioTemporalVoxelLayer::ClearGridExceptRegionCallback(
   std::shared_ptr<nav2_msgs::srv::ClearCostmapExceptRegion::Response> response)
 /*****************************************************************************/
 {
+  if (_mapping_mode) {
+    RCLCPP_WARN(node_->get_logger(),
+      "Received request to clear the grid while on mapping mode. Not doing anything.");
+    return;
+  }
+
   RCLCPP_INFO(node_->get_logger(),
     "Received request to clear the grid except a square region of side " + std::to_string(request->reset_distance));
 
