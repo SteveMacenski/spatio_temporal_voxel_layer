@@ -149,6 +149,11 @@ public:
   // Clear the grid
   bool ResetGrid(void);
 
+  // Clear the grid except for a square region of side reset_distance
+  void ClearGridExceptRegion(
+    double robot_x, double robot_y, double reset_distance,
+    std::unordered_set<occupany_cell> & cleared_cells);
+
   // Save the file to file with size information
   bool SaveGrid(const std::string & file_name, double & map_size_bytes);
 
