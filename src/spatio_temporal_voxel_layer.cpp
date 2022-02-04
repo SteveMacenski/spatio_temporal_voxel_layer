@@ -802,8 +802,9 @@ void SpatioTemporalVoxelLayer::ClearGridExceptRegion(
   std::unordered_set<volume_grid::occupany_cell> & cleared_cells)
 /*****************************************************************************/
 {
-  if (!_clear_grid_except_region)
+  if (!_clear_grid_except_region) {
     return;
+  }
 
   _voxel_grid->ClearGridExceptRegion(robot_x, robot_y, _reset_distance,  cleared_cells);
   _clear_grid_except_region = false;
