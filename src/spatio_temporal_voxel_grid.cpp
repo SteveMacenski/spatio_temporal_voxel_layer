@@ -451,4 +451,44 @@ bool SpatioTemporalVoxelGrid::SaveGrid(
   return false;  // best offense is a good defense
 }
 
+/*****************************************************************************/
+void SpatioTemporalVoxelGrid::ClearGridExceptRegion(
+  double robot_x, double robot_y, double reset_distance,
+  std::unordered_set<occupany_cell> & cleared_cells)
+/*****************************************************************************/
+{
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+
+  if (this->IsGridEmpty()) {
+    return;
+  }
+
+  double start_point_x = robot_x - reset_distance / 2;
+  double start_point_y = robot_y - reset_distance / 2;
+  double end_point_x = start_point_x + reset_distance;
+  double end_point_y = start_point_y + reset_distance;
+
+  openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
+  for (; cit_grid.test(); ++cit_grid) {
+
+    const openvdb::Coord pt_index(cit_grid.getCoord());
+    const openvdb::Vec3d pose_world = this->IndexToWorld(pt_index);
+
+    double x = pose_world[0];
+    double y = pose_world[1];
+
+    bool is_outside_xrange = x <= start_point_x || x >= end_point_x;
+    bool is_outside_yrange = y <= start_point_y || y >= end_point_y;
+
+    if (is_outside_xrange || is_outside_yrange){
+      if (this->ClearGridPoint(pt_index)) {
+        cleared_cells.insert(occupany_cell(x, y));
+      }
+      else {
+        std::cout << "Failed to clear point." << std::endl;
+      }
+    }
+  }
+}
+
 }  // namespace volume_grid

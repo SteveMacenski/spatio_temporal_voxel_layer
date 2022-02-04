@@ -56,6 +56,7 @@
 #include "nav2_costmap_2d/layered_costmap.hpp"
 #include "nav2_costmap_2d/costmap_layer.hpp"
 #include "nav2_costmap_2d/footprint.hpp"
+#include "nav2_msgs/srv/clear_costmap_except_region.hpp"
 // openVDB
 #include "openvdb/openvdb.h"
 // msgs
@@ -151,6 +152,17 @@ private:
     const std::shared_ptr<buffer::MeasurementBuffer> buffer,
     const std::shared_ptr<message_filters::SubscriberBase> & subcriber);
 
+  // ClearGridExceptRegion Callback and service
+  void ClearGridExceptRegionCallback(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<nav2_msgs::srv::ClearCostmapExceptRegion::Request> request,
+    std::shared_ptr<nav2_msgs::srv::ClearCostmapExceptRegion::Response> response);
+
+  // Clears the grid outside a user-specified area
+  void ClearGridExceptRegion(
+    double robot_x, double robot_y,
+    std::unordered_set<volume_grid::occupany_cell> & cleared_cells);
+
 
   laser_geometry::LaserProjection _laser_projector;
   std::vector<std::shared_ptr<message_filters::SubscriberBase>> _observation_subscribers;
@@ -174,6 +186,11 @@ private:
   std::vector<observation::MeasurementReading> _static_observations;
   std::unique_ptr<volume_grid::SpatioTemporalVoxelGrid> _voxel_grid;
   boost::recursive_mutex _voxel_grid_lock;
+
+  // For the clear_grid_except_region service
+  rclcpp::Service<nav2_msgs::srv::ClearCostmapExceptRegion>::SharedPtr clear_grid_except_service;
+  bool   _clear_grid_except_region;
+  double _reset_distance;
 };
 
 }  // namespace spatio_temporal_voxel_layer
