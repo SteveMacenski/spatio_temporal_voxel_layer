@@ -8,7 +8,6 @@ global_costmap:
         decay_model:              0     # 0=linear, 1=exponential, -1=persistent
         voxel_size:               0.05  # meters
         track_unknown_space:      true  # default space is known
-        max_obstacle_height:      2.0   # meters
         unknown_threshold:        15    # voxel height
         mark_threshold:           0     # voxel height
         update_footprint_enabled: true
