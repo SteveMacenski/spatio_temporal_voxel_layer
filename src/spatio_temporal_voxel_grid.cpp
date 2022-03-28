@@ -226,7 +226,7 @@ void SpatioTemporalVoxelGrid::PopulateCostmapAndPointcloud(
 /*****************************************************************************/
 {
   // add pt to the pointcloud and costmap
-  openvdb::Vec3d pose_world = _grid->indexToWorld(pt);
+  openvdb::Vec3d pose_world = this->IndexToWorld(pt);
 
   if (_pub_voxels) {
     geometry_msgs::msg::Point32 point;
@@ -286,8 +286,13 @@ void SpatioTemporalVoxelGrid::operator()(
       if (distance_2 > mark_range_2 || distance_2 < 0.0001) {
         continue;
       }
+
+      double x = *iter_x < 0 ? *iter_x - _voxel_size : *iter_x;
+      double y = *iter_y < 0 ? *iter_y - _voxel_size : *iter_y;
+      double z = *iter_y < 0 ? *iter_z - _voxel_size : *iter_z;
+
       openvdb::Vec3d mark_grid(this->WorldToIndex(
-          openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
+          openvdb::Vec3d(x, y, z)));
 
       if (!this->MarkGridPoint(
           openvdb::Coord(
@@ -416,7 +421,15 @@ openvdb::Vec3d SpatioTemporalVoxelGrid::IndexToWorld(
 /*****************************************************************************/
 {
   // Applies tranform stored in getTransform.
-  return _grid->indexToWorld(coord);
+  openvdb::Vec3d pose_world =  _grid->indexToWorld(coord);
+
+  // Using the center for world coordinate
+  const double & center_offset = _voxel_size / 2.0;
+  pose_world[0] += center_offset;
+  pose_world[1] += center_offset;
+  pose_world[2] += center_offset;
+
+  return pose_world;
 }
 
 /*****************************************************************************/
