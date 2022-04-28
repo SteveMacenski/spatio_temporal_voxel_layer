@@ -425,7 +425,7 @@ void SpatioTemporalVoxelLayer::BufferEnablerCallback(
   const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
   std::shared_ptr<std_srvs::srv::SetBool::Response> response,
   const std::shared_ptr<buffer::MeasurementBuffer> buffer,
-  const std::shared_ptr<message_filters::SubscriberBase> & subcriber)
+  const std::shared_ptr<message_filters::SubscriberBase<>> & subcriber)
 /*****************************************************************************/
 {
   buffer->Lock();
