@@ -80,7 +80,7 @@ namespace spatio_temporal_voxel_layer
 {
 
 // conveniences for line lengths
-typedef std::vector<std::shared_ptr<message_filters::SubscriberBase<>>>::iterator
+typedef std::vector<std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>>::iterator
   observation_subscribers_iter;
 typedef std::vector<std::shared_ptr<buffer::MeasurementBuffer>>::iterator observation_buffers_iter;
 
@@ -148,12 +148,13 @@ private:
   bool RemoveStaticObservations(void);
 
   // Enable/Disable callback
-  void BufferEnablerCallback(
-    const std::shared_ptr<rmw_request_id_t> request_header,
+  void BufferEnablerCallback(const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response,
     const std::shared_ptr<buffer::MeasurementBuffer> buffer,
-    const std::shared_ptr<message_filters::SubscriberBase<>> & subcriber);
+    const std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>
+      &subcriber
+    );
 
   /**
    * @brief Callback executed when a paramter change is detected
@@ -163,7 +164,11 @@ private:
     dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
   laser_geometry::LaserProjection _laser_projector;
-  std::vector<std::shared_ptr<message_filters::SubscriberBase<>>> _observation_subscribers;
+
+  //message_filters::Subscriber<sensor_msgs::msg::LaserScan, rclcpp_lifecycle::LifecycleNode>
+
+  std::vector<std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>>
+    _observation_subscribers;
   std::vector<std::shared_ptr<tf2_ros::MessageFilterBase>> _observation_notifiers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _observation_buffers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _marking_buffers;
