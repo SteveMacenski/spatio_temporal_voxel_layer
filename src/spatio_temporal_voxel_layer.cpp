@@ -831,7 +831,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
     while (ss >> source) {
       if (type == ParameterType::PARAMETER_DOUBLE) {
         if (name == name_ + "." + source + "." + "min_obstacle_height") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetMinObstacleHeight(parameter.as_double());
@@ -839,7 +839,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "max_obstacle_height") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetMaxObstacleHeight(parameter.as_double());
@@ -847,7 +847,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "min_z") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetMinZ(parameter.as_double());
@@ -855,7 +855,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "max_z") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetMaxZ(parameter.as_double());
@@ -863,7 +863,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "vertical_fov_angle") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetVerticalFovAngle(parameter.as_double());
@@ -871,7 +871,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "vertical_fov_padding") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetVerticalFovPadding(parameter.as_double());
@@ -879,7 +879,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         } else if (name == name_ + "." + source + "." + "horizontal_fov_angle") {
-          for (auto & buffer:_observation_buffers) {
+          for (auto & buffer : _observation_buffers) {
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetHorizontalFovAngle(parameter.as_double());

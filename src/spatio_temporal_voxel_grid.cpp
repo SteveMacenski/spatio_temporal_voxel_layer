@@ -207,13 +207,11 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
         }
       }
     }
-    
+
     if (cleared_point)
     {
       cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
-    }
-    else
-    {
+    } else {
       // if here, we can add to costmap and PC2
       PopulateCostmapAndPointcloud(pt_index);
     }

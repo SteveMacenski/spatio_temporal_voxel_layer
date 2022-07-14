@@ -49,6 +49,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <unordered_set>
 // voxel grid
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp"
 // ROS
@@ -80,8 +81,9 @@ namespace spatio_temporal_voxel_layer
 {
 
 // conveniences for line lengths
-typedef std::vector<std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>>::iterator
-  observation_subscribers_iter;
+typedef std::vector<
+  std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>
+  >::iterator observation_subscribers_iter;
 typedef std::vector<std::shared_ptr<buffer::MeasurementBuffer>>::iterator observation_buffers_iter;
 
 // Core ROS voxel layer class
@@ -153,7 +155,7 @@ private:
     std::shared_ptr<std_srvs::srv::SetBool::Response> response,
     const std::shared_ptr<buffer::MeasurementBuffer> buffer,
     const std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>
-      &subcriber
+      & subcriber
     );
 
   /**
@@ -164,9 +166,6 @@ private:
     dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
   laser_geometry::LaserProjection _laser_projector;
-
-  //message_filters::Subscriber<sensor_msgs::msg::LaserScan, rclcpp_lifecycle::LifecycleNode>
-
   std::vector<std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>>
     _observation_subscribers;
   std::vector<std::shared_ptr<tf2_ros::MessageFilterBase>> _observation_notifiers;

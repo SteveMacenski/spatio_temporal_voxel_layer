@@ -47,7 +47,9 @@ namespace buffer
 using namespace std::chrono_literals;
 
 /*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string & source_name, const std::string & topic_name,
+MeasurementBuffer::MeasurementBuffer(
+  const std::string & source_name,
+  const std::string & topic_name,
   const double & observation_keep_time, const double & expected_update_rate,
   const double & min_obstacle_height, const double & max_obstacle_height,
   const double & obstacle_range, tf2_ros::Buffer & tf, const std::string & global_frame,
