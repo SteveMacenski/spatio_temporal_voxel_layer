@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(spatio_temporal_voxel_layer)
 
 if(NOT WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -76,6 +76,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   ${srv_files}
   DEPENDENCIES builtin_interfaces std_msgs
 )
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
 include_directories(
     include
@@ -95,7 +96,7 @@ add_library(${library_name} SHARED
             src/vdb2pc.cpp
 )
 
-rosidl_target_interfaces(${library_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_link_libraries(${library_name} "${cpp_typesupport_target}")
 target_compile_definitions(${library_name} PUBLIC "PLUGINLIB__DISABLE_BOOST_FUNCTIONS")
 
 target_link_libraries(${library_name}
