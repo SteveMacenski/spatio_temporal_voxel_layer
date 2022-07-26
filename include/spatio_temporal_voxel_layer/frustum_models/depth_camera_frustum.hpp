@@ -40,6 +40,8 @@
 #ifndef SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__DEPTH_CAMERA_FRUSTUM_HPP_
 #define SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__DEPTH_CAMERA_FRUSTUM_HPP_
 
+#define VISUALIZE_FRUSTUM 0
+
 // STL
 #include <vector>
 // STVL
@@ -78,6 +80,12 @@ private:
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   bool _valid_frustum;
+
+  #if VISUALIZE_FRUSTUM
+    std::vector<Eigen::Vector3d> _frustum_pts;
+    rclcpp::Node::SharedPtr node_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _frustumPub;
+  #endif
 };
 
 }  // namespace geometry
