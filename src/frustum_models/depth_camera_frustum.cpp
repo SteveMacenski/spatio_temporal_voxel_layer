@@ -51,8 +51,8 @@ DepthCameraFrustum::DepthCameraFrustum(
   _valid_frustum = false;
   #if VISUALIZE_FRUSTUM
     node_ = std::make_shared<rclcpp::Node>("frustum_publisher");
-    _frustumPub = node_->create_publisher<visualization_msgs::msg::MarkerArray>("/frustum", 10);
-    rclcpp::sleep_for(std::chrono::milliseconds(1000));
+    _frustumPub = node_->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", 10);
+    rclcpp::sleep_for(std::chrono::milliseconds(500));
   #endif
   this->ComputePlaneNormals();
 }
