@@ -210,9 +210,9 @@ void DepthCameraFrustum::TransformModel(void)
     // frustum lines
     msg.header.frame_id = std::string("map"); // Use global_frame of costmap
     msg.type = visualization_msgs::msg::Marker::LINE_STRIP;
-    msg.scale.x = 0.15; /// ?
-    msg.scale.y = 0.15; /// ?
-    msg.scale.z = 0.15; /// ?
+    msg.scale.x = 0.03; /// ?
+    msg.scale.y = 0.03; /// ?
+    msg.scale.z = 0.03; /// ?
     msg.pose.orientation.w = 1.0;
     msg.pose.position.x = 0;
     msg.pose.position.y = 0;
