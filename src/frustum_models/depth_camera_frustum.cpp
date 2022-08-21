@@ -50,9 +50,9 @@ DepthCameraFrustum::DepthCameraFrustum(
 {
   _valid_frustum = false;
   #if VISUALIZE_FRUSTUM
-    _node = std::make_shared<rclcpp::Node>("frustum_publisher");
-    _frustum_pub = _node->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", 10);
-    rclcpp::sleep_for(std::chrono::milliseconds(500));
+  _node = std::make_shared<rclcpp::Node>("frustum_publisher");
+  _frustum_pub = _node->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", 10);
+  rclcpp::sleep_for(std::chrono::milliseconds(500));
   #endif
   this->ComputePlaneNormals();
 }
@@ -149,7 +149,7 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
       T_1[0], T_1[1], T_1[2], pt_[2]) * -1);
 
   #if VISUALIZE_FRUSTUM
-    _frustum_pts = pt_;
+  _frustum_pts = pt_;
   #endif
 
   assert(_plane_normals.size() == 6);
@@ -174,114 +174,111 @@ void DepthCameraFrustum::TransformModel(void)
   }
 
   #if VISUALIZE_FRUSTUM
-    visualization_msgs::msg::MarkerArray msg_list;
-    visualization_msgs::msg::Marker msg;
-    for (uint i = 0; i !=  _frustum_pts.size(); i++)
-    {
-      // frustum pts
-      msg.header.frame_id = std::string("map"); // Use global_frame of costmap
-      msg.type = visualization_msgs::msg::Marker::SPHERE;
-      msg.action = visualization_msgs::msg::Marker::ADD;
-      msg.scale.x = 0.15;
-      msg.scale.y = 0.15;
-      msg.scale.z = 0.15;
-      msg.pose.orientation.w = 1.0;
-      msg.header.stamp = _node->now();
-      msg.ns = "pt_"  + std::to_string(i);
-      msg.color.g = 1.0f;
-      msg.color.a = 1.0;
-      Eigen::Vector3d T_pt = T*_frustum_pts.at(i);
-      geometry_msgs::msg::Pose pnt;
-      pnt.position.x = T_pt[0];
-      pnt.position.y = T_pt[1];
-      pnt.position.z = T_pt[2];
-      pnt.orientation.w = 1;
-      msg.pose = pnt;
-      msg_list.markers.push_back(msg);
-
-      // point numbers
-      msg.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-      msg.ns = std::to_string(i);
-      msg.pose.position.z+=0.15;
-      msg.text = std::to_string(i);
-      msg_list.markers.push_back(msg);
-    }
-
-    // frustum lines
-    msg.header.frame_id = std::string("map"); // Use global_frame of costmap
-    msg.type = visualization_msgs::msg::Marker::LINE_STRIP;
-    msg.scale.x = 0.03; /// ?
-    msg.scale.y = 0.03; /// ?
-    msg.scale.z = 0.03; /// ?
+  visualization_msgs::msg::MarkerArray msg_list;
+  visualization_msgs::msg::Marker msg;
+  for (uint i = 0; i != _frustum_pts.size(); i++) {
+    // frustum pts
+    msg.header.frame_id = std::string("map");   // Use global_frame of costmap
+    msg.type = visualization_msgs::msg::Marker::SPHERE;
+    msg.action = visualization_msgs::msg::Marker::ADD;
+    msg.scale.x = 0.15;
+    msg.scale.y = 0.15;
+    msg.scale.z = 0.15;
     msg.pose.orientation.w = 1.0;
-    msg.pose.position.x = 0;
-    msg.pose.position.y = 0;
-    msg.pose.position.z = 0;
     msg.header.stamp = _node->now();
+    msg.ns = "pt_" + std::to_string(i);
     msg.color.g = 1.0f;
     msg.color.a = 1.0;
+    Eigen::Vector3d T_pt = T * _frustum_pts.at(i);
+    geometry_msgs::msg::Pose pnt;
+    pnt.position.x = T_pt[0];
+    pnt.position.y = T_pt[1];
+    pnt.position.z = T_pt[2];
+    pnt.orientation.w = 1;
+    msg.pose = pnt;
+    msg_list.markers.push_back(msg);
 
-    // annoying but only evaluates once
-    const static std::vector<int> v1 =  {0, 2}; 
-    const static std::vector<int> v2 =  {2, 4};
-    const static std::vector<int> v3 =  {4, 6};
-    const static std::vector<int> v4 =  {6, 0};
-    const static std::vector<int> v5 =  {1, 3};
-    const static std::vector<int> v6 =  {3, 5};
-    const static std::vector<int> v7 =  {5, 7};
-    const static std::vector<int> v8 =  {7, 1};
-    const static std::vector<int> v9 =  {0, 1};
-    const static std::vector<int> v10 = {2, 3};
-    const static std::vector<int> v11 = {4, 5};
-    const static std::vector<int> v12 = {6, 7};
-    const static std::vector<std::vector<int> > v_t = \
-                           {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12};
+    // point numbers
+    msg.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    msg.ns = std::to_string(i);
+    msg.pose.position.z += 0.15;
+    msg.text = std::to_string(i);
+    msg_list.markers.push_back(msg);
+  }
 
-    for (uint i=0; i != v_t.size(); i++)
-    {
-      // frustum lines
-      msg.ns = "line_"  + std::to_string(i);
-      msg.points.clear();
+  // frustum lines
+  msg.header.frame_id = std::string("map");   // Use global_frame of costmap
+  msg.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  msg.scale.x = 0.03;   /// ?
+  msg.scale.y = 0.03;   /// ?
+  msg.scale.z = 0.03;   /// ?
+  msg.pose.orientation.w = 1.0;
+  msg.pose.position.x = 0;
+  msg.pose.position.y = 0;
+  msg.pose.position.z = 0;
+  msg.header.stamp = _node->now();
+  msg.color.g = 1.0f;
+  msg.color.a = 1.0;
 
-      for (uint j=0; j!= v_t[i].size(); j++)
-      {
-        Eigen::Vector3d T_pt = T*_frustum_pts.at(v_t[i][j]);
-        geometry_msgs::msg::Point point;
-        point.x = T_pt[0];
-        point.y = T_pt[1];
-        point.z = T_pt[2];
-        msg.points.push_back(point);
-      }
-      msg_list.markers.push_back(msg);
+  // annoying but only evaluates once
+  const static std::vector<int> v1 = {0, 2};
+  const static std::vector<int> v2 = {2, 4};
+  const static std::vector<int> v3 = {4, 6};
+  const static std::vector<int> v4 = {6, 0};
+  const static std::vector<int> v5 = {1, 3};
+  const static std::vector<int> v6 = {3, 5};
+  const static std::vector<int> v7 = {5, 7};
+  const static std::vector<int> v8 = {7, 1};
+  const static std::vector<int> v9 = {0, 1};
+  const static std::vector<int> v10 = {2, 3};
+  const static std::vector<int> v11 = {4, 5};
+  const static std::vector<int> v12 = {6, 7};
+  const static std::vector<std::vector<int>> v_t = \
+  {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12};
+
+  for (uint i = 0; i != v_t.size(); i++) {
+    // frustum lines
+    msg.ns = "line_" + std::to_string(i);
+    msg.points.clear();
+
+    for (uint j = 0; j != v_t[i].size(); j++) {
+      Eigen::Vector3d T_pt = T * _frustum_pts.at(v_t[i][j]);
+      geometry_msgs::msg::Point point;
+      point.x = T_pt[0];
+      point.y = T_pt[1];
+      point.z = T_pt[2];
+      msg.points.push_back(point);
     }
+    msg_list.markers.push_back(msg);
+  }
 
-    for (uint i = 0; i != _plane_normals.size(); i++)
-    {
-      // normal vectors
-      msg.pose.position.z -= 0.15;
-      msg.type = visualization_msgs::msg::Marker::ARROW;
-      msg.ns = "normal_"  + std::to_string(i);
-      msg.scale.y = 0.07;
-      msg.scale.z = 0.07;
-      msg.scale.x = 1;
-      msg.color.g = 1.0f;
-      const VectorWithPt3D nml = _plane_normals.at(i);
-      msg.pose.position.x = nml.initial_point[0];
-      msg.pose.position.y = nml.initial_point[1];
-      msg.pose.position.z = nml.initial_point[2];
+  for (uint i = 0; i != _plane_normals.size(); i++) {
+    // normal vectors
+    msg.pose.position.z -= 0.15;
+    msg.type = visualization_msgs::msg::Marker::ARROW;
+    msg.ns = "normal_" + std::to_string(i);
+    msg.scale.y = 0.07;
+    msg.scale.z = 0.07;
+    msg.scale.x = 1;
+    msg.color.g = 1.0f;
+    const VectorWithPt3D nml = _plane_normals.at(i);
+    msg.pose.position.x = nml.initial_point[0];
+    msg.pose.position.y = nml.initial_point[1];
+    msg.pose.position.z = nml.initial_point[2];
 
-      // turn unit vector into a quaternion
-      const Eigen::Quaterniond quat = 
-              Eigen::Quaterniond::FromTwoVectors( Eigen::Vector3d::UnitX(), \
-              Eigen::Vector3d(nml.x, nml.y, nml.z) );
-      msg.pose.orientation.x = quat.x();
-      msg.pose.orientation.y = quat.y();
-      msg.pose.orientation.z = quat.z();
-      msg.pose.orientation.w = quat.w();
+    // turn unit vector into a quaternion
+    const Eigen::Quaterniond quat =
+      Eigen::Quaterniond::FromTwoVectors(
+      Eigen::Vector3d::UnitX(), \
+      Eigen::Vector3d(nml.x, nml.y, nml.z) );
+    msg.pose.orientation.x = quat.x();
+    msg.pose.orientation.y = quat.y();
+    msg.pose.orientation.z = quat.z();
+    msg.pose.orientation.w = quat.w();
 
-      msg_list.markers.push_back(msg); 
-    }
-    _frustum_pub->publish(msg_list);
+    msg_list.markers.push_back(msg);
+  }
+  _frustum_pub->publish(msg_list);
   #endif
 
 
