@@ -50,8 +50,8 @@ DepthCameraFrustum::DepthCameraFrustum(
 {
   _valid_frustum = false;
   #if VISUALIZE_FRUSTUM
-    node_ = std::make_shared<rclcpp::Node>("frustum_publisher");
-    _frustumPub = node_->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", 10);
+    _node = std::make_shared<rclcpp::Node>("frustum_publisher");
+    _frustum_pub = _node->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", 10);
     rclcpp::sleep_for(std::chrono::milliseconds(500));
   #endif
   this->ComputePlaneNormals();
@@ -186,7 +186,7 @@ void DepthCameraFrustum::TransformModel(void)
       msg.scale.y = 0.15;
       msg.scale.z = 0.15;
       msg.pose.orientation.w = 1.0;
-      msg.header.stamp = node_->now();
+      msg.header.stamp = _node->now();
       msg.ns = "pt_"  + std::to_string(i);
       msg.color.g = 1.0f;
       msg.color.a = 1.0;
@@ -217,7 +217,7 @@ void DepthCameraFrustum::TransformModel(void)
     msg.pose.position.x = 0;
     msg.pose.position.y = 0;
     msg.pose.position.z = 0;
-    msg.header.stamp = node_->now();
+    msg.header.stamp = _node->now();
     msg.color.g = 1.0f;
     msg.color.a = 1.0;
 
@@ -281,7 +281,7 @@ void DepthCameraFrustum::TransformModel(void)
 
       msg_list.markers.push_back(msg); 
     }
-    _frustumPub->publish(msg_list);
+    _frustum_pub->publish(msg_list);
   #endif
 
 

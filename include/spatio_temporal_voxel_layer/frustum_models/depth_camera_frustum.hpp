@@ -83,8 +83,8 @@ private:
 
   #if VISUALIZE_FRUSTUM
     std::vector<Eigen::Vector3d> _frustum_pts;
-    rclcpp::Node::SharedPtr node_;
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _frustumPub;
+    rclcpp::Node::SharedPtr _node;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _frustum_pub;
   #endif
 };
 
