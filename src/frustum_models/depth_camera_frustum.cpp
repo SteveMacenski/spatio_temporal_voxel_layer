@@ -221,19 +221,19 @@ void DepthCameraFrustum::TransformModel(void)
   msg.color.a = 1.0;
 
   // annoying but only evaluates once
-  const static std::vector<int> v1 = {0, 2};
-  const static std::vector<int> v2 = {2, 4};
-  const static std::vector<int> v3 = {4, 6};
-  const static std::vector<int> v4 = {6, 0};
-  const static std::vector<int> v5 = {1, 3};
-  const static std::vector<int> v6 = {3, 5};
-  const static std::vector<int> v7 = {5, 7};
-  const static std::vector<int> v8 = {7, 1};
-  const static std::vector<int> v9 = {0, 1};
-  const static std::vector<int> v10 = {2, 3};
-  const static std::vector<int> v11 = {4, 5};
-  const static std::vector<int> v12 = {6, 7};
-  const static std::vector<std::vector<int>> v_t = \
+  static const std::vector<int> v1 = {0, 2};
+  static const std::vector<int> v2 = {2, 4};
+  static const std::vector<int> v3 = {4, 6};
+  static const std::vector<int> v4 = {6, 0};
+  static const std::vector<int> v5 = {1, 3};
+  static const std::vector<int> v6 = {3, 5};
+  static const std::vector<int> v7 = {5, 7};
+  static const std::vector<int> v8 = {7, 1};
+  static const std::vector<int> v9 = {0, 1};
+  static const std::vector<int> v10 = {2, 3};
+  static const std::vector<int> v11 = {4, 5};
+  static const std::vector<int> v12 = {6, 7};
+  static const std::vector<std::vector<int>> v_t = \
   {v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12};
 
   for (uint i = 0; i != v_t.size(); i++) {
@@ -280,8 +280,6 @@ void DepthCameraFrustum::TransformModel(void)
   }
   _frustum_pub->publish(msg_list);
   #endif
-
-
 }
 
 /*****************************************************************************/
