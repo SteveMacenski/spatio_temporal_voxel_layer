@@ -820,6 +820,7 @@ void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, in
 
   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   _voxel_grid->ResetGridArea(start_world, end_world, invert_area);
+  CostmapLayer::clearArea(start_x, start_y, end_x, end_y, invert_area);
 }
 
 }; // end namespace
