@@ -895,9 +895,9 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
   return result;
 }
 
-/*****************************************************************************/
+/********************************************************************************************************/
 void SpatioTemporalVoxelLayer::clearArea(int start_x, int start_y, int end_x, int end_y, bool invert_area)
-/*****************************************************************************/
+/********************************************************************************************************/
 {
   // convert map coords to world coords
   volume_grid::occupany_cell start_world(0, 0);
