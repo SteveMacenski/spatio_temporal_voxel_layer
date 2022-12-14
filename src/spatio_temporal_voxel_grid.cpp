@@ -63,7 +63,7 @@ SpatioTemporalVoxelGrid::~SpatioTemporalVoxelGrid(void)
   // pcl pointclouds free themselves
   if (_cost_map)
   {
-    delete _cost_map;    
+    delete _cost_map;
   }
 
   if (_grid_points)
@@ -237,7 +237,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
         }
       }
     }
-    
+
     if (cleared_point)
     {
       cleared_cells.insert(occupany_cell(pose_world[0], pose_world[1]));
@@ -428,6 +428,29 @@ bool SpatioTemporalVoxelGrid::ResetGrid(void)
     std::cout << "Failed to reset costmap, please try again." << std::endl;
   }
   return false;
+}
+
+/*****************************************************************************************************************/
+void SpatioTemporalVoxelGrid::ResetGridArea(const occupany_cell& start, const occupany_cell& end, bool invert_area)
+/*****************************************************************************************************************/
+{
+  boost::unique_lock<boost::mutex> lock(_grid_lock);
+
+  openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
+  for (cit_grid; cit_grid.test(); ++cit_grid)
+  {
+    const openvdb::Coord pt_index(cit_grid.getCoord());
+    const openvdb::Vec3d pose_world = this->IndexToWorld(pt_index);
+
+    const bool in_x_range = pose_world.x() > start.x && pose_world.x() < end.x;
+    const bool in_y_range = pose_world.y() > start.y && pose_world.y() < end.y;
+    const bool in_range = in_x_range && in_y_range;
+
+    if(in_range == invert_area)
+    {
+      ClearGridPoint(pt_index);
+    }
+  }
 }
 
 /*****************************************************************************/

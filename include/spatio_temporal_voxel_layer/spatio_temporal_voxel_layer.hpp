@@ -106,6 +106,7 @@ public:
   virtual void reset(void);
   virtual void activate(void);
   virtual void deactivate(void);
+  virtual void clearArea(int start_x, int start_y, int end_x, int end_y, bool invert_area=false) override;
 
 
   // Functions for sensor feeds
