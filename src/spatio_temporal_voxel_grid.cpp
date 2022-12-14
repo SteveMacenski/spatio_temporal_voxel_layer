@@ -388,9 +388,10 @@ bool SpatioTemporalVoxelGrid::ResetGrid(void)
   return false;
 }
 
-/*****************************************************************************************************************/
-void SpatioTemporalVoxelGrid::ResetGridArea(const occupany_cell& start, const occupany_cell& end, bool invert_area)
-/*****************************************************************************************************************/
+/*****************************************************************************/
+void SpatioTemporalVoxelGrid::ResetGridArea(
+  const occupany_cell & start, const occupany_cell & end, bool invert_area)
+/*****************************************************************************/
 {
   boost::unique_lock<boost::mutex> lock(_grid_lock);
 
