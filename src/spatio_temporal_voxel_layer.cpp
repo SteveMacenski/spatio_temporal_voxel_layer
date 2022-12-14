@@ -895,6 +895,22 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
   return result;
 }
 
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::clearArea(
+  int start_x, int start_y, int end_x, int end_y, bool invert_area)
+/*****************************************************************************/
+{
+  // convert map coords to world coords
+  volume_grid::occupany_cell start_world(0, 0);
+  volume_grid::occupany_cell end_world(0, 0);
+  mapToWorld(start_x, start_y, start_world.x, start_world.y);
+  mapToWorld(end_x, end_y, end_world.x, end_world.y);
+
+  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  _voxel_grid->ResetGridArea(start_world, end_world, invert_area);
+  CostmapLayer::clearArea(start_x, start_y, end_x, end_y, invert_area);
+}
+
 }  // namespace spatio_temporal_voxel_layer
 
 #include "pluginlib/class_list_macros.hpp"
