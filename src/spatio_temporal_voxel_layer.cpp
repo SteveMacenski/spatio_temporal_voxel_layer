@@ -720,6 +720,10 @@ void SpatioTemporalVoxelLayer::updateBounds( \
     return;
   }
 
+  // Required because UpdateROSCostmap will also lock if AFTER we lock here voxel_grid_lock,
+  // and if clearArea is called in between, we will have a deadlock
+  boost::unique_lock<mutex_t> cm_lock(*getMutex());
+
   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
 
   // Steve's Note June 22, 2018
