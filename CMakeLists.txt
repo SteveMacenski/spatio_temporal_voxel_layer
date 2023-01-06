@@ -23,6 +23,7 @@ find_package(pcl_conversions REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -63,6 +64,7 @@ set(dependencies
   rclcpp
   tf2_ros
   tf2_geometry_msgs
+  tf2_sensor_msgs
   visualization_msgs
   builtin_interfaces
 )
