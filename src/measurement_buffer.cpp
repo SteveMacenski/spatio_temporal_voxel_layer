@@ -40,6 +40,7 @@
 #include <vector>
 #include "spatio_temporal_voxel_layer/measurement_buffer.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_sensor_msgs/tf2_sensor_msgs.hpp"
 
 namespace buffer
 {
