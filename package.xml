@@ -21,6 +21,7 @@
   <build_depend>message_filters</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>libopenvdb-dev</build_depend>
@@ -40,6 +41,7 @@
   <run_depend>roscpp</run_depend>
   <run_depend>tf2_ros</run_depend>
   <run_depend>tf2_geometry_msgs</run_depend>
+  <run_depend>tf2_sensor_msgs</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>libopenvdb-dev</run_depend>
   <run_depend>libopenvdb</run_depend>
