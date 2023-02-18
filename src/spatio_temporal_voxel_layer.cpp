@@ -552,6 +552,7 @@ void SpatioTemporalVoxelLayer::activate(void)
     }
     (*buf_it)->ResetLastUpdatedTime();
   }
+
   // Add callback for dynamic parametrs
   auto node = node_.lock();
   dyn_params_handler = node->add_on_set_parameters_callback(
