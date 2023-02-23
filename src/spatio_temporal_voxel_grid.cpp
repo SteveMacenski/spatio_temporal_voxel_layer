@@ -85,7 +85,7 @@ void SpatioTemporalVoxelGrid::InitializeGrid(void)
   // setup scale and tranform
   openvdb::Mat4d m = openvdb::Mat4d::identity();
   m.preScale(openvdb::Vec3d(_voxel_size, _voxel_size, _voxel_size));
-  m.preTranslate(openvdb::Vec3d(0, 0, 0));
+  m.preTranslate(openvdb::Vec3d(0.5, 0.5, 0.5)); //Translating for half a voxel size (since it is scaled) to align costmap with voxels
   m.preRotate(openvdb::math::Z_AXIS, 0);
 
   // setup transform and other metadata
@@ -328,8 +328,8 @@ void SpatioTemporalVoxelGrid::operator()(const \
       openvdb::Vec3d mark_grid(this->WorldToIndex( \
                                  openvdb::Vec3d(*iter_x, *iter_y, *iter_z)));
 
-      if(!this->MarkGridPoint(openvdb::Coord(mark_grid[0], mark_grid[1], \
-                                             mark_grid[2]), cur_time))
+      if(!this->MarkGridPoint(openvdb::Coord(std::round(mark_grid[0]), std::round(mark_grid[1]), \
+                                             std::round(mark_grid[2])), cur_time))
       {
         std::cout << "Failed to mark point." << std::endl;
       }
