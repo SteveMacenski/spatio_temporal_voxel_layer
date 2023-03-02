@@ -112,7 +112,6 @@ rgbd_obstacle_layer:
   track_unknown_space:   true   #default space is unknown
   observation_persistence: 0.0  #seconds
   max_obstacle_height:   2.0    #meters
-  unknown_threshold:     15     #voxel height
   mark_threshold:        0      #voxel height
   update_footprint_enabled: true
   combination_method:    1      #1=max, 0=override
