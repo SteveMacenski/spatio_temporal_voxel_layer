@@ -365,6 +365,9 @@ void SpatioTemporalVoxelLayer::LaserScanCallback(
   const std::shared_ptr<buffer::MeasurementBuffer> & buffer)
 /*****************************************************************************/
 {
+  if (!buffer->IsEnabled()) {
+    return;
+  }
   // laser scan where infinity is invalid callback function
   sensor_msgs::msg::PointCloud2 cloud;
   cloud.header = message->header;
@@ -390,6 +393,9 @@ void SpatioTemporalVoxelLayer::LaserScanValidInfCallback(
   const std::shared_ptr<buffer::MeasurementBuffer> & buffer)
 /*****************************************************************************/
 {
+  if (!buffer->IsEnabled()) {
+    return;
+  }
   // Filter infinity to max_range
   float epsilon = 0.0001;
   sensor_msgs::msg::LaserScan message = *raw_message;
@@ -423,6 +429,9 @@ void SpatioTemporalVoxelLayer::PointCloud2Callback(
   const std::shared_ptr<buffer::MeasurementBuffer> & buffer)
 /*****************************************************************************/
 {
+  if (!buffer->IsEnabled()) {
+    return;
+  }
   // buffer the point cloud
   buffer->Lock();
   buffer->BufferROSCloud(*message);
