@@ -545,13 +545,15 @@ void SpatioTemporalVoxelLayer::activate(void)
   RCLCPP_INFO(logger_, "%s was activated.", getName().c_str());
 
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
+  for (; sub_it != _observation_subscribers.end(); ++sub_it) {
+    (*sub_it)->subscribe();
+  }
+
   observation_buffers_iter buf_it = _observation_buffers.begin();
-  for (; sub_it != _observation_subscribers.end(); ++sub_it, ++buf_it) {
-    if (!(*buf_it)->IsEnabled()) {
-      (*sub_it)->unsubscribe();
-    }
+  for (; buf_it != _observation_buffers.end(); ++buf_it) {
     (*buf_it)->ResetLastUpdatedTime();
   }
+
   // Add callback for dynamic parametrs
   auto node = node_.lock();
   dyn_params_handler = node->add_on_set_parameters_callback(
