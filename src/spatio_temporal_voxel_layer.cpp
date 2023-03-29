@@ -907,7 +907,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
       if (name == name_ + "." + "enabled") {
         bool enable = parameter.as_bool();
         if (enabled_ != enable) {
-          if (enable){
+          if (enable) {
             observation_subscribers_iter sub_it = _observation_subscribers.begin();
             for (; sub_it != _observation_subscribers.end(); ++sub_it) {
               (*sub_it)->subscribe();
