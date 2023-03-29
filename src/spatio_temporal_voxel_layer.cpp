@@ -902,6 +902,33 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
         }
       }
     }
+
+    if (type == ParameterType::PARAMETER_BOOL) {
+      if (name == name_ + "." + "enabled") {
+        bool enable = parameter.as_bool();
+        if (enabled_ != enable) {
+          if (enable){
+            observation_subscribers_iter sub_it = _observation_subscribers.begin();
+            for (; sub_it != _observation_subscribers.end(); ++sub_it) {
+              (*sub_it)->subscribe();
+            }
+
+            observation_buffers_iter buf_it = _observation_buffers.begin();
+            for (; buf_it != _observation_buffers.end(); ++buf_it) {
+              (*buf_it)->ResetLastUpdatedTime();
+            }
+          } else {
+            observation_subscribers_iter sub_it = _observation_subscribers.begin();
+            for (; sub_it != _observation_subscribers.end(); ++sub_it) {
+              if (*sub_it != NULL) {
+                (*sub_it)->unsubscribe();
+              }
+            }
+          }
+        }
+        enabled_ = enable;
+      }
+    }
   }
 
   result.successful = true;
