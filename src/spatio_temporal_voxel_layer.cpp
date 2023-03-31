@@ -578,7 +578,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
   for (; sub_it != _observation_subscribers.end(); ++sub_it) {
-    if (*sub_it != NULL) {
+    if (*sub_it != nullptr) {
       (*sub_it)->unsubscribe();
     }
   }
@@ -900,6 +900,37 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             }
           }
         }
+      }
+    }
+
+    if (type == ParameterType::PARAMETER_BOOL) {
+      if (name == name_ + "." + "enabled") {
+        bool enable = parameter.as_bool();
+        if (enabled_ != enable) {
+          if (enable) {
+            observation_subscribers_iter sub_it = _observation_subscribers.begin();
+            for (; sub_it != _observation_subscribers.end(); ++sub_it) {
+              if (*sub_it != nullptr) {
+                (*sub_it)->subscribe();
+              }
+            }
+
+            observation_buffers_iter buf_it = _observation_buffers.begin();
+            for (; buf_it != _observation_buffers.end(); ++buf_it) {
+              if (*buf_it != nullptr) {
+                (*buf_it)->ResetLastUpdatedTime();
+              }
+            }
+          } else {
+            observation_subscribers_iter sub_it = _observation_subscribers.begin();
+            for (; sub_it != _observation_subscribers.end(); ++sub_it) {
+              if (*sub_it != nullptr) {
+                (*sub_it)->unsubscribe();
+              }
+            }
+          }
+        }
+        enabled_ = enable;
       }
     }
   }
