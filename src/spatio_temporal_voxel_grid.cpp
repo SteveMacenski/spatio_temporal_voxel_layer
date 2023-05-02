@@ -108,6 +108,8 @@ void SpatioTemporalVoxelGrid::ClearFrustums( \
   // accelerate the decay of voxels interior to the frustum
   if(this->IsGridEmpty())
   {
+    _grid_points->clear();
+    _cost_map->clear();
     return;
   }
 
