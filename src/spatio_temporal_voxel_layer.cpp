@@ -933,6 +933,12 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
         enabled_ = enable;
       }
     }
+
+    if (type == ParameterType::PARAMETER_INTEGER) {
+      if (name == name_ + "." + "mark_threshold") {
+        _mark_threshold = parameter.as_int();
+      }
+    }
   }
 
   result.successful = true;
