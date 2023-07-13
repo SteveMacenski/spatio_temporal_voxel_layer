@@ -53,7 +53,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const double& tf_tolerance,             \
                                      const double& min_d,                    \
                                      const double& max_d,                    \
-                                     const double& vFOV,                     \
+                                     const double& vSFOV,                     \
+                                     const double& vEFOV,                     \
                                      const double& vFOVPadding,              \
                                      const double& hFOV,                     \
                                      const double& decay_acceleration,       \
@@ -71,7 +72,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
+    _vertical_start_fov(vSFOV),_vertical_end_fov(vEFOV),
+    _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
     _voxel_filter(voxel_filter), _enabled(enabled),
@@ -140,7 +142,8 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
-    _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
+    _observation_list.front()._vertical_start_fov_in_rad = _vertical_start_fov;
+    _observation_list.front()._vertical_end_fov_in_rad = _vertical_end_fov;
     _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;

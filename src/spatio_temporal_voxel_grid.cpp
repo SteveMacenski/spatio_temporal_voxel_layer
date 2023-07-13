@@ -125,7 +125,8 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
     geometry::Frustum* frustum;
     if (it->_model_type == DEPTH_CAMERA)
     {
-      frustum = new geometry::DepthCameraFrustum(it->_vertical_fov_in_rad,
+      frustum = new geometry::DepthCameraFrustum(it->_vertical_start_fov_in_rad,
+                                                 it->_vertical_end_fov_in_rad,
                                                  it->_horizontal_fov_in_rad,
                                                  it->_min_z_in_m,
                                                  it->_max_z_in_m);
@@ -133,7 +134,8 @@ void SpatioTemporalVoxelGrid::ClearFrustums(const \
     else if (it->_model_type == THREE_DIMENSIONAL_LIDAR)
     {
       frustum = new geometry::ThreeDimensionalLidarFrustum( \
-                                                    it->_vertical_fov_in_rad,
+                                                    it->_vertical_start_fov_in_rad,
+                                                    it->_vertical_end_fov_in_rad,
                                                     it->_vertical_fov_padding_in_m,
                                                     it->_horizontal_fov_in_rad,
                                                     it->_min_z_in_m,

@@ -41,9 +41,9 @@ namespace geometry
 {
 
 /*****************************************************************************/
-DepthCameraFrustum::DepthCameraFrustum(const double& vFOV, const double& hFOV,
+DepthCameraFrustum::DepthCameraFrustum(const double& vSFOV, const double& vEFOV, const double& hFOV,
                               const double& min_dist, const double& max_dist) :
-                   _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
+                   _vSFOV(vSFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
 {
   _valid_frustum = false;
@@ -68,7 +68,7 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
 /*****************************************************************************/
 {
   // give ability to construct with bogus values
-  if (_vFOV == 0 && _hFOV == 0)
+  if (_vSFOV == 0 && _hFOV == 0)
   {
     _valid_frustum = false;
     return;
@@ -81,18 +81,18 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
 
   // rotate going CCW
   Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV/2.,Eigen::Vector3d::UnitX()));
+    Eigen::Affine3d(Eigen::AngleAxisd(_vSFOV/2.,Eigen::Vector3d::UnitX()));
   Eigen::Affine3d ry =
     Eigen::Affine3d(Eigen::AngleAxisd(_hFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV/2.,Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_vSFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
   ry = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV/2.,Eigen::Vector3d::UnitY()));
   deflected_vecs.push_back(rx * ry * Z);
 
-  rx = Eigen::Affine3d(Eigen::AngleAxisd( _vFOV/2.,Eigen::Vector3d::UnitX()));
+  rx = Eigen::Affine3d(Eigen::AngleAxisd( _vSFOV/2.,Eigen::Vector3d::UnitX()));
   deflected_vecs.push_back(rx * ry * Z);
 
   // get and store CCW 4 corners for each 2 planes at ends

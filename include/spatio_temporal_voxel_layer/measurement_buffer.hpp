@@ -83,7 +83,8 @@ public:
                     const double& tf_tolerance,             \
                     const double& min_d,                    \
                     const double& max_d,                    \
-                    const double& vFOV,                     \
+                    const double& vSFOV,                     \
+                    const double& vEFOV,                     \
                     const double& vFOVPadding,              \
                     const double& hFOV,                     \
                     const double& decay_acceleration,       \
@@ -129,7 +130,7 @@ private:
   std::string _global_frame, _topic_name, _sensor_frame;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
-  double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;
+  double _min_z, _max_z, _vertical_start_fov, _vertical_end_fov, _vertical_fov_padding, _horizontal_fov;
   double  _decay_acceleration, _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
