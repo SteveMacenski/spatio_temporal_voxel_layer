@@ -29,7 +29,10 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
 
-find_package(OpenVDB REQUIRED)
+# Find OpenVDB . If not found on the system, will compile from source
+option(USE_SYSTEM_OPENVDB "Use system pre-installed OpenVDB" ON)
+include(cmake/find_dependencies.cmake)
+
 remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
@@ -86,7 +89,6 @@ include_directories(
     ${EIGEN3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${OpenVDB_INCLUDE_DIR}
 )
 
 add_library(${library_name} SHARED
@@ -105,7 +107,7 @@ target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
-  ${OpenVDB_LIBRARIES}
+  OpenVDB::openvdb
 )
 
 ament_target_dependencies(${library_name} ${dependencies})
