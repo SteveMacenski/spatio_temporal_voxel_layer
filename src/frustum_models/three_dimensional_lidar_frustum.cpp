@@ -41,6 +41,32 @@ namespace geometry
 {
 
 /*****************************************************************************/
+ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
+                                                        const double& vFOVPadding,
+                                                        const double& hFOV,
+                                                        const double& min_dist,
+                                                        const double& max_dist)
+                                                        : _vFOV(vFOV),
+                                                          _vFOVPadding(vFOVPadding),  
+                                                          _hFOV(hFOV),
+                                                          _min_d(min_dist),
+                                                          _max_d(max_dist)
+/*****************************************************************************/
+{
+  _use_start_end_fov = false;
+  _hFOVhalf = _hFOV / 2.0;
+  _tan_vFOVhalf = tan(_vFOV / 2.0);
+  _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
+  _min_d_squared = _min_d * _min_d;
+  _max_d_squared = _max_d * _max_d;
+  _full_hFOV = false;
+  if (_hFOV > 6.27)
+  {
+    _full_hFOV = true;
+  }
+}
+
+/*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vSFOV,
                                                         const double& vEFOV,
                                                         const double& vFOVPadding,
@@ -55,6 +81,7 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vSFOV,
                                                           _max_d(max_dist)
 /*****************************************************************************/
 {
+  _use_start_end_fov = true;
   _hFOVhalf = _hFOV / 2.0;
   _tan_vSFOV = tan(_vSFOV);
   _tan_vEFOV = tan(_vEFOV);
@@ -110,7 +137,16 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   //   return false;
   // }
   const double v_padded = transformed_pt[2] + _vFOVPadding;
-  if ((v_padded * v_padded / radial_distance_squared) > (v_padded < 1e-9 ? _tan_vSFOV_squared : _tan_vEFOV_squared))
+  double tan_vFOV_squared;
+  if (_use_start_end_fov)
+  {
+    tan_vFOV_squared = (v_padded < 1e-9 ? _tan_vSFOV_squared : _tan_vEFOV_squared);
+  }
+  else
+  {
+    tan_vFOV_squared = _tan_vFOVhalf_squared;
+  }
+  if ((v_padded * v_padded / radial_distance_squared) > tan_vFOV_squared)
   {
     return false;
   }

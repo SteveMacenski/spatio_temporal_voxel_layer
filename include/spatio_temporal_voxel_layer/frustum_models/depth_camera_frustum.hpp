@@ -53,7 +53,7 @@ namespace geometry
 class DepthCameraFrustum : public Frustum
 {
 public:
-  DepthCameraFrustum(const double& vSFOV, const double& vEFOV, const double& hFOV,
+  DepthCameraFrustum(const double& vFOV, const double& hFOV,
           const double& min_dist, const double& max_dist);
   virtual ~DepthCameraFrustum(void);
 
@@ -73,7 +73,7 @@ private:
   double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
   double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
-  double _vSFOV, _hFOV, _min_d, _max_d;
+  double _vFOV, _hFOV, _min_d, _max_d;
   std::vector<VectorWithPt3D> _plane_normals;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
