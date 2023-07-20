@@ -169,9 +169,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // use start and end of vertical FOV instead of center
     source_node.param("use_start_end_fov", use_start_end_fov, false);
     // vertical FOV start angle in rad
-    source_node.param("vertical_fov_start_angle", vSFOV, -0.35);
+    source_node.param("vertical_fov_start_angle", vSFOV, -0.12);
     // vertical FOV end angle in rad
-    source_node.param("vertical_fov_end_angle", vEFOV, 0.35);
+    source_node.param("vertical_fov_end_angle", vEFOV, 1.0);
     // vertical FOV padding in meters (3D lidar frustum only)
     source_node.param("vertical_fov_padding", vFOVPadding, 0.0);
     // horizontal FOV angle in rad
