@@ -148,7 +148,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double max_obstacle_height, min_z, max_z, vFOV, vSFOV, vEFOV, vFOVPadding;
     double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
-    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled, use_start_end_fov;
+    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled, use_start_end_angle;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -167,7 +167,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // vertical FOV angle in rad
     source_node.param("vertical_fov_angle", vFOV, 0.7);
     // use start and end of vertical FOV instead of center
-    source_node.param("use_start_end_fov", use_start_end_fov, false);
+    source_node.param("use_start_end_angle", use_start_end_angle, false);
     // vertical FOV start angle in rad
     source_node.param("vertical_fov_start_angle", vSFOV, -0.12);
     // vertical FOV end angle in rad
@@ -208,7 +208,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
 
-    if (model_type == ModelType::THREE_DIMENSIONAL_LIDAR && use_start_end_fov)
+    if (model_type == ModelType::THREE_DIMENSIONAL_LIDAR && use_start_end_angle)
     {
       // create an observation buffer
       _observation_buffers.push_back(

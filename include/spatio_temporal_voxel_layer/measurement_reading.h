@@ -81,7 +81,8 @@ struct MeasurementReading
                                       _decay_acceleration(decay_acceleration),           \
                                       _marking(marking),                                 \
                                       _clearing(clearing),                               \
-                                      _model_type(model_type)
+                                      _model_type(model_type),                           \
+                                      _use_start_end_fov(false)
   {
   }
 
@@ -110,7 +111,8 @@ struct MeasurementReading
                              _clearing(obs._clearing),                                  \
                              _orientation(obs._orientation),                            \
                              _decay_acceleration(obs._decay_acceleration),              \
-                             _model_type(obs._model_type)
+                             _model_type(obs._model_type),                              \
+                             _use_start_end_fov(obs._use_start_end_fov)
   {
   }
 
@@ -133,7 +135,8 @@ struct MeasurementReading
                                       _decay_acceleration(decay_acceleration),           \
                                       _marking(marking),                                 \
                                       _clearing(clearing),                               \
-                                      _model_type(model_type)
+                                      _model_type(model_type),                           \
+                                      _use_start_end_fov(false)
   {
   }
 
@@ -144,7 +147,7 @@ struct MeasurementReading
   double _vertical_fov_in_rad, _vertical_start_fov_in_rad,_vertical_end_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
-
+  bool _use_start_end_fov;
 };
 
 } // end namespace
