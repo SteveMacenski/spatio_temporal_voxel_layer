@@ -71,6 +71,30 @@ typedef pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_ptr;
 class MeasurementBuffer
 {
 public:
+	MeasurementBuffer(const std::string& topic_name,          \
+                    const double& observation_keep_time,    \
+                    const double& expected_update_rate,     \
+                    const double& min_obstacle_height,      \
+                    const double& max_obstacle_height,      \
+                    const double& obstacle_range,           \
+                    tf::TransformListener& tf,              \
+                    const std::string& global_frame,        \
+                    const std::string& sensor_frame,        \
+                    const double& tf_tolerance,             \
+                    const double& min_d,                    \
+                    const double& max_d,                    \
+                    const double& vFOV,                     \
+                    const double& vFOVPadding,              \
+                    const double& hFOV,                     \
+                    const double& decay_acceleration,       \
+                    const bool& marking,                    \
+                    const bool& clearing,                   \
+                    const double& voxel_size,               \
+                    const bool& voxel_filter,               \
+                    const bool& enabled,                    \
+                    const bool& clear_buffer_after_reading, \
+                    const ModelType& model_type);
+
   MeasurementBuffer(const std::string& topic_name,          \
                     const double& observation_keep_time,    \
                     const double& expected_update_rate,     \
@@ -130,9 +154,10 @@ private:
   std::string _global_frame, _topic_name, _sensor_frame;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
-  double _min_z, _max_z, _vertical_start_fov, _vertical_end_fov, _vertical_fov_padding, _horizontal_fov;
+  double _min_z, _max_z, _vertical_fov, _vertical_start_fov, _vertical_end_fov, _vertical_fov_padding, _horizontal_fov;
   double  _decay_acceleration, _voxel_size;
   bool _marking, _clearing, _voxel_filter, _clear_buffer_after_reading, _enabled;
+  bool _use_start_end_fov;
   ModelType _model_type;
 };
 
