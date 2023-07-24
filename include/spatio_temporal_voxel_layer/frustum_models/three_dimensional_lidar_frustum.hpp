@@ -52,10 +52,8 @@ namespace geometry
 class ThreeDimensionalLidarFrustum : public Frustum
 {
 public:
-  ThreeDimensionalLidarFrustum(const double& vFOV, const double& vFOVPadding, 
-          const double& hFOV, const double& min_dist, const double& max_dist);
-  ThreeDimensionalLidarFrustum(const double& vEFOV,const double& vSFOV, const double& vFOVPadding,
-          const double& hFOV, const double& min_dist, const double& max_dist);
+  ThreeDimensionalLidarFrustum(const double& vFOV, const bool& use_start_end_angle, const double& vEFOV,const double& vSFOV,
+          const double& vFOVPadding, const double& hFOV, const double& min_dist, const double& max_dist);
   virtual ~ThreeDimensionalLidarFrustum(void);
 
   // Does nothing in 3D lidar model
@@ -73,7 +71,7 @@ private:
   double Dot(const VectorWithPt3D&, const openvdb::Vec3d&) const;
   double Dot(const VectorWithPt3D&, const Eigen::Vector3d&) const;
 
-  bool _use_start_end_fov;
+  bool _use_start_end_angle;
   double _vFOV, _vSFOV, _vEFOV, _vFOVPadding, _hFOV, _min_d, _max_d;
   double _hFOVhalf;
   double _min_d_squared, _max_d_squared;

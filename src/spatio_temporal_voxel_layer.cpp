@@ -208,31 +208,15 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       source_node.getParam(obstacle_range_param_name, obstacle_range);
     }
 
-    if (model_type == ModelType::THREE_DIMENSIONAL_LIDAR && use_start_end_angle)
-    {
-      // create an observation buffer
-      _observation_buffers.push_back(
-          boost::shared_ptr <buffer::MeasurementBuffer>
-          (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
-          expected_update_rate, min_obstacle_height, max_obstacle_height,   \
-          obstacle_range, *tf_, _global_frame, sensor_frame,                \
-          transform_tolerance, min_z, max_z, vSFOV, vEFOV, vFOVPadding, hFOV,       \
-          decay_acceleration, marking, clearing, _voxel_size,               \
-          voxel_filter, enabled, clear_after_reading, model_type)));
-    }
-    // use FOV
-    else if (model_type == ModelType::DEPTH_CAMERA)
-    {
-      // create an observation buffer
-      _observation_buffers.push_back(
-          boost::shared_ptr <buffer::MeasurementBuffer>
-          (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
-          expected_update_rate, min_obstacle_height, max_obstacle_height,   \
-          obstacle_range, *tf_, _global_frame, sensor_frame,                \
-          transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,       \
-          decay_acceleration, marking, clearing, _voxel_size,               \
-          voxel_filter, enabled, clear_after_reading, model_type)));
-    }
+    // create an observation buffer
+    _observation_buffers.push_back(
+        boost::shared_ptr <buffer::MeasurementBuffer>
+        (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
+        expected_update_rate, min_obstacle_height, max_obstacle_height,   \
+        obstacle_range, *tf_, _global_frame, sensor_frame,                \
+        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle, vSFOV, vEFOV, vFOVPadding, hFOV,       \
+        decay_acceleration, marking, clearing, _voxel_size,               \
+        voxel_filter, enabled, clear_after_reading, model_type)));
 
     // Add buffer to marking observation buffers
     if (marking == true)

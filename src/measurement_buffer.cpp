@@ -54,6 +54,9 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
                                      const double& min_d,                    \
                                      const double& max_d,                    \
                                      const double& vFOV,                     \
+                                     const bool& use_start_end_angle,        \
+                                     const double& vSFOV,                    \
+                                     const double& vEFOV,                    \
                                      const double& vFOVPadding,              \
                                      const double& hFOV,                     \
                                      const double& decay_acceleration,       \
@@ -71,47 +74,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding), _use_start_end_fov(false),
-    _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
-    _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
-    _voxel_filter(voxel_filter), _enabled(enabled),
-    _clear_buffer_after_reading(clear_buffer_after_reading),
-    _model_type(model_type)
-{
-}
-/*****************************************************************************/
-MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
-                                     const double& observation_keep_time,    \
-                                     const double& expected_update_rate,     \
-                                     const double& min_obstacle_height,      \
-                                     const double& max_obstacle_height,      \
-                                     const double& obstacle_range,           \
-                                     tf::TransformListener& tf,              \
-                                     const std::string& global_frame,        \
-                                     const std::string& sensor_frame,        \
-                                     const double& tf_tolerance,             \
-                                     const double& min_d,                    \
-                                     const double& max_d,                    \
-                                     const double& vSFOV,                     \
-                                     const double& vEFOV,                     \
-                                     const double& vFOVPadding,              \
-                                     const double& hFOV,                     \
-                                     const double& decay_acceleration,       \
-                                     const bool& marking,                    \
-                                     const bool& clearing,                   \
-                                     const double& voxel_size,               \
-                                     const bool& voxel_filter,               \
-                                     const bool& enabled,                    \
-                                     const bool& clear_buffer_after_reading, \
-                                     const ModelType& model_type) :
-/*****************************************************************************/
-    _tf(tf), _observation_keep_time(observation_keep_time), 
-    _expected_update_rate(expected_update_rate),_last_updated(ros::Time::now()), 
-    _global_frame(global_frame), _sensor_frame(sensor_frame),
-    _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
-    _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
-    _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-    _vertical_start_fov(vSFOV),_vertical_end_fov(vEFOV), _use_start_end_fov(true),
+		_vertical_fov(vFOV), _use_start_end_angle(use_start_end_angle && model_type == ModelType::THREE_DIMENSIONAL_LIDAR),
+    _vertical_start_fov(vSFOV),_vertical_end_fov(vEFOV),
     _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
     _marking(marking), _clearing(clearing), _voxel_size(voxel_size),
@@ -181,15 +145,10 @@ void MeasurementBuffer::BufferPCLCloud(const \
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
-    if (_use_start_end_fov)
-    {
-      _observation_list.front()._vertical_start_fov_in_rad = _vertical_start_fov;
-      _observation_list.front()._vertical_end_fov_in_rad = _vertical_end_fov;
-    }
-    else
-    {
-      _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
-    }
+    _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
+    _observation_list.front()._use_start_end_angle = _use_start_end_angle;
+    _observation_list.front()._vertical_start_fov_in_rad = _vertical_start_fov;
+    _observation_list.front()._vertical_end_fov_in_rad = _vertical_end_fov;
     _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
