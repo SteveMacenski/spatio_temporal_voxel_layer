@@ -457,6 +457,7 @@ void SpatioTemporalVoxelLayer::BufferEnablerCallback(
       response->message = "Enabling sensor";
     } else if (subcriber) {
       subcriber->unsubscribe();
+      ResetGrid();
       response->message = "Disabling sensor";
     }
   } else {
