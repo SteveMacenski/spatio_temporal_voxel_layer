@@ -115,16 +115,13 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   // {
   //   return false;
   // }
-  const double v_padded = transformed_pt[2] + _vFOVPadding;
-  double tan_vFOV_squared;
+  const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
+  double tan_vFOV_squared = _tan_vFOVhalf_squared;
   if (_use_start_end_angle)
   {
-    tan_vFOV_squared = (v_padded < 1e-9 ? _tan_vSFOV_squared : _tan_vEFOV_squared);
+    tan_vFOV_squared = (transformed_pt[2] < 0 ? _tan_vSFOV_squared : _tan_vEFOV_squared);
   }
-  else
-  {
-    tan_vFOV_squared = _tan_vFOVhalf_squared;
-  }
+
   if ((v_padded * v_padded / radial_distance_squared) > tan_vFOV_squared)
   {
     return false;
