@@ -74,7 +74,8 @@ MeasurementBuffer::MeasurementBuffer(const std::string& topic_name,          \
     _topic_name(topic_name), _min_obstacle_height(min_obstacle_height), 
     _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
     _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), 
-		_vertical_fov(vFOV), _use_start_end_angle(use_start_end_angle && model_type == ModelType::THREE_DIMENSIONAL_LIDAR),
+    _vertical_fov(vFOV), _use_start_end_angle(
+      use_start_end_angle && model_type == ModelType::THREE_DIMENSIONAL_LIDAR),
     _vertical_start_fov(vSFOV),_vertical_end_fov(vEFOV),
     _vertical_fov_padding(vFOVPadding),
     _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
