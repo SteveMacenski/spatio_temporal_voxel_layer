@@ -215,7 +215,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
         expected_update_rate, min_obstacle_height, max_obstacle_height,   \
         obstacle_range, *tf_, _global_frame, sensor_frame,                \
-        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle,
+        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle,     \
         vSFOV, vEFOV, vFOVPadding, hFOV,                                  \
         decay_acceleration, marking, clearing, _voxel_size,               \
         voxel_filter, enabled, clear_after_reading, model_type)));
