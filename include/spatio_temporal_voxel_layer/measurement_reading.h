@@ -122,7 +122,8 @@ struct MeasurementReading
   geometry_msgs::Quaternion _orientation;
   pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
-  double _vertical_fov_in_rad, _vertical_start_fov_in_rad,_vertical_end_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
+  double _vertical_fov_in_rad, _vertical_start_fov_in_rad, _vertical_end_fov_in_rad;
+  double _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
   bool _use_start_end_angle;

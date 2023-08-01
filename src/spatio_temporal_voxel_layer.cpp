@@ -148,7 +148,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double max_obstacle_height, min_z, max_z, vFOV, vSFOV, vEFOV, vFOVPadding;
     double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
-    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled, use_start_end_angle;
+    bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled;
+    bool use_start_end_angle;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -214,7 +215,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
         expected_update_rate, min_obstacle_height, max_obstacle_height,   \
         obstacle_range, *tf_, _global_frame, sensor_frame,                \
-        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle, vSFOV, vEFOV, vFOVPadding, hFOV,       \
+        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle,
+        vSFOV, vEFOV, vFOVPadding, hFOV,                                  \
         decay_acceleration, marking, clearing, _voxel_size,               \
         voxel_filter, enabled, clear_after_reading, model_type)));
 

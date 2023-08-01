@@ -110,11 +110,6 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
   }
 
   // // Check if inside frustum valid vFOV
-  // const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
-  // if (( v_padded * v_padded / radial_distance_squared) > _tan_vSFOV_squared)
-  // {
-  //   return false;
-  // }
   const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
   double tan_vFOV_squared = _tan_vFOVhalf_squared;
   if (_use_start_end_angle)
