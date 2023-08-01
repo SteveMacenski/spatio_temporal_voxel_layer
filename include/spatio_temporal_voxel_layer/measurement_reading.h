@@ -66,9 +66,9 @@ struct MeasurementReading
 
   /*****************************************************************************/
   MeasurementReading(geometry_msgs::Point& origin, pcl::PointCloud<pcl::PointXYZ> cloud, \
-            double obstacle_range, double min_z, double max_z, double vFOV,
-            double vFOVPadding, double hFOV, double decay_acceleration, bool marking,
-            bool clearing, ModelType model_type) :
+            double obstacle_range, double min_z, double max_z, double vFOV, double vSFOV,
+            double vEFOV, double vFOVPadding, double hFOV, double decay_acceleration, 
+            bool marking, bool clearing, ModelType model_type) :
   /*****************************************************************************/
                                       _origin(origin),                                   \
                                       _cloud(new pcl::PointCloud<pcl::PointXYZ>(cloud)), \
@@ -76,6 +76,8 @@ struct MeasurementReading
                                       _min_z_in_m(min_z),                                \
                                       _max_z_in_m(max_z),                                \
                                       _vertical_fov_in_rad(vFOV),                        \
+                                      _vertical_start_fov_in_rad(vSFOV),                 \
+                                      _vertical_end_fov_in_rad(vEFOV),                   \
                                       _vertical_fov_padding_in_m(vFOVPadding),           \
                                       _horizontal_fov_in_rad(hFOV),                      \
                                       _decay_acceleration(decay_acceleration),           \
@@ -102,24 +104,29 @@ struct MeasurementReading
                              _min_z_in_m(obs._min_z_in_m),                              \
                              _max_z_in_m(obs._max_z_in_m),                              \
                              _vertical_fov_in_rad(obs._vertical_fov_in_rad),            \
+                             _vertical_start_fov_in_rad(obs._vertical_start_fov_in_rad),\
+                             _vertical_end_fov_in_rad(obs._vertical_end_fov_in_rad),    \
                              _vertical_fov_padding_in_m(obs._vertical_fov_padding_in_m),\
                              _horizontal_fov_in_rad(obs._horizontal_fov_in_rad),        \
                              _marking(obs._marking),                                    \
                              _clearing(obs._clearing),                                  \
                              _orientation(obs._orientation),                            \
                              _decay_acceleration(obs._decay_acceleration),              \
-                             _model_type(obs._model_type)
+                             _model_type(obs._model_type),                              \
+                             _use_start_end_angle(obs._use_start_end_angle)
   {
   }
+
 
   geometry_msgs::Point _origin;
   geometry_msgs::Quaternion _orientation;
   pcl::PointCloud<pcl::PointXYZ>::Ptr _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
-  double _vertical_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
+  double _vertical_fov_in_rad, _vertical_start_fov_in_rad, _vertical_end_fov_in_rad;
+  double _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
-
+  bool _use_start_end_angle;
 };
 
 } // end namespace

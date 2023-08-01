@@ -145,10 +145,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height;
-    double max_obstacle_height, min_z, max_z, vFOV, vFOVPadding;
+    double max_obstacle_height, min_z, max_z, vFOV, vSFOV, vEFOV, vFOVPadding;
     double hFOV, decay_acceleration;
     std::string topic, sensor_frame, data_type;
     bool inf_is_valid, clearing, marking, voxel_filter, clear_after_reading, enabled;
+    bool use_start_end_angle;
 
     source_node.param("topic", topic, source);
     source_node.param("sensor_frame", sensor_frame, std::string(""));
@@ -166,6 +167,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     source_node.param("max_z", max_z, 10.);
     // vertical FOV angle in rad
     source_node.param("vertical_fov_angle", vFOV, 0.7);
+    // use start and end of vertical FOV instead of center
+    source_node.param("use_start_end_angle", use_start_end_angle, false);
+    // vertical FOV start angle in rad
+    source_node.param("vertical_fov_start_angle", vSFOV, -0.12);
+    // vertical FOV end angle in rad
+    source_node.param("vertical_fov_end_angle", vEFOV, 1.0);
     // vertical FOV padding in meters (3D lidar frustum only)
     source_node.param("vertical_fov_padding", vFOVPadding, 0.0);
     // horizontal FOV angle in rad
@@ -208,7 +215,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         (new buffer::MeasurementBuffer(topic, observation_keep_time,      \
         expected_update_rate, min_obstacle_height, max_obstacle_height,   \
         obstacle_range, *tf_, _global_frame, sensor_frame,                \
-        transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,       \
+        transform_tolerance, min_z, max_z, vFOV, use_start_end_angle,     \
+        vSFOV, vEFOV, vFOVPadding, hFOV,                                  \
         decay_acceleration, marking, clearing, _voxel_size,               \
         voxel_filter, enabled, clear_after_reading, model_type)));
 
@@ -489,6 +497,7 @@ bool SpatioTemporalVoxelLayer::updateFootprint(double robot_x, double robot_y, \
     touch(_transformed_footprint[i].x, _transformed_footprint[i].y, \
           min_x, min_y, max_x, max_y);
   }
+  return true;
 }
 
 /*****************************************************************************/

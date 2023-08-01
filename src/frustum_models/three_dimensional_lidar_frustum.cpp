@@ -42,11 +42,17 @@ namespace geometry
 
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
+                                                        const bool& use_start_end_angle,
+                                                        const double& vSFOV,
+                                                        const double& vEFOV,
                                                         const double& vFOVPadding,
                                                         const double& hFOV,
                                                         const double& min_dist,
                                                         const double& max_dist)
                                                         : _vFOV(vFOV),
+                                                          _use_start_end_angle(use_start_end_angle),
+                                                          _vSFOV(vSFOV),
+                                                          _vEFOV(vEFOV),
                                                           _vFOVPadding(vFOVPadding),  
                                                           _hFOV(hFOV),
                                                           _min_d(min_dist),
@@ -56,6 +62,10 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(const double& vFOV,
   _hFOVhalf = _hFOV / 2.0;
   _tan_vFOVhalf = tan(_vFOV / 2.0);
   _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
+  _tan_vSFOV = tan(_vSFOV);
+  _tan_vEFOV = tan(_vEFOV);
+  _tan_vSFOV_squared = _tan_vSFOV * _tan_vSFOV;
+  _tan_vEFOV_squared = _tan_vEFOV * _tan_vEFOV;
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
   _full_hFOV = false;
@@ -101,7 +111,13 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d &pt)
 
   // // Check if inside frustum valid vFOV
   const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
-  if (( v_padded * v_padded / radial_distance_squared) > _tan_vFOVhalf_squared)
+  double tan_vFOV_squared = _tan_vFOVhalf_squared;
+  if (_use_start_end_angle)
+  {
+    tan_vFOV_squared = (transformed_pt[2] < 0 ? _tan_vSFOV_squared : _tan_vEFOV_squared);
+  }
+
+  if ((v_padded * v_padded / radial_distance_squared) > tan_vFOV_squared)
   {
     return false;
   }
