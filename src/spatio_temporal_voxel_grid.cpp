@@ -170,7 +170,7 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(                \
 /*****************************************************************************/
 {
   // sample time once for all clearing readings
-  const double cur_time = ros::WallTime::now().toSec();
+  const double cur_time = ros::Time::now().toSec();
 
   // check each point in the grid for inclusion in a frustum
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
@@ -309,7 +309,7 @@ void SpatioTemporalVoxelGrid::operator()(const \
   if (obs._marking)
   {
     float mark_range_2 = obs._obstacle_range_in_m * obs._obstacle_range_in_m;
-    const double cur_time = ros::WallTime::now().toSec();
+    const double cur_time = ros::Time::now().toSec();
 
     const sensor_msgs::PointCloud2& cloud = *(obs._cloud);
     sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud, "x");
