@@ -218,6 +218,9 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
       PopulateCostmapAndPointcloud(pt_index);
     }
   }
+
+  // free memory taken by expired voxels
+  _grid->pruneGrid();
 }
 
 /*****************************************************************************/
