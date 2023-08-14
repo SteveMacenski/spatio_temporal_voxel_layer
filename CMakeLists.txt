@@ -151,3 +151,6 @@ install(FILES costmap_plugins.xml test/minimal_test.launch
 install(DIRECTORY example
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
