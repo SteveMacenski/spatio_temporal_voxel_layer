@@ -24,7 +24,7 @@ if(USE_SYSTEM_OPENVDB)
   # When OpenVDB is available on the system, we just go for the dynamic version
   # of it
   include(GNUInstallDirs)
-  list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/spatio_temporal_voxel_layer/cmake/OpenVDB")
+  list(APPEND CMAKE_MODULE_PATH "${CMAKE_INSTALL_FULL_LIBDIR}/openvdb_vendor/cmake/OpenVDB")
   find_package(OpenVDB QUIET)
   if(OpenVDB_FOUND AND OpenVDB_USES_BLOSC)
     # We need to get these hidden dependencies (if available) to static link
@@ -35,7 +35,7 @@ endif()
 
 # When not using a pre installed version of OpenVDB we assume that no
 # dependencies are installed and therefore build blos-c, tbb, and libboost from
-# soruce
+# source
 if(NOT USE_SYSTEM_OPENVDB OR NOT OpenVDB_FOUND)
   set(USE_SYSTEM_OPENVDB OFF)
   message(WARNING "Building OpenVDB from source")

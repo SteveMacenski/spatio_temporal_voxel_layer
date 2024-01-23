@@ -30,10 +30,6 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(openvdb_vendor REQUIRED)
 
-# Find OpenVDB . If not found on the system, will compile from source
-option(USE_SYSTEM_OPENVDB "Use system pre-installed OpenVDB" ON)
-include(cmake/find_dependencies.cmake)
-
 remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system thread)
@@ -71,6 +67,7 @@ set(dependencies
   tf2_sensor_msgs
   visualization_msgs
   builtin_interfaces
+  openvdb_vendor
 )
 
 set(library_name spatio_temporal_voxel_layer_core)
@@ -108,7 +105,6 @@ target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
-  OpenVDB::openvdb
 )
 
 ament_target_dependencies(${library_name} ${dependencies})
