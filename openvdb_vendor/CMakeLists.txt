@@ -4,12 +4,14 @@ project(openvdb_vendor)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_vendor_package REQUIRED)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
+ament_vendor(${PROJECT_NAME}
+  VCS_URL https://github.com/AcademySoftwareFoundation/openvdb.git
+  VCS_VERSION v10.0.1
+  VCS_TYPE git
+  CMAKE_ARGS
+    -DCONCURRENT_MALLOC=Tbbmalloc
+)
 
-# Find OpenVDB . If not found on the system, will compile from source
-option(USE_SYSTEM_OPENVDB "Use system pre-installed OpenVDB" ON)
-include(cmake/find_dependencies.cmake)
-
-ament_export_include_directories(include)
+ament_export_include_directories("opt/${PROJECT_NAME}/include")
 
 ament_package()

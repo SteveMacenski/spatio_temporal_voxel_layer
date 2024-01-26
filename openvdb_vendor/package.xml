@@ -24,10 +24,8 @@
   <buildtool_depend>git</buildtool_depend>
 
   <depend>libboost-thread-dev</depend>
-  <depend>libopenvdb-dev</depend>
   <depend>tbb</depend>
   <depend>zlib</depend>
-  <exec_depend>libopenvdb</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
