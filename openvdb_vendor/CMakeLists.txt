@@ -10,6 +10,7 @@ ament_vendor(${PROJECT_NAME}
   VCS_TYPE git
   CMAKE_ARGS
     -DCONCURRENT_MALLOC=Tbbmalloc
+    -DOPENVDB_BUILD_BINARIES=OFF
 )
 
 ament_export_include_directories("opt/${PROJECT_NAME}/include")
