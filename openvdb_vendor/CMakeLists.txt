@@ -13,6 +13,7 @@ ament_vendor(${PROJECT_NAME}
     -DOPENVDB_BUILD_BINARIES=OFF
 )
 
-ament_export_include_directories("opt/${PROJECT_NAME}/include")
-
-ament_package()
+# When this package is found, make sure to find the real OpenVDB
+ament_package(
+  CONFIG_EXTRAS "openvdb_vendor-extras.cmake.in"
+)

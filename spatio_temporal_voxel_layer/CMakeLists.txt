@@ -9,6 +9,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# Get a linker error when there are undefined symbols
+add_link_options(-Wl,--no-undefined)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 find_package(ament_cmake REQUIRED)
@@ -105,6 +108,7 @@ target_link_libraries(${library_name}
   ${Boost_LIBRARIES}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
+  OpenVDB::openvdb
 )
 
 ament_target_dependencies(${library_name} ${dependencies})
