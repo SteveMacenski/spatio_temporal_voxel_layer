@@ -1,2 +1,0 @@
-list(APPEND CMAKE_MODULE_PATH "${@PROJECT_NAME@_DIR}/../../../opt/openvdb_vendor/lib/cmake/OpenVDB")
-find_package(OpenVDB REQUIRED)

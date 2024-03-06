@@ -15,5 +15,5 @@ ament_vendor(${PROJECT_NAME}
 
 # When this package is found, make sure to find the real OpenVDB
 ament_package(
-  CONFIG_EXTRAS "openvdb_vendor-extras.cmake.in"
+  CONFIG_EXTRAS "openvdb_vendor-extras.cmake"
 )
