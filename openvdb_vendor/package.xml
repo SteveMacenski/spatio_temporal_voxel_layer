@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format2.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="2">
+  <name>openvdb_vendor</name>
+  <version>2.2.0</version>
+  <description>
+    Wrapper around OpenVDB, if not found on the system, will compile from source
+  </description>
+
+  <maintainer email="tim.clephas@nobleo.nl">Tim Clephas</maintainer>
+
+  <license>LGPL v2.1</license>  <!-- The contents of this package -->
+  <license>MPL-2.0 license</license>  <!-- OpenVDB -->
+
+  <url type="website">https://github.com/AcademySoftwareFoundation/openvdb</url>
+
+  <author email="ignaciovizzo@gmail.com">Ignacio Vizzo</author>
+  <author email="tim.clephas@nobleo.nl">Tim Clephas</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
+  <buildtool_depend>git</buildtool_depend>
+
+  <depend>libboost-thread-dev</depend>
+  <depend>tbb</depend>
+  <depend>zlib</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
