@@ -2,7 +2,7 @@
 <?xml-model
   href="http://download.ros.org/schema/package_format2.xsd"
   schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="2">
+<package format="3">
   <name>openvdb_vendor</name>
   <version>2.2.0</version>
   <description>
@@ -26,6 +26,7 @@
   <depend>libblosc-dev</depend>
   <depend>libboost-iostreams-dev</depend>
   <depend>libboost-thread-dev</depend>
+  <depend condition="$ROS_DISTRO != humble and $ROS_DISTRO != iron">libopenvdb-dev</depend>
   <depend>tbb</depend>
   <depend>zlib</depend>
 
