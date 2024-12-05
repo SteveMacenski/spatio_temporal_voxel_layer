@@ -258,6 +258,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
               "Only topics that use pointclouds or laser scans are supported.");
     }
 
+    topic = joinWithParentNamespace(topic);
+
     // create an observation buffer
     _observation_buffers.push_back(
       std::shared_ptr<buffer::MeasurementBuffer>(
