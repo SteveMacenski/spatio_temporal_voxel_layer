@@ -146,8 +146,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   auto pub_opt = rclcpp::PublisherOptions();
   pub_opt.callback_group = callback_group_;
 
-  _voxel_pub = node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "voxel_grid", rclcpp::QoS(1), pub_opt);
+  if(_publish_voxels)
+  {
+    _voxel_pub = node->create_publisher<sensor_msgs::msg::PointCloud2>(
+      "voxel_grid", rclcpp::QoS(1), pub_opt);
+  }
 
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
@@ -799,7 +802,7 @@ void SpatioTemporalVoxelLayer::updateBounds(
   UpdateROSCostmap(min_x, min_y, max_x, max_y, cleared_cells);
 
   // publish point cloud in navigation mode
-  if (_publish_voxels && !_mapping_mode) {
+  if (_publish_voxels && !_mapping_mode && _voxel_pub) {
     std::unique_ptr<sensor_msgs::msg::PointCloud2> pc2 =
       std::make_unique<sensor_msgs::msg::PointCloud2>();
     _voxel_grid->GetOccupancyPointCloud(pc2);
