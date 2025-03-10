@@ -802,7 +802,7 @@ void SpatioTemporalVoxelLayer::updateBounds(
   UpdateROSCostmap(min_x, min_y, max_x, max_y, cleared_cells);
 
   // publish point cloud in navigation mode
-  if (_publish_voxels && !_mapping_mode && _voxel_pub) {
+  if (_publish_voxels && !_mapping_mode) {
     std::unique_ptr<sensor_msgs::msg::PointCloud2> pc2 =
       std::make_unique<sensor_msgs::msg::PointCloud2>();
     _voxel_grid->GetOccupancyPointCloud(pc2);
