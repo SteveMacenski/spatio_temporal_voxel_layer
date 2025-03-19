@@ -410,7 +410,7 @@ void SpatioTemporalVoxelGrid::ResetGridArea(
     const bool in_y_range = pose_world.y() > start.y && pose_world.y() < end.y;
     const bool in_range = in_x_range && in_y_range;
 
-    if(in_range == invert_area)
+    if(in_range != invert_area)
     {
       ClearGridPoint(pt_index);
     }
