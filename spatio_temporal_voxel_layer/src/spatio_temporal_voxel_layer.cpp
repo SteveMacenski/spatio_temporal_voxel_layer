@@ -78,7 +78,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   RCLCPP_INFO(
     logger_, "%s's global frame is %s.",
     getName().c_str(), _global_frame.c_str());
-
+  
   bool track_unknown_space;
   double transform_tolerance, map_save_time;
   int decay_model_int;
@@ -108,6 +108,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // clear under robot footprint
   declareParameter("update_footprint_enabled", rclcpp::ParameterValue(true));
   node->get_parameter(name_ + ".update_footprint_enabled", _update_footprint_enabled);
+  // use 3d transform for clearing footprint
+  declareParameter("footprint_projection_enabled", rclcpp::ParameterValue(false));
+  node->get_parameter(name_ + ".footprint_projection_enabled", _footprint_projection_enabled);
+  // robot base frame ( necessary for 3d footprint projection )
+  declareParameter("robot_base_frame", rclcpp::ParameterValue(std::string("")));
+  node->get_parameter(name_ + ".robot_base_frame", _robot_base_frame);
   // keep tabs on unknown space
   declareParameter(
     "track_unknown_space",
@@ -161,6 +167,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
     _voxel_decay, _publish_voxels);
 
+  _clock = node->get_clock();
+
   matchSize();
 
   RCLCPP_INFO(logger_, "%s created underlying voxel grid.", getName().c_str());
@@ -172,7 +180,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type, filter_str;
+    std::string topic, sensor_frame, z_reference_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
     int voxel_min_points;
@@ -199,6 +207,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "horizontal_fov_angle", rclcpp::ParameterValue(1.04));
     declareParameter(source + "." + "decay_acceleration", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "filter", rclcpp::ParameterValue(std::string("passthrough")));
+    declareParameter(source + "." + "z_reference_frame", rclcpp::ParameterValue(_global_frame));    
     declareParameter(source + "." + "voxel_min_points", rclcpp::ParameterValue(0));
     declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
@@ -234,6 +243,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "decay_acceleration", decay_acceleration);
     // performs an approximate voxel filter over the data to reduce
     node->get_parameter(name_ + "." + source + "." + "filter", filter_str);
+    // frame in which to calculate z bounds if relative filter is applied
+    node->get_parameter(name_ + "." + source + "." + "z_reference_frame", z_reference_frame);
     // minimum points per voxel for voxel filter
     node->get_parameter(name_ + "." + source + "." + "voxel_min_points", voxel_min_points);
     // clears measurement buffer after reading values from it
@@ -251,7 +262,13 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     } else if (filter_str == "voxel") {
       RCLCPP_INFO(logger_, "Voxel filter activated.");
       filter = buffer::Filters::VOXEL;
-    } else {
+    } else if (filter_str == "passthrough_relative") {
+      RCLCPP_INFO(logger_, "Relative Passthough filter activated.");
+      filter = buffer::Filters::PASSTHROUGH_RELATIVE;
+    } else if (filter_str == "voxel_relative") {
+      RCLCPP_INFO(logger_, "Relative Voxel filter activated.");
+      filter = buffer::Filters::VOXEL_RELATIVE;
+    }  else {
       RCLCPP_INFO(logger_, "No filters activated.");
       filter = buffer::Filters::NONE;
     }
@@ -269,7 +286,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         new buffer::MeasurementBuffer(
           source, topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
-          max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
+          max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame, z_reference_frame,
           transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
@@ -538,17 +555,41 @@ bool SpatioTemporalVoxelLayer::updateFootprint(
   double * min_y, double * max_x, double * max_y)
 /*****************************************************************************/
 {
-  // updates layer costmap to include footprint for clearing in voxel grid
+  // Updates layer costmap to include footprint for clearing in voxel grid
   if (!_update_footprint_enabled) {
     return false;
   }
-  nav2_costmap_2d::transformFootprint(
-    robot_x, robot_y, robot_yaw,
-    getFootprint(), _transformed_footprint);
-  for (unsigned int i = 0; i < _transformed_footprint.size(); i++) {
-    touch(
-      _transformed_footprint[i].x, _transformed_footprint[i].y,
-      min_x, min_y, max_x, max_y);
+
+  if (!_footprint_projection_enabled) {
+    // Simple 2D transformation
+    nav2_costmap_2d::transformFootprint(
+      robot_x, robot_y, robot_yaw,
+      getFootprint(), _transformed_footprint);
+    for (unsigned int i = 0; i < _transformed_footprint.size(); i++) {
+      touch(
+        _transformed_footprint[i].x, _transformed_footprint[i].y,
+        min_x, min_y, max_x, max_y);
+    }
+  } else {
+    // Using tf2 for 3d rotation to provide accurate projection of the footprint
+    try {
+      rclcpp::Time current_time = _clock->now();
+      geometry_msgs::msg::TransformStamped tf_footprint_stamped =
+        tf_->lookupTransform(
+          _global_frame, _robot_base_frame,
+          current_time ); 
+      for (unsigned int i = 0; i < _transformed_footprint.size(); i++) {
+        tf2::doTransform(_transformed_footprint[i], _transformed_footprint[i], tf_footprint_stamped);       
+        touch(
+          _transformed_footprint[i].x, _transformed_footprint[i].y,
+          min_x, min_y, max_x, max_y);
+      }
+    } catch (tf2::TransformException &ex) {
+      RCLCPP_WARN(
+        rclcpp::get_logger("SpatioTemporalVoxelLayer"),
+        "Could not perform a transform for footprint projection: %s", ex.what());
+      return false;
+    }
   }
 
   return true;

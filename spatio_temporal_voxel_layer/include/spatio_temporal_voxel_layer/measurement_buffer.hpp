@@ -73,7 +73,9 @@ enum class Filters
 {
   NONE = 0,
   VOXEL = 1,
-  PASSTHROUGH = 2
+  PASSTHROUGH = 2,
+  VOXEL_RELATIVE = 3,
+  PASSTHROUGH_RELATIVE = 4
 };
 
 // conveniences for line lengths
@@ -95,6 +97,7 @@ public:
     tf2_ros::Buffer & tf,
     const std::string & global_frame,
     const std::string & sensor_frame,
+    const std::string & z_reference_frame,
     const double & tf_tolerance,
     const double & min_d,
     const double & max_d,
@@ -155,7 +158,7 @@ private:
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
   boost::recursive_mutex _lock;
-  std::string _global_frame, _sensor_frame, _source_name, _topic_name;
+  std::string _global_frame, _sensor_frame, _source_name, _topic_name, _z_reference_frame;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _vertical_fov_padding, _horizontal_fov;

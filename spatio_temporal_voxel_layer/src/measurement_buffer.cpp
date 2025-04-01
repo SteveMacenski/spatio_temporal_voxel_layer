@@ -54,7 +54,7 @@ MeasurementBuffer::MeasurementBuffer(
   const double & observation_keep_time, const double & expected_update_rate,
   const double & min_obstacle_height, const double & max_obstacle_height,
   const double & obstacle_range, tf2_ros::Buffer & tf, const std::string & global_frame,
-  const std::string & sensor_frame, const double & tf_tolerance,
+  const std::string & sensor_frame, const std::string & z_reference_frame, const double & tf_tolerance,
   const double & min_d, const double & max_d, const double & vFOV,
   const double & vFOVPadding, const double & hFOV,
   const double & decay_acceleration, const bool & marking,
@@ -67,7 +67,7 @@ MeasurementBuffer::MeasurementBuffer(
   _expected_update_rate(rclcpp::Duration::from_seconds(expected_update_rate)),
   _last_updated(clock->now()),
   _global_frame(global_frame), _sensor_frame(sensor_frame), _source_name(source_name),
-  _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
+  _topic_name(topic_name), _z_reference_frame(z_reference_frame), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
   _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
   _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
@@ -137,44 +137,98 @@ void MeasurementBuffer::BufferROSCloud(
       return;
     }
 
-    // transform the cloud in the global frame
-    point_cloud_ptr cld_global(new sensor_msgs::msg::PointCloud2());
-    geometry_msgs::msg::TransformStamped tf_stamped =
-      _buffer.lookupTransform(
-      _global_frame, cloud.header.frame_id,
-      tf2_ros::fromMsg(cloud.header.stamp));
-    tf2::doTransform(cloud, *cld_global, tf_stamped);
-
+    point_cloud_ptr cld_transformed(new sensor_msgs::msg::PointCloud2());
     pcl::PCLPointCloud2::Ptr cloud_pcl(new pcl::PCLPointCloud2());
     pcl::PCLPointCloud2::Ptr cloud_filtered(new pcl::PCLPointCloud2());
-
+    pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
+    pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
+    float v_s = static_cast<float>(_voxel_size);
     // remove points that are below or above our height restrictions, and
     // in the same time, remove NaNs and if user wants to use it, combine with a
-    if (_filter == Filters::VOXEL) {
-      pcl_conversions::toPCL(*cld_global, *cloud_pcl);
-      pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-      sor.setInputCloud(cloud_pcl);
-      sor.setFilterFieldName("z");
-      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
-      sor.setDownsampleAllData(false);
-      float v_s = static_cast<float>(_voxel_size);
-      sor.setLeafSize(v_s, v_s, v_s);
-      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
-      sor.filter(*cloud_filtered);
-      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
-    } else if (_filter == Filters::PASSTHROUGH) {
-      pcl_conversions::toPCL(*cld_global, *cloud_pcl);
-      pcl::PassThrough<pcl::PCLPointCloud2> pass_through_filter;
+
+    geometry_msgs::msg::TransformStamped tf_direct_global, tf_z_reference, tf_global_from_z_reference;
+
+
+    switch (_filter)
+    {
+    case Filters::PASSTHROUGH :
+      tf_direct_global =
+        _buffer.lookupTransform(
+        _global_frame, cloud.header.frame_id,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf2::doTransform(cloud, *cld_transformed, tf_direct_global);
+      pcl_conversions::toPCL(*cld_transformed, *cloud_pcl);
       pass_through_filter.setInputCloud(cloud_pcl);
       pass_through_filter.setKeepOrganized(false);
       pass_through_filter.setFilterFieldName("z");
       pass_through_filter.setFilterLimits(
         _min_obstacle_height, _max_obstacle_height);
       pass_through_filter.filter(*cloud_filtered);
-      pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_transformed);
+      break;
+    case Filters::VOXEL :
+      tf_direct_global =
+        _buffer.lookupTransform(
+        _global_frame, cloud.header.frame_id,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf2::doTransform(cloud, *cld_transformed, tf_direct_global);
+      pcl_conversions::toPCL(*cld_transformed, *cloud_pcl);
+      sor.setInputCloud(cloud_pcl);
+      sor.setFilterFieldName("z");
+      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
+      sor.setDownsampleAllData(false);
+      sor.setLeafSize(v_s, v_s, v_s);
+      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
+      sor.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_transformed);
+      break;
+    case Filters::PASSTHROUGH_RELATIVE :
+      tf_z_reference =
+        _buffer.lookupTransform(
+        _z_reference_frame, cloud.header.frame_id,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf_global_from_z_reference =
+        _buffer.lookupTransform(
+        _global_frame, _z_reference_frame,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf2::doTransform(cloud, *cld_transformed, tf_z_reference);
+      pcl_conversions::toPCL(*cld_transformed, *cloud_pcl);
+      pass_through_filter.setInputCloud(cloud_pcl);
+      pass_through_filter.setKeepOrganized(false);
+      pass_through_filter.setFilterFieldName("z");
+      pass_through_filter.setFilterLimits(
+        _min_obstacle_height, _max_obstacle_height);
+      pass_through_filter.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_transformed);
+      tf2::doTransform(*cld_transformed, *cld_transformed, tf_global_from_z_reference);
+      break;
+    case Filters::VOXEL_RELATIVE :
+      tf_z_reference =
+        _buffer.lookupTransform(
+        _z_reference_frame, cloud.header.frame_id,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf_global_from_z_reference =
+        _buffer.lookupTransform(
+        _global_frame, _z_reference_frame,
+        tf2_ros::fromMsg(cloud.header.stamp));
+      tf2::doTransform(cloud, *cld_transformed, tf_z_reference);
+      pcl_conversions::toPCL(*cld_transformed, *cloud_pcl);
+      sor.setInputCloud(cloud_pcl);
+      sor.setFilterFieldName("z");
+      sor.setFilterLimits(_min_obstacle_height, _max_obstacle_height);
+      sor.setDownsampleAllData(false);
+      sor.setLeafSize(v_s, v_s, v_s);
+      sor.setMinimumPointsNumberPerVoxel(static_cast<unsigned int>(_voxel_min_points));
+      sor.filter(*cloud_filtered);
+      pcl_conversions::fromPCL(*cloud_filtered, *cld_transformed);
+      tf2::doTransform(*cld_transformed, *cld_transformed, tf_global_from_z_reference);
+      break;    
+    default:
+      tf2::doTransform(cloud, *cld_transformed, tf_direct_global);
+      break;
     }
 
-    _observation_list.front()._cloud.reset(cld_global.release());
+    _observation_list.front()._cloud.reset(cld_transformed.release());
   } catch (tf2::TransformException & ex) {
     // if fails, remove the empty observation
     _observation_list.pop_front();

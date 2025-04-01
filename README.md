@@ -101,7 +101,7 @@ Required dependencies ROS Kinetic, navigation, OpenVDB, TBB.
 
 An example fully-described configuration is shown below.
 
-Note: We supply two PCL filters within STVL to massage the data to lower compute overhead. STVL has an approximate voxel filter to make the data more sparse if very dense. It also has a passthrough filter to limit processing data within the valid minimum to maximum height bounds. The voxel filter is recommended if it lowers CPU overhead, otherwise, passthrough filter. No filter is also available if you pre-process your data or are not interested in performance optimizations. 
+Note: We supply two PCL filters within STVL to massage the data to lower compute overhead. STVL has an approximate voxel filter to make the data more sparse if very dense. It also has a passthrough filter to limit processing data within the valid minimum to maximum height bounds. The voxel filter is recommended if it lowers CPU overhead, otherwise, passthrough filter. No filter is also available if you pre-process your data or are not interested in performance optimizations. Filters have "relative" variants made to use robot's frame for obstacle classification instead of the global frame in case of navigating sloped surfaces.
 
 ```
 rgbd_obstacle_layer:
@@ -113,7 +113,9 @@ rgbd_obstacle_layer:
   observation_persistence: 0.0  #seconds
   max_obstacle_height:   2.0    #meters
   mark_threshold:        0      #voxel height
-  update_footprint_enabled: true
+  update_footprint_enabled: true 
+  footprint_projection_enabled: true #default off, recommended when using 3d IMU data. Uses tf2 to transform the footprint
+  robot_base_frame: "base_link" #frame to use with footprint_projection_enabled
   combination_method:    1      #1=max, 0=override
   obstacle_range:        3.0    #meters
   origin_z:              0.0    #meters
@@ -133,7 +135,8 @@ rgbd_obstacle_layer:
     observation_persistence: 0.0 #default 0, use all measurements taken during now-value, 0=latest 
     inf_is_valid: false          #default false, for laser scans
     clear_after_reading: true    #default false, clear the buffer after the layer gets readings from it
-    filter: "voxel"              #default passthrough, apply "voxel", "passthrough", or no filter to sensor data, recommended to have at one filter on
+    filter: "voxel"              #default passthrough, apply "voxel", "passthrough", "voxel_relative", "passthrough_relative", or no filter to sensor data, recommended to have at one filter on
+    z_reference_frame: "base_link" #default global_frame, use with *_relative filters as a frame for obstacle classification based on z coordinate
     voxel_min_points: 0          #default 0, minimum points per voxel for voxel filter
   rgbd1_clear:
     enabled: true                #default true, can be toggled on/off with associated service call
