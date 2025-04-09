@@ -79,9 +79,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 )
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
-# Get a linker error when there are undefined symbols
-add_link_options(-Wl,--no-undefined)
-
 include_directories(
     include
     ${BOOST_INCLUDE_DIRS}
@@ -108,6 +105,15 @@ target_link_libraries(${library_name}
   ${PCL_LIBRARIES}
   OpenVDB::openvdb
 )
+
+# Get a linker error when there are undefined symbols
+# target_link_options (https://cmake.org/cmake/help/latest/command/target_link_options.html)
+# is only available since CMake 3.13
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+  target_link_options(${library_name} PRIVATE -Wl,--no-undefined)
+else()
+  add_link_options(-Wl,--no-undefined)
+endif()
 
 ament_target_dependencies(${library_name} ${dependencies})
 
