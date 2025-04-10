@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(spatio_temporal_voxel_layer)
 
 if(NOT WIN32)
@@ -107,13 +107,7 @@ target_link_libraries(${library_name}
 )
 
 # Get a linker error when there are undefined symbols
-# target_link_options (https://cmake.org/cmake/help/latest/command/target_link_options.html)
-# is only available since CMake 3.13
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
-  target_link_options(${library_name} PRIVATE -Wl,--no-undefined)
-else()
-  add_link_options(-Wl,--no-undefined)
-endif()
+target_link_options(${library_name} PRIVATE -Wl,--no-undefined)
 
 ament_target_dependencies(${library_name} ${dependencies})
 
