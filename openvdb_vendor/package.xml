@@ -4,7 +4,7 @@
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
   <name>openvdb_vendor</name>
-  <version>2.3.3</version>
+  <version>2.3.4</version>
   <description>
     Wrapper around OpenVDB, if not found on the system, will compile from source
   </description>
