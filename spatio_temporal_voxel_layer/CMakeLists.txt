@@ -85,6 +85,7 @@ include_directories(
     ${EIGEN3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
+    ${pcl_conversions_INCLUDE_DIRS}
 )
 
 add_library(${library_name} SHARED
@@ -104,12 +105,20 @@ target_link_libraries(${library_name}
   ${EIGEN3_LIBRARIES}
   ${PCL_LIBRARIES}
   OpenVDB::openvdb
+  rclcpp::rclcpp
+  ${geometry_msgs_TARGETS}
+  rclcpp_lifecycle::rclcpp_lifecycle
+  ${sensor_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  tf2_ros::tf2_ros
+  tf2_geometry_msgs::tf2_geometry_msgs
+  tf2_sensor_msgs::tf2_sensor_msgs
+  nav2_costmap_2d::nav2_costmap_2d_core
+  laser_geometry::laser_geometry
 )
 
 # Get a linker error when there are undefined symbols
 target_link_options(${library_name} PRIVATE -Wl,--no-undefined)
-
-ament_target_dependencies(${library_name} ${dependencies})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
