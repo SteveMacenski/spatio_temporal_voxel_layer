@@ -146,19 +146,16 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   auto sub_opt = rclcpp::SubscriptionOptions();
   sub_opt.callback_group = callback_group_;
 
-  auto pub_opt = rclcpp::PublisherOptions();
-  pub_opt.callback_group = callback_group_;
-
   if(_publish_voxels)
   {
     _voxel_pub = node->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "voxel_grid", rclcpp::QoS(1), pub_opt);
+      "voxel_grid", nav2::qos::StandardTopicQoS(1), callback_group_);
   }
 
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
   _grid_saver = node->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
-    "save_grid", save_grid_callback, rclcpp::SystemDefaultsQoS(), callback_group_);
+    "save_grid", save_grid_callback, callback_group_);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
     node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
@@ -288,13 +285,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _clearing_buffers.push_back(_observation_buffers.back());
     }
 
-    rmw_qos_profile_t custom_qos_profile = rmw_qos_profile_sensor_data;
-    custom_qos_profile.depth = 50;
+    const auto custom_qos_profile = nav2::qos::SensorDataQoS(50);
 
     // create a callback for the topic
     if (data_type == "LaserScan") {
-      auto sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::LaserScan,
-          rclcpp_lifecycle::LifecycleNode>>(node, topic, custom_qos_profile, sub_opt);
+      auto sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::LaserScan>>(
+        node, topic, custom_qos_profile, sub_opt);
       sub->unsubscribe();
 
       std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>
@@ -321,8 +317,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
       _observation_notifiers.back()->setTolerance(rclcpp::Duration::from_seconds(0.05));
     } else if (data_type == "PointCloud2") {
-      auto sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::PointCloud2,
-          rclcpp_lifecycle::LifecycleNode>>(node, topic, custom_qos_profile, sub_opt);
+      auto sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>>(
+        node, topic, custom_qos_profile, sub_opt);
       sub->unsubscribe();
 
       std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>
@@ -350,7 +346,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       _observation_subscribers.back());
     std::string toggle_topic = source + "/toggle_enabled";
     auto server = node->create_service<std_srvs::srv::SetBool>(
-      toggle_topic, toggle_srv_callback, rclcpp::SystemDefaultsQoS(), callback_group_);
+      toggle_topic, toggle_srv_callback, callback_group_);
 
     _buffer_enabler_servers.push_back(server);
 
@@ -454,7 +450,7 @@ void SpatioTemporalVoxelLayer::BufferEnablerCallback(
   const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
   std::shared_ptr<std_srvs::srv::SetBool::Response> response,
   const std::shared_ptr<buffer::MeasurementBuffer> buffer,
-  const std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>> &subcriber
+  const std::shared_ptr<message_filters::SubscriberBase> &subcriber
   )
 /*****************************************************************************/
 {

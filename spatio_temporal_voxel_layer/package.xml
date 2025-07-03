@@ -32,6 +32,7 @@
   <depend>visualization_msgs</depend>
   <depend>openvdb_vendor</depend>
   <depend>libopenexr-dev</depend>
+  <depend>nav2_ros_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>

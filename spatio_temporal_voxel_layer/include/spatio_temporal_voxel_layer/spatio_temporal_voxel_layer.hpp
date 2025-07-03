@@ -75,14 +75,13 @@
 #include "tf2_ros/message_filter.h"
 #include "message_filters/subscriber.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "tf2/buffer_core.h"
 
 namespace spatio_temporal_voxel_layer
 {
 
 // conveniences for line lengths
 typedef std::vector<
-  std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>
+  std::shared_ptr<message_filters::SubscriberBase>
   >::iterator observation_subscribers_iter;
 typedef std::vector<std::shared_ptr<buffer::MeasurementBuffer>>::iterator observation_buffers_iter;
 
@@ -155,7 +154,7 @@ private:
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response,
     const std::shared_ptr<buffer::MeasurementBuffer> buffer,
-    const std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>
+    const std::shared_ptr<message_filters::SubscriberBase>
       & subcriber
     );
 
@@ -167,17 +166,17 @@ private:
     dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters);
 
   laser_geometry::LaserProjection _laser_projector;
-  std::vector<std::shared_ptr<message_filters::SubscriberBase<rclcpp_lifecycle::LifecycleNode>>>
+  std::vector<std::shared_ptr<message_filters::SubscriberBase>>
     _observation_subscribers;
   std::vector<std::shared_ptr<tf2_ros::MessageFilterBase>> _observation_notifiers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _observation_buffers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _marking_buffers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _clearing_buffers;
-  std::vector<rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr> _buffer_enabler_servers;
+  std::vector<nav2::ServiceServer<std_srvs::srv::SetBool>::SharedPtr> _buffer_enabler_servers;
 
   bool _publish_voxels, _mapping_mode, was_reset_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
-  rclcpp::Service<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
+  nav2::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
+  nav2::ServiceServer<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
   std::unique_ptr<rclcpp::Duration> _map_save_duration;
   rclcpp::Time _last_map_save_time;
   std::string _global_frame;
