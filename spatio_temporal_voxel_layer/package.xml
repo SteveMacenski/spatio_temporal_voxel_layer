@@ -14,7 +14,8 @@
   <build_depend>rosidl_default_generators</build_depend>
   <build_depend>libpcl-all-dev</build_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
-  <exec_depend>libpcl-all</exec_depend>
+  <exec_depend>libpcl-common</exec_depend>
+  <exec_depend>libpcl-filters</exec_depend>
 
   <depend>builtin_interfaces</depend>
   <depend>nav2_costmap_2d</depend>
