@@ -125,6 +125,7 @@ rgbd_obstacle_layer:
   rgbd1_mark:
     data_type: PointCloud2
     topic: camera1/depth/points
+    transport_type: "raw"        #default raw -No compression-, Options: zlib, draco, zstd
     marking: true
     clearing: false
     min_obstacle_height: 0.3     #default 0, meters
@@ -139,6 +140,7 @@ rgbd_obstacle_layer:
     enabled: true                #default true, can be toggled on/off with associated service call
     data_type: PointCloud2
     topic: camera1/depth/points
+    transport_type: "raw"        #default raw -No compression-, Options: zlib, draco, zstd
     marking: false
     clearing: true
     min_z: 0.1                   #default 0, meters
