@@ -71,8 +71,8 @@
 // projector
 #include "laser_geometry/laser_geometry.hpp"
 // tf
-#include "tf2_ros/transform_listener.h"
-#include "tf2_ros/message_filter.h"
+#include "tf2_ros/transform_listener.hpp"
+#include "tf2_ros/message_filter.hpp"
 #include "message_filters/subscriber.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
