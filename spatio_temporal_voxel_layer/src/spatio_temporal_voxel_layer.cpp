@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
+#include "point_cloud_transport/subscriber_filter.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -172,7 +173,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type, filter_str;
+    std::string topic, sensor_frame, data_type, filter_str, transport_type;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
     int voxel_min_points;
@@ -185,6 +186,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(
       source + "." + "data_type",
       rclcpp::ParameterValue(std::string("PointCloud2")));
+    declareParameter(source + "." + "transport_type", rclcpp::ParameterValue(std::string("raw")));
     declareParameter(source + "." + "min_obstacle_height", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "max_obstacle_height", rclcpp::ParameterValue(3.0));
     declareParameter(source + "." + "inf_is_valid", rclcpp::ParameterValue(false));
@@ -213,6 +215,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       name_ + "." + source + "." + "expected_update_rate",
       expected_update_rate);
     node->get_parameter(name_ + "." + source + "." + "data_type", data_type);
+    node->get_parameter(name_ + "." + source + "." + "transport_type", transport_type);
     node->get_parameter(name_ + "." + source + "." + "min_obstacle_height", min_obstacle_height);
     node->get_parameter(name_ + "." + source + "." + "max_obstacle_height", max_obstacle_height);
     node->get_parameter(name_ + "." + source + "." + "inf_is_valid", inf_is_valid);
@@ -317,8 +320,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
       _observation_notifiers.back()->setTolerance(rclcpp::Duration::from_seconds(0.05));
     } else if (data_type == "PointCloud2") {
-      auto sub = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>>(
-        node, topic, custom_qos_profile, sub_opt);
+      auto sub = std::make_shared<point_cloud_transport::SubscriberFilter>(
+        *node, topic, transport_type, custom_qos_profile, sub_opt);
       sub->unsubscribe();
 
       std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>

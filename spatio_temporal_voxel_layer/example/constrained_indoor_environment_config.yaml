@@ -20,6 +20,7 @@ global_costmap:
         rgbd1_mark:
           data_type: PointCloud2
           topic: camera1/depth/points
+          transport_type: "raw"        # default raw -No compression-, Options: zlib, draco, zstd
           marking: true
           clearing: false
           obstacle_range: 3.0          # meters
@@ -34,6 +35,7 @@ global_costmap:
         rgbd1_clear:
           data_type: PointCloud2
           topic: camera1/depth/points
+          transport_type: "raw"       # default raw -No compression-, Options: zlib, draco, zstd
           marking: false
           clearing: true
           max_z: 7.0                  # default 0, meters

@@ -20,6 +20,7 @@ global_costmap:
         rgbd1_mark:
           data_type: PointCloud2
           topic: /velodyne_points
+          transport_type: "raw"        # default raw -No compression-, Options: zlib, draco, zstd
           marking: true
           clearing: false
           obstacle_range: 3.0          # meters
@@ -34,6 +35,7 @@ global_costmap:
           enabled: true                #default true, can be toggled on/off with associated service call
           data_type: PointCloud2
           topic: /velodyne_points
+          transport_type: "raw"       # default raw -No compression-, Options: zlib, draco, zstd
           marking: false
           clearing: true
           max_z: 8.0                  # default 0, meters

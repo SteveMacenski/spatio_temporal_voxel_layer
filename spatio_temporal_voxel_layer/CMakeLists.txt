@@ -30,6 +30,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(openvdb_vendor REQUIRED)
+find_package(point_cloud_transport REQUIRED)
 
 remove_definitions(-DDISABLE_LIBUSB-1.0)
 find_package(Eigen3 REQUIRED)
@@ -69,6 +70,7 @@ set(dependencies
   visualization_msgs
   builtin_interfaces
   openvdb_vendor
+  point_cloud_transport
 )
 
 set(library_name spatio_temporal_voxel_layer_core)
@@ -118,6 +120,7 @@ target_link_libraries(${library_name}
   laser_geometry::laser_geometry
   pcl_conversions::pcl_conversions
   nav2_ros_common::nav2_ros_common
+  point_cloud_transport::point_cloud_transport
 )
 
 # Get a linker error when there are undefined symbols
