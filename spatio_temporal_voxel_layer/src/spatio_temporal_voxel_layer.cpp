@@ -296,12 +296,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         node, topic, custom_qos_profile, sub_opt);
       sub->unsubscribe();
 
-      std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>
-      > filter(new tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>(
+      auto filter = std::make_shared<tf2_ros::MessageFilter<sensor_msgs::msg::LaserScan>>(
           *sub, *tf_, _global_frame, 50,
                  node->get_node_logging_interface(),
                  node->get_node_clock_interface(),
-                 tf2::durationFromSec(transform_tolerance)));
+                 tf2::durationFromSec(transform_tolerance));
 
       if (inf_is_valid) {
         filter->registerCallback(
@@ -324,12 +323,11 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         *node, topic, transport_type, custom_qos_profile, sub_opt);
       sub->unsubscribe();
 
-      std::shared_ptr<tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>
-      > filter(new tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>(
+      auto filter = std::make_shared<tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>>(
           *sub, *tf_, _global_frame, 50,
                  node->get_node_logging_interface(),
                  node->get_node_clock_interface(),
-                 tf2::durationFromSec(transform_tolerance)));
+                 tf2::durationFromSec(transform_tolerance));
       filter->registerCallback(
         std::bind(
           &SpatioTemporalVoxelLayer::PointCloud2Callback, this, _1,
