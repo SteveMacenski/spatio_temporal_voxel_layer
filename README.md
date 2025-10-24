@@ -107,7 +107,7 @@ Note: We supply two PCL filters within STVL to massage the data to lower compute
 rgbd_obstacle_layer:
   enabled:               true
   voxel_decay:           20     #seconds if linear, e^n if exponential
-  decay_model:           0      #0=linear, 1=exponential, -1=persistent
+  decay_model:           0      #0=linear, 1=exponential, 2=persistent
   voxel_size:            0.05   #meters
   track_unknown_space:   true   #default space is unknown
   observation_persistence: 0.0  #seconds
