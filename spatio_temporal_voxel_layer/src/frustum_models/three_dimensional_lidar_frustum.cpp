@@ -42,10 +42,10 @@ namespace geometry
 
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
-  const double & vFOV, const double & vFOVPadding, const double & hFOV,
-  const double & min_dist, const double & max_dist)
-: _vFOV(vFOV), _vFOVPadding(vFOVPadding), _hFOV(hFOV),
-  _min_d(min_dist), _max_d(max_dist)
+  const double & vFOV, const double & vFOVOffset, const double & vFOVPadding, 
+  const double & hFOV, const double & min_dist, const double & max_dist)
+: _vFOV(vFOV), _vFOVOffset(vFOVOffset), _vFOVPadding(vFOVPadding),
+  _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
 {
   _hFOVhalf = _hFOV / 2.0;
@@ -84,16 +84,18 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   const double radial_distance_squared =
     (transformed_pt[0] * transformed_pt[0]) +
     (transformed_pt[1] * transformed_pt[1]);
-
+    
   // Check if inside frustum valid range
   if (radial_distance_squared > _max_d_squared ||
     radial_distance_squared < _min_d_squared)
   {
     return false;
   }
+      
+  // Check if inside frustum valid vFOV
+  const double z_rel = transformed_pt[2] - sqrt(radial_distance_squared) * std::tan(_vFOVOffset);
+  const double v_padded = fabs(z_rel) + _vFOVPadding;
 
-  // // Check if inside frustum valid vFOV
-  const double v_padded = fabs(transformed_pt[2]) + _vFOVPadding;
   if (( v_padded * v_padded / radial_distance_squared) >
     _tan_vFOVhalf_squared)
   {
