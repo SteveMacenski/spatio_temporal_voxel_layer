@@ -348,7 +348,7 @@ double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(
   } else if (_decay_model == 1) {  // Exponential
     return _voxel_decay * std::exp(-time_delta);
   }
-  return _voxel_decay;  // PERSISTENT
+  return std::numeric_limits<double>::max();  // PERSISTENT
 }
 
 /*****************************************************************************/
