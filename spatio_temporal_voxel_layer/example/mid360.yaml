@@ -39,7 +39,7 @@ global_costmap:
           max_z: 8.0                   # default 0, meters
           min_z: 1.0                   # default 10, meters
           vertical_fov_angle: 1.8151   # default 0.7, radians. For 3D lidars it's the symmetric FOV about the planar axis.
-          vertical_fov_offset: 0.3927  # default 0, radians. For 3D lidars it's the offset from the planar axis. f.e. a MID360 has a vFOV of -7deg to 52deg, so the offset is +22.5deg (0.3927 rad)
+          vertical_fov_offset: 0.3927  # default 0, radians. 3D Lidar only. Offset from planar axis. f.e. MID360 has a vFOV of -7deg to 52deg => offset +22.5deg (0.3927 rad)
           vertical_fov_padding: 0.05   # 3D Lidar only. Default 0, in meters 
           horizontal_fov_angle: 6.29   # 3D lidar scanners like the VLP16 have 360 deg horizontal FOV.
           decay_acceleration: 5.0      # default 0, 1/s^2. 
