@@ -56,7 +56,7 @@ MeasurementBuffer::MeasurementBuffer(
   const double & obstacle_range, tf2_ros::Buffer & tf, const std::string & global_frame,
   const std::string & sensor_frame, const double & tf_tolerance,
   const double & min_d, const double & max_d, const double & vFOV,
-  const double & vFOVPadding, const double & hFOV,
+  const double & vFOVOffset, const double & vFOVPadding, const double & hFOV,
   const double & decay_acceleration, const bool & marking,
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
@@ -70,7 +70,7 @@ MeasurementBuffer::MeasurementBuffer(
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
   _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
-  _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
+  _vertical_fov(vFOV), _vertical_fov_offset(vFOVOffset), _vertical_fov_padding(vFOVPadding),
   _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
@@ -124,8 +124,8 @@ void MeasurementBuffer::BufferROSCloud(
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
-    _observation_list.front()._vertical_fov_padding_in_m =
-      _vertical_fov_padding;
+    _observation_list.front()._vertical_fov_offset_in_rad = _vertical_fov_offset;
+    _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
@@ -315,6 +315,13 @@ void MeasurementBuffer::SetVerticalFovAngle(const double & vertical_fov_angle)
 /*****************************************************************************/
 {
   _vertical_fov = vertical_fov_angle;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetVerticalFovOffset(const double & vertical_fov_offset)
+/*****************************************************************************/
+{
+  _vertical_fov_offset = vertical_fov_offset;
 }
 
 /*****************************************************************************/
