@@ -23,10 +23,13 @@
   <buildtool_depend>ament_cmake_vendor_package</buildtool_depend>
   <buildtool_depend>git</buildtool_depend>
 
+  <depend>bzip2</depend>
   <depend>libblosc-dev</depend>
   <depend>libboost-iostreams-dev</depend>
   <depend>libboost-thread-dev</depend>
+  <depend>liblzma-dev</depend>
   <depend condition="$ROS_DISTRO != humble and $ROS_DISTRO != iron">libopenvdb-dev</depend>
+  <depend>libzstd-dev</depend>
   <depend>tbb</depend>
   <depend>zlib</depend>
 
