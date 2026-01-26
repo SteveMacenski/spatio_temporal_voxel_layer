@@ -139,7 +139,8 @@ public:
   void ClearFrustums(
     const std::vector<observation::MeasurementReading> & clearing_observations,
     std::unordered_set<occupany_cell> & cleared_cells,
-    openvdb::Vec3d & robot_pose_world);
+    openvdb::Vec3d & robot_pose_world,
+    const std::string & global_frame = "map");
 
   // Get the pointcloud of the underlying occupancy grid
   void GetOccupancyPointCloud(std::unique_ptr<sensor_msgs::msg::PointCloud2> & pc2);

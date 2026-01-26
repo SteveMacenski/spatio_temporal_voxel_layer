@@ -774,7 +774,7 @@ void SpatioTemporalVoxelLayer::updateBounds(
     openvdb::Vec3d robot_pose_world;
     robot_pose_world[0] = robot_x;
     robot_pose_world[1] = robot_y;
-    _voxel_grid->ClearFrustums(clearing_observations, cleared_cells, robot_pose_world);
+    _voxel_grid->ClearFrustums(clearing_observations, cleared_cells, robot_pose_world, _global_frame);
   } else if (should_save) {
     _last_map_save_time = node->now();
     time_t rawtime;

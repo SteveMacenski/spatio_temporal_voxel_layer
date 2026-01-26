@@ -97,7 +97,8 @@ void SpatioTemporalVoxelGrid::InitializeGrid(void)
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::ClearFrustums(
   const std::vector<observation::MeasurementReading> & clearing_readings,
-  std::unordered_set<occupany_cell> & cleared_cells, openvdb::Vec3d & robot_pose_world)
+  std::unordered_set<occupany_cell> & cleared_cells, openvdb::Vec3d & robot_pose_world,
+  const std::string & global_frame)
 /*****************************************************************************/
 {
   boost::unique_lock<boost::mutex> lock(_grid_lock);
@@ -132,7 +133,11 @@ void SpatioTemporalVoxelGrid::ClearFrustums(
     } else if (it->_model_type == THREE_DIMENSIONAL_LIDAR) {
       frustum = new geometry::ThreeDimensionalLidarFrustum(
         it->_vertical_fov_in_rad, it->_vertical_fov_offset_in_rad, it->_vertical_fov_padding_in_m,
-        it->_horizontal_fov_in_rad, it->_min_z_in_m, it->_max_z_in_m);
+        it->_horizontal_fov_in_rad, it->_min_z_in_m, it->_max_z_in_m
+#if VISUALIZE_FRUSTUM
+        , global_frame, it->_source_name, false
+#endif
+      );
     } else {
       // add else if statement for each implemented model
       delete frustum;
@@ -281,7 +286,13 @@ void SpatioTemporalVoxelGrid::Mark(
   // mark the grid
   if (marking_readings.size() > 0) {
     for (uint i = 0; i != marking_readings.size(); i++) {
-      (*this)(marking_readings.at(i));
+      const auto & reading = marking_readings.at(i);
+
+#if VISUALIZE_FRUSTUM
+      geometry::PublishMarkingFrustumVisualizationIfEnabled(reading);
+#endif
+
+      (*this)(reading);
     }
   }
 }
@@ -316,13 +327,11 @@ void SpatioTemporalVoxelGrid::operator()(
       double z = *iter_z < 0 ? *iter_z - _voxel_size : *iter_z;
 
       openvdb::Vec3d mark_grid(this->WorldToIndex(
-          openvdb::Vec3d(x, y, z)));
+        openvdb::Vec3d(x, y, z)));
 
       if (!this->MarkGridPoint(
-          openvdb::Coord(
-            mark_grid[0], mark_grid[1],
-            mark_grid[2]), cur_time))
-      {
+            openvdb::Coord(
+              mark_grid[0], mark_grid[1], mark_grid[2]), cur_time)) {
         std::cout << "Failed to mark point." << std::endl;
       }
     }
@@ -330,8 +339,7 @@ void SpatioTemporalVoxelGrid::operator()(
 }
 
 /*****************************************************************************/
-std::unordered_map<occupany_cell, uint> *
-SpatioTemporalVoxelGrid::GetFlattenedCostmap()
+std::unordered_map<occupany_cell, uint> * SpatioTemporalVoxelGrid::GetFlattenedCostmap()
 /*****************************************************************************/
 {
   return _cost_map;
@@ -356,8 +364,8 @@ double SpatioTemporalVoxelGrid::GetFrustumAcceleration(
   const double & time_delta, const double & acceleration_factor)
 /*****************************************************************************/
 {
-  const double acceleration = 1. / 6. * acceleration_factor *
-    (time_delta * time_delta * time_delta);
+  const double acceleration =
+    1. / 6. * acceleration_factor * (time_delta * time_delta * time_delta);
   return acceleration;
 }
 
@@ -431,7 +439,7 @@ void SpatioTemporalVoxelGrid::ResetGridArea(
     const bool in_y_range = pose_world.y() > start.y && pose_world.y() < end.y;
     const bool in_range = in_x_range && in_y_range;
 
-    if(in_range != invert_area)
+    if (in_range != invert_area)
     {
       ClearGridPoint(pt_index);
     }
@@ -469,7 +477,7 @@ openvdb::Vec3d SpatioTemporalVoxelGrid::IndexToWorld(
 /*****************************************************************************/
 {
   // Applies tranform stored in getTransform.
-  openvdb::Vec3d pose_world =  _grid->indexToWorld(coord);
+  openvdb::Vec3d pose_world = _grid->indexToWorld(coord);
 
   // Using the center for world coordinate
   const double & center_offset = _voxel_size / 2.0;

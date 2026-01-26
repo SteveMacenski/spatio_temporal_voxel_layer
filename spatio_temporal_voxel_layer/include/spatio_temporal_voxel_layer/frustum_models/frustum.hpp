@@ -39,6 +39,12 @@
 #ifndef SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__FRUSTUM_HPP_
 #define SPATIO_TEMPORAL_VOXEL_LAYER__FRUSTUM_MODELS__FRUSTUM_HPP_
 
+// Frustum visualization can be enabled at compile time. If the macro is not
+// already defined (e.g. via compiler flags), default it to disabled.
+#ifndef VISUALIZE_FRUSTUM
+#define VISUALIZE_FRUSTUM 0
+#endif
+
 // STL
 #include <vector>
 #include <cassert>
