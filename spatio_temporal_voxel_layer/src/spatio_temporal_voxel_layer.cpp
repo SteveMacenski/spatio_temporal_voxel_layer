@@ -854,6 +854,9 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
               buffer->Lock();
               buffer->SetMinObstacleHeight(parameter.as_double());
               buffer->Unlock();
+
+              boost::unique_lock<mutex_t> cm_lock(*getMutex());
+              current_ = false;
             }
           }
         } else if (name == name_ + "." + source + "." + "max_obstacle_height") {
@@ -862,6 +865,9 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
               buffer->Lock();
               buffer->SetMaxObstacleHeight(parameter.as_double());
               buffer->Unlock();
+
+              boost::unique_lock<mutex_t> cm_lock(*getMutex());
+              current_ = false;
             }
           }
         } else if (name == name_ + "." + source + "." + "min_z") {
@@ -944,12 +950,18 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
           }
         }
         enabled_ = enable;
+
+        boost::unique_lock<mutex_t> cm_lock(*getMutex());
+        current_ = false;
       }
     }
 
     if (type == ParameterType::PARAMETER_INTEGER) {
       if (name == name_ + "." + "mark_threshold") {
         _mark_threshold = parameter.as_int();
+
+        boost::unique_lock<mutex_t> cm_lock(*getMutex());
+        current_ = false;
       }
     }
   }
