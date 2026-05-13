@@ -80,7 +80,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     getName().c_str(), _global_frame.c_str());
 
   bool track_unknown_space;
-  double transform_tolerance, map_save_time;
+  double transform_tolerance, map_save_time, safety_distance, safety_decay;
   int decay_model_int;
   // source names
   auto node = node_.lock();
@@ -119,6 +119,10 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   // decay param
   declareParameter("voxel_decay", rclcpp::ParameterValue(-1.0));
   node->get_parameter(name_ + ".voxel_decay", _voxel_decay);
+  declareParameter("safety_distance", rclcpp::ParameterValue(2.0));
+  node->get_parameter(name_ + ".safety_distance", safety_distance);
+  declareParameter("safety_decay", rclcpp::ParameterValue(800.0));
+  node->get_parameter(name_ + ".safety_decay", safety_decay);
   // whether to map or navigate
   declareParameter("mapping_mode", rclcpp::ParameterValue(false));
   node->get_parameter(name_ + ".mapping_mode", _mapping_mode);
@@ -147,16 +151,16 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   pub_opt.callback_group = callback_group_;
 
   _voxel_pub = node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "voxel_grid", rclcpp::QoS(1), pub_opt);
+    name_ + "/voxel_grid", rclcpp::QoS(1), pub_opt);
 
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
   _grid_saver = node->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
-    "save_grid", save_grid_callback, rmw_qos_profile_services_default, callback_group_);
+    name_ + "/save_grid", save_grid_callback, rmw_qos_profile_services_default, callback_group_);
 
   _voxel_grid = std::make_unique<volume_grid::SpatioTemporalVoxelGrid>(
     node->get_clock(), _voxel_size, static_cast<double>(default_value_), _decay_model,
-    _voxel_decay, _publish_voxels);
+    _voxel_decay, safety_distance, safety_decay, _publish_voxels);
 
   matchSize();
 
@@ -777,7 +781,10 @@ void SpatioTemporalVoxelLayer::updateBounds(
 
   // save map or clear frustrums and populate costmap
   if (!_mapping_mode) {
-    _voxel_grid->ClearFrustums(clearing_observations, cleared_cells);
+    geometry_msgs::msg::Point32 shuttle_pose;
+    shuttle_pose.x = robot_x;
+    shuttle_pose.y = robot_y;
+    _voxel_grid->ClearFrustums(shuttle_pose, clearing_observations, cleared_cells);
   } else if (should_save) {
     _last_map_save_time = node->now();
     time_t rawtime;
@@ -908,6 +915,20 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
       }
     }
 
+	if (type == ParameterType::PARAMETER_DOUBLE) {
+	  if (name == name_ + "." + "safety_distance") {
+        if (_voxel_grid) {
+          boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+          _voxel_grid->SetSafetyDistance(parameter.as_double());
+	    }
+      } else if (name == name_ + "." + "safety_decay") {
+        if (_voxel_grid) {
+          boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+          _voxel_grid->SetSafetyDecay(parameter.as_double());
+        }
+      }
+    }
+
     if (type == ParameterType::PARAMETER_BOOL) {
       if (name == name_ + "." + "enabled") {
         bool enable = parameter.as_bool();
@@ -960,6 +981,27 @@ void SpatioTemporalVoxelLayer::clearArea(
   volume_grid::occupany_cell end_world(0, 0);
   mapToWorld(start_x, start_y, start_world.x, start_world.y);
   mapToWorld(end_x, end_y, end_world.x, end_world.y);
+
+  if (invert_area) {
+    const double safety_distance = _voxel_grid->GetSafetyDistance();
+    const double center_x = (start_world.x + end_world.x) / 2.0;
+    const double center_y = (start_world.y + end_world.y) / 2.0;
+
+    const double half_x = center_x - start_world.x;
+    const double half_y = center_y - start_world.y;
+
+    const double updated_half_x = std::max(half_x, safety_distance);
+    const double updated_half_y = std::max(half_y, safety_distance);
+
+    RCLCPP_INFO(logger_, "%s->clearArea(): inverted safety_distance=%.3f half_x:%.3f->%.3f half_y:%.3f->%.3f",
+      getName().c_str(), safety_distance, half_x, updated_half_x, half_y, updated_half_y);
+
+    start_world.x = center_x - updated_half_x;
+    start_world.y = center_y - updated_half_y;
+
+    end_world.x = center_x + updated_half_x;
+    end_world.y = center_y + updated_half_y;
+  }
 
   boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
   _voxel_grid->ResetGridArea(start_world, end_world, invert_area);

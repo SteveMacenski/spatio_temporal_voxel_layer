@@ -130,6 +130,7 @@ public:
     rclcpp::Clock::SharedPtr clock,
     const float & voxel_size, const double & background_value,
     const int & decay_model, const double & voxel_decay,
+    const double & safety_distance, const double & safety_decay,
     const bool & pub_voxels);
   ~SpatioTemporalVoxelGrid(void);
 
@@ -137,6 +138,7 @@ public:
   void Mark(const std::vector<observation::MeasurementReading> & marking_observations);
   void operator()(const observation::MeasurementReading & obs) const;
   void ClearFrustums(
+    const geometry_msgs::msg::Point32& shuttle_pose,
     const std::vector<observation::MeasurementReading> & clearing_observations,
     std::unordered_set<occupany_cell> & cleared_cells);
 
@@ -151,6 +153,21 @@ public:
   // Save the file to file with size information
   bool SaveGrid(const std::string & file_name, double & map_size_bytes);
 
+  void SetSafetyDistance(const double safety_distance)
+  {
+    _safety_distance = safety_distance;
+  }
+
+  double GetSafetyDistance()
+  {
+    return _safety_distance;
+  }
+
+  void SetSafetyDecay(const double safety_decay)
+  {
+    _safety_decay = safety_decay;
+  }
+
 protected:
   // Initialize grid metadata and library
   void InitializeGrid(void);
@@ -164,9 +181,11 @@ protected:
 
   // Get time information for clearing
   double GetTemporalClearingDuration(const double & time_delta);
+  double GetTemporalSafetyDuration(const double & time_delta);
   double GetFrustumAcceleration(
     const double & time_delta, const double & acceleration_factor);
   void TemporalClearAndGenerateCostmap(
+    const geometry_msgs::msg::Point32& shuttle_pose,
     std::vector<frustum_model> & frustums,
     std::unordered_set<occupany_cell> & cleared_cells);
 
@@ -182,6 +201,7 @@ protected:
   mutable openvdb::DoubleGrid::Ptr _grid;
   int _decay_model;
   double _background_value, _voxel_size, _voxel_decay;
+  double _safety_distance, _safety_decay;
   bool _pub_voxels;
   std::unique_ptr<std::vector<geometry_msgs::msg::Point32>> _grid_points;
   std::unordered_map<occupany_cell, uint> * _cost_map;

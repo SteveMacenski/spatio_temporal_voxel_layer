@@ -49,9 +49,11 @@ namespace volume_grid
 SpatioTemporalVoxelGrid::SpatioTemporalVoxelGrid(
   rclcpp::Clock::SharedPtr clock,
   const float & voxel_size, const double & background_value,
-  const int & decay_model, const double & voxel_decay, const bool & pub_voxels)
+  const int & decay_model, const double & voxel_decay, const double & safety_distance, const double & safety_decay,
+  const bool & pub_voxels)
 : _clock(clock), _decay_model(decay_model), _background_value(background_value),
-  _voxel_size(voxel_size), _voxel_decay(voxel_decay), _pub_voxels(pub_voxels),
+  _voxel_size(voxel_size), _voxel_decay(voxel_decay), _safety_distance(safety_distance),
+  _safety_decay(safety_decay), _pub_voxels(pub_voxels),
   _grid_points(std::make_unique<std::vector<geometry_msgs::msg::Point32>>()),
   _cost_map(new std::unordered_map<occupany_cell, uint>)
 /*****************************************************************************/
@@ -94,6 +96,7 @@ void SpatioTemporalVoxelGrid::InitializeGrid(void)
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::ClearFrustums(
+  const geometry_msgs::msg::Point32& shuttle_pose,
   const std::vector<observation::MeasurementReading> & clearing_readings,
   std::unordered_set<occupany_cell> & cleared_cells)
 /*****************************************************************************/
@@ -113,7 +116,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums(
   std::vector<frustum_model> obs_frustums;
 
   if (clearing_readings.size() == 0) {
-    TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
+    TemporalClearAndGenerateCostmap(shuttle_pose, obs_frustums, cleared_cells);
     return;
   }
 
@@ -142,11 +145,12 @@ void SpatioTemporalVoxelGrid::ClearFrustums(
     frustum->TransformModel();
     obs_frustums.emplace_back(frustum, it->_decay_acceleration);
   }
-  TemporalClearAndGenerateCostmap(obs_frustums, cleared_cells);
+  TemporalClearAndGenerateCostmap(shuttle_pose, obs_frustums, cleared_cells);
 }
 
 /*****************************************************************************/
 void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
+  const geometry_msgs::msg::Point32& shuttle_pose,
   std::vector<frustum_model> & frustums,
   std::unordered_set<occupany_cell> & cleared_cells)
 /*****************************************************************************/
@@ -166,6 +170,8 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
 
     const double time_since_marking = cur_time - cit_grid.getValue();
     const double base_duration_to_decay = GetTemporalClearingDuration(
+      time_since_marking);
+    const double safety_duration_to_decay = GetTemporalSafetyDuration(
       time_since_marking);
 
     for (; frustum_it != frustums.end(); ++frustum_it) {
@@ -201,7 +207,18 @@ void SpatioTemporalVoxelGrid::TemporalClearAndGenerateCostmap(
 
     // if not inside any, check against nominal decay model
     if (!frustum_cycle) {
+    // Check if far enough away.
+    // Check is done like in costmap clearing. Check for a square around the shuttle in costmap frame.
+    if (std::abs(shuttle_pose.x - pose_world[0]) > _safety_distance ||
+        std::abs(shuttle_pose.y - pose_world[1]) > _safety_distance) {
       if (base_duration_to_decay < 0.) {
+        // expired by temporal clearing
+        cleared_point = true;
+        if (!this->ClearGridPoint(pt_index)) {
+          std::cout << "Failed to clear point." << std::endl;
+        }
+      }
+    } else if (safety_duration_to_decay < 0.) {
         // expired by temporal clearing
         cleared_point = true;
         if (!this->ClearGridPoint(pt_index)) {
@@ -316,18 +333,39 @@ SpatioTemporalVoxelGrid::GetFlattenedCostmap()
   return _cost_map;
 }
 
+
+/*****************************************************************************/
+double GetTemporalDuration(const double & time_delta, const double & decay, const int decay_model)
+/*****************************************************************************/
+{
+  // use configurable model to get desired decay time
+  if (decay_model == 0) {  // Linear
+    return decay - time_delta;
+  } else if (decay_model == 1) {  // Exponential
+    return decay * std::exp(-time_delta);
+  }
+
+  return decay;  // PERSISTENT
+}
+
 /*****************************************************************************/
 double SpatioTemporalVoxelGrid::GetTemporalClearingDuration(
   const double & time_delta)
 /*****************************************************************************/
 {
-  // use configurable model to get desired decay time
-  if (_decay_model == 0) {  // Linear
-    return _voxel_decay - time_delta;
-  } else if (_decay_model == 1) {  // Exponential
-    return _voxel_decay * std::exp(-time_delta);
+  return GetTemporalDuration(time_delta, _voxel_decay, _decay_model);
+}
+
+/*****************************************************************************/
+double SpatioTemporalVoxelGrid::GetTemporalSafetyDuration(
+  const double & time_delta)
+/*****************************************************************************/
+{
+  if (_safety_decay < 0.) {
+    return 1.0; // Never decay
   }
-  return _voxel_decay;  // PERSISTENT
+
+  return GetTemporalDuration(time_delta, _safety_decay, _decay_model);
 }
 
 /*****************************************************************************/
@@ -410,7 +448,7 @@ void SpatioTemporalVoxelGrid::ResetGridArea(
     const bool in_y_range = pose_world.y() > start.y && pose_world.y() < end.y;
     const bool in_range = in_x_range && in_y_range;
 
-    if(in_range == invert_area)
+    if(in_range != invert_area)
     {
       ClearGridPoint(pt_index);
     }
