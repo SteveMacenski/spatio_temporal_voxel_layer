@@ -44,6 +44,7 @@
 #include <list>
 #include <string>
 #include <chrono>
+#include <mutex>
 #include <memory>
 // measurement structs
 #include "spatio_temporal_voxel_layer/measurement_reading.h"
@@ -63,8 +64,6 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-// Mutex
-#include "boost/thread.hpp"
 
 namespace buffer
 {
@@ -156,7 +155,7 @@ private:
   tf2_ros::Buffer & _buffer;
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
-  boost::recursive_mutex _lock;
+  std::recursive_mutex _lock;
   std::string _global_frame, _sensor_frame, _source_name, _topic_name;
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;

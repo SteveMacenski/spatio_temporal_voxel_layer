@@ -100,7 +100,7 @@ void SpatioTemporalVoxelGrid::ClearFrustums(
   std::unordered_set<occupany_cell> & cleared_cells, openvdb::Vec3d & robot_pose_world)
 /*****************************************************************************/
 {
-  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  std::unique_lock<std::mutex> lock(_grid_lock);
 
   // accelerate the decay of voxels interior to the frustum
   if (this->IsGridEmpty()) {
@@ -276,7 +276,7 @@ void SpatioTemporalVoxelGrid::Mark(
   const std::vector<observation::MeasurementReading> & marking_readings)
 /*****************************************************************************/
 {
-  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  std::unique_lock<std::mutex> lock(_grid_lock);
 
   // mark the grid
   if (marking_readings.size() > 0) {
@@ -400,7 +400,7 @@ void SpatioTemporalVoxelGrid::GetOccupancyPointCloud(
 bool SpatioTemporalVoxelGrid::ResetGrid(void)
 /*****************************************************************************/
 {
-  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  std::unique_lock<std::mutex> lock(_grid_lock);
 
   // clear the voxel grid
   try {
@@ -419,7 +419,7 @@ void SpatioTemporalVoxelGrid::ResetGridArea(
   const occupany_cell & start, const occupany_cell & end, bool invert_area)
 /*****************************************************************************/
 {
-  boost::unique_lock<boost::mutex> lock(_grid_lock);
+  std::unique_lock<std::mutex> lock(_grid_lock);
 
   openvdb::DoubleGrid::ValueOnCIter cit_grid = _grid->cbeginValueOn();
   for (; cit_grid.test(); ++cit_grid)
