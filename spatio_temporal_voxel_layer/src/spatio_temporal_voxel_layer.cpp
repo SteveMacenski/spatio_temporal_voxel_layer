@@ -41,6 +41,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
 #include "point_cloud_transport/subscriber_filter.hpp"
@@ -591,7 +592,7 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 void SpatioTemporalVoxelLayer::reset(void)
 /*****************************************************************************/
 {
-  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  std::lock_guard<std::recursive_mutex> lock(_voxel_grid_lock);
   // reset layer
   Costmap2D::resetMaps();
   this->ResetGrid();
@@ -738,9 +739,9 @@ void SpatioTemporalVoxelLayer::updateBounds(
 
   // Required because UpdateROSCostmap will also lock if AFTER we lock here voxel_grid_lock,
   // and if clearArea is called in between, we will have a deadlock
-  boost::unique_lock<mutex_t> cm_lock(*getMutex());
+  std::unique_lock<mutex_t> cm_lock(*getMutex());
 
-  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  std::lock_guard<std::recursive_mutex> lock(_voxel_grid_lock);
 
   // Steve's Note June 22, 2018
   // I dislike this necessity, I can't remove the master grid's knowledge about
@@ -819,7 +820,7 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
   std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Response> resp)
 /*****************************************************************************/
 {
-  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  std::lock_guard<std::recursive_mutex> lock(_voxel_grid_lock);
   double map_size_bytes;
 
   if (_voxel_grid->SaveGrid(req->file_name, map_size_bytes) ) {
@@ -855,7 +856,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
               buffer->SetMinObstacleHeight(parameter.as_double());
               buffer->Unlock();
 
-              boost::unique_lock<mutex_t> cm_lock(*getMutex());
+              std::unique_lock<mutex_t> cm_lock(*getMutex());
               current_ = false;
             }
           }
@@ -866,7 +867,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
               buffer->SetMaxObstacleHeight(parameter.as_double());
               buffer->Unlock();
 
-              boost::unique_lock<mutex_t> cm_lock(*getMutex());
+              std::unique_lock<mutex_t> cm_lock(*getMutex());
               current_ = false;
             }
           }
@@ -951,7 +952,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
         }
         enabled_ = enable;
 
-        boost::unique_lock<mutex_t> cm_lock(*getMutex());
+        std::unique_lock<mutex_t> cm_lock(*getMutex());
         current_ = false;
       }
     }
@@ -960,7 +961,7 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
       if (name == name_ + "." + "mark_threshold") {
         _mark_threshold = parameter.as_int();
 
-        boost::unique_lock<mutex_t> cm_lock(*getMutex());
+        std::unique_lock<mutex_t> cm_lock(*getMutex());
         current_ = false;
       }
     }
@@ -981,7 +982,7 @@ void SpatioTemporalVoxelLayer::clearArea(
   mapToWorldNoBounds(start_x, start_y, start_world.x, start_world.y);
   mapToWorldNoBounds(end_x, end_y, end_world.x, end_world.y);
 
-  boost::recursive_mutex::scoped_lock lock(_voxel_grid_lock);
+  std::lock_guard<std::recursive_mutex> lock(_voxel_grid_lock);
   _voxel_grid->ResetGridArea(start_world, end_world, invert_area);
   CostmapLayer::clearArea(start_x, start_y, end_x, end_y, invert_area);
 }

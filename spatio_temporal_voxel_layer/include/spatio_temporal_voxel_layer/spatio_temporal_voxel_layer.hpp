@@ -49,6 +49,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <unordered_set>
 // voxel grid
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_grid.hpp"
@@ -187,7 +188,7 @@ private:
   std::vector<geometry_msgs::msg::Point> _transformed_footprint;
   std::vector<observation::MeasurementReading> _static_observations;
   std::unique_ptr<volume_grid::SpatioTemporalVoxelGrid> _voxel_grid;
-  boost::recursive_mutex _voxel_grid_lock;
+  std::recursive_mutex _voxel_grid_lock;
 
   std::string _topics_string;
 
