@@ -150,6 +150,23 @@ rgbd_obstacle_layer:
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
 
+In case you want to use the 3D lidar model with defined obstructions (e.g., robot body parts blocking the sensor's FOV), you can add the `obstruction_polygons` parameter. This prevents frustum clearing in the specified azimuth/elevation regions, preserving voxels behind blind spots:
+
+```yaml
+  lidar1_clear:
+    data_type: PointCloud2
+    topic: /lidar/points
+    marking: false
+    clearing: true
+    model_type: 1                #3D Lidar
+    horizontal_fov_angle: 6.28   #radians, full circle
+    vertical_fov_angle: 0.52     #radians
+    decay_acceleration: 5.0
+    obstruction_polygons: "[[0.8,-0.2, 1.2,-0.2, 1.2,0.1, 0.8,0.1], [3.5,-0.3, 4.0,-0.3, 4.0,0.0, 3.5,0.0]]"
+```
+
+Each inner bracket `[az1,el1, az2,el2, ...]` defines one convex polygon (minimum 3 vertices, azimuth in [0, 2π] radians, elevation in [-π/2, π/2] radians). If empty or unset, behavior is identical to the original STVL. Only applies to `model_type: 1`.
+
 ### local/global_costmap_params.yaml
 
 Add this plugin to your costmap params file. 
