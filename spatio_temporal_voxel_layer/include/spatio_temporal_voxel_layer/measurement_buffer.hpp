@@ -136,6 +136,8 @@ public:
   void SetVerticalFovPadding(const double & vertical_fov_padding);
   void SetHorizontalFovAngle(const double & horizontal_fov_angle);
   void SetVerticalFovAngle(const double & vertical_fov_angle);
+  void SetObstructionPolygons(
+    std::shared_ptr<std::vector<geometry::ConvexPolygon2D>> polygons);
 
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
@@ -165,6 +167,7 @@ private:
   int _voxel_min_points;
   bool _clear_buffer_after_reading, _enabled;
   ModelType _model_type;
+  std::shared_ptr<std::vector<geometry::ConvexPolygon2D>> _obstruction_polygons;
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
 };

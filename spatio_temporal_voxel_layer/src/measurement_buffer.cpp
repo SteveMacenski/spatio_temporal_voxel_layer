@@ -131,6 +131,7 @@ void MeasurementBuffer::BufferROSCloud(
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
     _observation_list.front()._model_type = _model_type;
+    _observation_list.front()._obstruction_polygons = _obstruction_polygons;
 
     if (_clearing && !_marking) {
       // no need to buffer points
@@ -315,6 +316,14 @@ void MeasurementBuffer::SetVerticalFovAngle(const double & vertical_fov_angle)
 /*****************************************************************************/
 {
   _vertical_fov = vertical_fov_angle;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetObstructionPolygons(
+  std::shared_ptr<std::vector<geometry::ConvexPolygon2D>> polygons)
+/*****************************************************************************/
+{
+  _obstruction_polygons = std::move(polygons);
 }
 
 /*****************************************************************************/

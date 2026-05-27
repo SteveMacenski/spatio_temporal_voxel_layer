@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -272,6 +273,22 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
           node->get_clock(), node->get_logger())));
+
+    // Load obstruction polygons for 3D lidar sources
+    if (model_type == THREE_DIMENSIONAL_LIDAR) {
+      std::string param_prefix = name_ + "." + source;
+      auto polygons = geometry::parseObstructionPolygonsFromParams(
+        node, param_prefix, logger_);
+      if (!polygons.empty()) {
+        RCLCPP_INFO(
+          logger_,
+          "Loaded %zu obstruction polygon(s) for source '%s'",
+          polygons.size(), source.c_str());
+        _observation_buffers.back()->SetObstructionPolygons(
+          std::make_shared<std::vector<geometry::ConvexPolygon2D>>(
+            std::move(polygons)));
+      }
+    }
 
     // Add buffer to marking observation buffers
     if (marking) {

@@ -42,8 +42,11 @@
 
 // M_PI
 #include <cmath>
+#include <vector>
+#include <memory>
 // STVL
 #include "spatio_temporal_voxel_layer/frustum_models/frustum.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace geometry
 {
@@ -67,6 +70,10 @@ public:
   virtual void SetPosition(const geometry_msgs::msg::Point & origin);
   virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
 
+  // Set obstruction polygons (blind spots in sensor-local angular space)
+  void SetObstructionPolygons(
+    std::shared_ptr<std::vector<ConvexPolygon2D>> polygons);
+
 private:
   // utils to find useful frustum metadata
   double Dot(const VectorWithPt3D &, const openvdb::Vec3d &) const;
@@ -82,6 +89,7 @@ private:
   Eigen::Quaterniond _orientation_conjugate;
   bool _valid_frustum;
   bool _full_hFOV;
+  std::shared_ptr<std::vector<ConvexPolygon2D>> _obstruction_polygons;
 };
 
 }  // namespace geometry
