@@ -55,7 +55,7 @@ MeasurementBuffer::MeasurementBuffer(
   const double & min_obstacle_height, const double & max_obstacle_height,
   const double & obstacle_range, tf2_ros::Buffer & tf, const std::string & global_frame,
   const std::string & sensor_frame, const double & tf_tolerance,
-  const double & min_d, const double & max_d, const double & vFOV,
+  const double & min_d, const double & max_d, const double & min_height, const double & vFOV,
   const double & vFOVPadding, const double & hFOV,
   const double & decay_acceleration, const bool & marking,
   const bool & clearing, const double & voxel_size, const Filters & filter,
@@ -69,7 +69,7 @@ MeasurementBuffer::MeasurementBuffer(
   _global_frame(global_frame), _sensor_frame(sensor_frame), _source_name(source_name),
   _topic_name(topic_name), _min_obstacle_height(min_obstacle_height),
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
-  _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
+  _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d), _min_height(min_height),
   _vertical_fov(vFOV), _vertical_fov_padding(vFOVPadding),
   _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
@@ -123,6 +123,7 @@ void MeasurementBuffer::BufferROSCloud(
     _observation_list.front()._obstacle_range_in_m = _obstacle_range;
     _observation_list.front()._min_z_in_m = _min_z;
     _observation_list.front()._max_z_in_m = _max_z;
+    _observation_list.front()._min_height = _min_height;
     _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
     _observation_list.front()._vertical_fov_padding_in_m =
       _vertical_fov_padding;
@@ -308,6 +309,13 @@ void MeasurementBuffer::SetMaxZ(const double & max_z)
 /*****************************************************************************/
 {
   _max_z = max_z;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetMinHeight(const double & min_height)
+/*****************************************************************************/
+{
+  _min_height = min_height;
 }
 
 /*****************************************************************************/

@@ -44,8 +44,8 @@ namespace geometry
 /*****************************************************************************/
 DepthCameraFrustum::DepthCameraFrustum(
   const double & vFOV, const double & hFOV, const double & min_dist,
-  const double & max_dist)
-: _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
+  const double & max_dist, const double & min_height)
+: _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist), _min_height(min_height)
 /*****************************************************************************/
 {
   _valid_frustum = false;
@@ -287,6 +287,10 @@ bool DepthCameraFrustum::IsInside(const openvdb::Vec3d & pt)
 /*****************************************************************************/
 {
   if (!_valid_frustum) {
+    return false;
+  }
+
+  if (pt[2] < _min_height) {
     return false;
   }
 

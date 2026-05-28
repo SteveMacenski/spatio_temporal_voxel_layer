@@ -171,7 +171,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
   while (ss >> source) {
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
-    double min_z, max_z, vFOV, vFOVPadding;
+    double min_z, max_z, min_height, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
     std::string topic, sensor_frame, data_type, filter_str;
     bool inf_is_valid = false, clearing, marking;
@@ -195,6 +195,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
     declareParameter(source + "." + "min_z", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "max_z", rclcpp::ParameterValue(10.0));
+  	declareParameter(source + "." + "min_height", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "vertical_fov_angle", rclcpp::ParameterValue(0.7));
     declareParameter(source + "." + "vertical_fov_padding", rclcpp::ParameterValue(0.0));
     declareParameter(source + "." + "horizontal_fov_angle", rclcpp::ParameterValue(1.04));
@@ -225,6 +226,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     node->get_parameter(name_ + "." + source + "." + "min_z", min_z);
     // maximum distance from camera it can see
     node->get_parameter(name_ + "." + source + "." + "max_z", max_z);
+	// minimum height where it is allowed to clear data
+	node->get_parameter(name_ + "." + source + "." + "min_height", min_height);
     // vertical FOV angle in rad
     node->get_parameter(name_ + "." + source + "." + "vertical_fov_angle", vFOV);
     // vertical FOV padding in meters (3D lidar frustum only)
@@ -269,7 +272,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           source, topic,
           observation_keep_time, expected_update_rate, min_obstacle_height,
           max_obstacle_height, obstacle_range, *tf_, _global_frame, sensor_frame,
-          transform_tolerance, min_z, max_z, vFOV, vFOVPadding, hFOV,
+          transform_tolerance, min_z, max_z, min_height, vFOV, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
           node->get_clock(), node->get_logger())));
@@ -884,6 +887,14 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetMaxZ(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "min_height") {
+          for (auto & buffer : _observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetMinHeight(parameter.as_double());
               buffer->Unlock();
             }
           }

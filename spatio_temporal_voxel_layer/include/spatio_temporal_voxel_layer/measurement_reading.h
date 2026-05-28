@@ -69,7 +69,7 @@ struct MeasurementReading
   /*****************************************************************************/
   MeasurementReading(
     geometry_msgs::msg::Point & origin, sensor_msgs::msg::PointCloud2 cloud,
-    double obstacle_range, double min_z, double max_z, double vFOV,
+    double obstacle_range, double min_z, double max_z, double min_height, double vFOV,
     double vFOVPadding, double hFOV, double decay_acceleration, bool marking,
     bool clearing, ModelType model_type)
   /*****************************************************************************/
@@ -78,6 +78,7 @@ struct MeasurementReading
     _obstacle_range_in_m(obstacle_range),
     _min_z_in_m(min_z),
     _max_z_in_m(max_z),
+    _min_height(min_height),
     _vertical_fov_in_rad(vFOV),
     _vertical_fov_padding_in_m(vFOVPadding),
     _horizontal_fov_in_rad(hFOV),
@@ -105,6 +106,7 @@ struct MeasurementReading
     _obstacle_range_in_m(obs._obstacle_range_in_m),
     _min_z_in_m(obs._min_z_in_m),
     _max_z_in_m(obs._max_z_in_m),
+    _min_height(obs._min_height),
     _vertical_fov_in_rad(obs._vertical_fov_in_rad),
     _vertical_fov_padding_in_m(obs._vertical_fov_padding_in_m),
     _horizontal_fov_in_rad(obs._horizontal_fov_in_rad),
@@ -118,7 +120,7 @@ struct MeasurementReading
   geometry_msgs::msg::Point _origin;
   geometry_msgs::msg::Quaternion _orientation;
   std::shared_ptr < sensor_msgs::msg::PointCloud2 > _cloud;
-  double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
+  double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m, _min_height;
   double _vertical_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
