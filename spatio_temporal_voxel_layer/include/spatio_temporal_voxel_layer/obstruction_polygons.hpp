@@ -51,22 +51,35 @@
 namespace geometry
 {
 
+struct SphericalPoint
+{
+  double azimuth;    // radians
+  double elevation;  // radians
+};
+
+struct Vec3D { double x, y, z; };
+
 /**
- * @brief A generic 2D convex polygon with precomputed half-plane representation
- *        for fast point-in-polygon queries.
+ * @brief A convex polygon defined in (azimuth, elevation) space with precomputed
+ *        3D great-circle normals for spherical point-in-polygon testing via Cartesian dot products.
+ *
+ * Vertices are stored as (azimuth, elevation) for parsing/validation/serialization.
+ * At precompute time, they are converted to 3D unit direction vectors and each edge
+ * becomes a great-circle plane through the origin. The runtime isInside() test uses
+ * only dot products on 3D points.
+ *
  */
 struct ConvexPolygon2D
 {
-  // Vertices as (x, y) pairs, must be convex and consistently wound
-  std::vector<std::pair<double, double>> vertices;
+  // Vertices as angular coordinates in radians
+  std::vector<SphericalPoint> vertices;
 
-  // Precomputed edge normals and offsets for half-plane test
-  // For edge from v[i] to v[(i+1)%n], the inward normal and offset
-  std::vector<double> nx, ny, d;
+  // Precomputed 3D great-circle plane normals (one per edge)
+  std::vector<Vec3D> normals;
 
   /**
-   * @brief Precompute half-plane representation for fast point-in-polygon.
-   * @return true if polygon is valid (convex, >= 3 vertices)
+   * @brief Convert angular (az/el) vertices to 3D directions and precompute edge normals.
+   * @return true if polygon is valid (convex, >= 3 vertices, no degenerate edges)
    */
   bool precompute()
   {
@@ -75,59 +88,68 @@ struct ConvexPolygon2D
       return false;
     }
 
-    nx.resize(n);
-    ny.resize(n);
-    d.resize(n);
-
-    // Compute signed area to determine winding
-    double area = 0.0;
+    // Convert (azimuth, elevation) vertices to 3D unit direction vectors from sensor origin
+    std::vector<Vec3D> dirs(n);
     for (size_t i = 0; i < n; ++i) {
-      size_t j = (i + 1) % n;
-      area += vertices[i].first * vertices[j].second;
-      area -= vertices[j].first * vertices[i].second;
+      double az = vertices[i].azimuth;
+      double el = vertices[i].elevation;
+      // Convert spherical to Cartesian coordinates
+      double cos_el = std::cos(el);
+      dirs[i] = {cos_el * std::cos(az), cos_el * std::sin(az), std::sin(el)};
     }
-    bool ccw = area > 0.0;
 
+    // Compute edge normals as cross products of adjacent direction vectors
+    normals.resize(n);
     for (size_t i = 0; i < n; ++i) {
-      size_t j = (i + 1) % n;
-      double ex = vertices[j].first - vertices[i].first;
-      double ey = vertices[j].second - vertices[i].second;
+      size_t j = (i + 1) % n;  // index of next vertex
+      normals[i].x = dirs[i].y * dirs[j].z - dirs[i].z * dirs[j].y;
+      normals[i].y = dirs[i].z * dirs[j].x - dirs[i].x * dirs[j].z;
+      normals[i].z = dirs[i].x * dirs[j].y - dirs[i].y * dirs[j].x;
 
-      // Inward normal (perpendicular to edge, pointing inside)
-      if (ccw) {
-        nx[i] = -ey;  // rotate edge 90° CCW for inward normal of CCW polygon
-        ny[i] = ex;
-      } else {
-        nx[i] = ey;   // rotate edge 90° CW for inward normal of CW polygon
-        ny[i] = -ex;
+      // Check for degenerate edge (coincident vertices)
+      double len_sq = normals[i].x * normals[i].x +
+                      normals[i].y * normals[i].y +
+                      normals[i].z * normals[i].z;
+
+      constexpr double kMinEdgeNormSquared = 1e-12;  // reject edges < ~0.001° apart
+      if (len_sq < kMinEdgeNormSquared) {
+        return false;
       }
+    }
 
-      // Normalize
-      double len = std::sqrt(nx[i] * nx[i] + ny[i] * ny[i]);
-      if (len < 1e-12) {
-        return false;  // degenerate edge
+    // Determine orientation: centroid direction should be on inside of all half-planes
+    Vec3D centroid{0.0, 0.0, 0.0};
+    for (const auto & d : dirs) {
+      centroid.x += d.x;
+      centroid.y += d.y;
+      centroid.z += d.z;
+    }
+
+    // flip normals if pointing outward (dot product with centroid < 0)
+    double test_dot = normals[0].x * centroid.x +
+                      normals[0].y * centroid.y +
+                      normals[0].z * centroid.z;
+    if (test_dot < 0.0) {
+      for (auto & norm : normals) {
+        norm.x = -norm.x;
+        norm.y = -norm.y;
+        norm.z = -norm.z;
       }
-      nx[i] /= len;
-      ny[i] /= len;
-
-      // Half-plane offset: the signed distance from the origin to the edge along
-      // the normal direction. By precomputing d = n·v (where v is any point on
-      // the edge), the inside test becomes n·p ≥ d — a single dot product and
-      // compare per edge — rather than n·(p - v) which requires a subtraction.
-      d[i] = nx[i] * vertices[i].first + ny[i] * vertices[i].second;
     }
 
     return true;
   }
 
   /**
-   * @brief Check if a 2D point is inside this convex polygon.
-   * Uses half-plane intersection: point must be on the inner side of all edges.
+   * @brief Check if a 3D direction is inside this polygon.
+   * Takes the raw cartesian direction from sensor origin, no normalization needed
+   * since dot-product sign is scale-invariant.
    */
-  bool isInside(double x, double y) const
+  bool isInside(double x, double y, double z) const
   {
-    for (size_t i = 0; i < nx.size(); ++i) {
-      if (nx[i] * x + ny[i] * y < d[i]) {
+    for (const auto & n : normals) {
+      // if any of the dot-product tests fail, early return false
+      if (n.x * x + n.y * y + n.z * z < 0.0) {
         return false;
       }
     }
@@ -160,7 +182,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
     // Check for NaN
     bool has_nan = false;
     for (const auto & v : poly.vertices) {
-      if (!std::isfinite(v.first) || !std::isfinite(v.second)) {
+      if (!std::isfinite(v.azimuth) || !std::isfinite(v.elevation)) {
         has_nan = true;
         break;
       }
@@ -176,7 +198,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
     // Check azimuth bounds — warn if any vertex outside [0, 2π]
     bool out_of_range = false;
     for (const auto & v : poly.vertices) {
-      if (v.first < 0.0 || v.first > 2.0 * M_PI) {
+      if (v.azimuth < 0.0 || v.azimuth > 2.0 * M_PI) {
         out_of_range = true;
         break;
       }
@@ -205,14 +227,15 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
 }
 
 /**
- * @brief Check if a point falls inside any of the obstruction polygons.
+ * @brief Check if a 3D direction falls inside any of the obstruction polygons.
+ * Takes raw cartesian direction (x, y, z) from sensor frame.
  */
 inline bool isInsideAnyObstruction(
   const std::vector<ConvexPolygon2D> & polygons,
-  double x, double y)
+  double x, double y, double z)
 {
   for (const auto & poly : polygons) {
-    if (poly.isInside(x, y)) {
+    if (poly.isInside(x, y, z)) {
       return true;
     }
   }
@@ -279,7 +302,7 @@ inline std::vector<ConvexPolygon2D> parsePolygonsFromString(
     if (values.size() >= 6 && values.size() % 2 == 0) {
       ConvexPolygon2D poly;
       for (size_t i = 0; i < values.size(); i += 2) {
-        poly.vertices.emplace_back(values[i], values[i + 1]);
+        poly.vertices.push_back({values[i], values[i + 1]});
       }
       polygons.push_back(std::move(poly));
     } else if (!values.empty()) {

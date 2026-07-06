@@ -115,16 +115,9 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   }
 
   // Check if the point falls inside any obstruction polygon (blind spot)
-  // Regard points in blind spots as outside the frustum (i.e., not cleared)
   if (_obstruction_polygons && !_obstruction_polygons->empty()) {
-    double azimuth = std::atan2(transformed_pt[1], transformed_pt[0]);
-    if (azimuth < 0.0) {
-      azimuth += 2.0 * M_PI;  // shift to [0, 2pi] to match polygon convention
-    }
-    const double xy_dist = std::sqrt(radial_distance_squared);
-    const double elevation = std::atan2(transformed_pt[2], xy_dist);
-
-    if (geometry::isInsideAnyObstruction(*_obstruction_polygons, azimuth, elevation)) {
+    if (geometry::isInsideAnyObstruction(*_obstruction_polygons,
+        transformed_pt[0], transformed_pt[1], transformed_pt[2])) {
       return false;  // point is in a blind spot
     }
   }
