@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(spatio_temporal_voxel_layer)
 
 if(NOT WIN32)
@@ -104,10 +104,10 @@ target_link_libraries(${library_name}
   ${PCL_LIBRARIES}
   OpenVDB::openvdb
   rclcpp::rclcpp
-  ${geometry_msgs_TARGETS}
+  geometry_msgs::geometry_msgs
   rclcpp_lifecycle::rclcpp_lifecycle
-  ${sensor_msgs_TARGETS}
-  ${visualization_msgs_TARGETS}
+  sensor_msgs::sensor_msgs
+  visualization_msgs::visualization_msgs
   tf2_ros::tf2_ros
   tf2_geometry_msgs::tf2_geometry_msgs
   tf2_sensor_msgs::tf2_sensor_msgs

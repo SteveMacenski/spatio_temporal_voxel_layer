@@ -57,7 +57,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 // TF
-#include "tf2_ros/buffer.hpp"
+#include "nav2_ros_common/tf2_factories.hpp"
 #include "message_filters/subscriber.hpp"
 // msgs
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -91,7 +91,7 @@ public:
     const double & min_obstacle_height,
     const double & max_obstacle_height,
     const double & obstacle_range,
-    tf2_ros::Buffer & tf,
+    nav2::TransformBuffer & tf,
     const std::string & global_frame,
     const std::string & sensor_frame,
     const double & tf_tolerance,
@@ -152,7 +152,7 @@ private:
   // Removing old observations from buffer
   void RemoveStaleObservations(void);
 
-  tf2_ros::Buffer & _buffer;
+  nav2::TransformBuffer & _buffer;
   const rclcpp::Duration _observation_keep_time, _expected_update_rate;
   rclcpp::Time _last_updated;
   std::recursive_mutex _lock;
