@@ -138,6 +138,20 @@ struct ConvexPolygon2D
       }
     }
 
+    // Verify spherical convexity. isInside()'s sequential cross product needs spherical convexity to be valid.
+    // Check that all vertices are on the same side of each edge's great-circle plane.
+    constexpr double kConvexEps = 1e-9;  // tolerance for vertices lying on an edge's line
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t k = 0; k < n; ++k) {
+        double side = normals[i].x * dirs[k].x +
+                      normals[i].y * dirs[k].y +
+                      normals[i].z * dirs[k].z;
+        if (side < -kConvexEps) {
+          return false;  // non-convex polygon: reject rather than mis-test
+        }
+      }
+    }
+
     return true;
   }
 
@@ -214,7 +228,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
     }
 
     if (!poly.precompute()) {
-      RCLCPP_WARN(
+      RCLCPP_ERROR(
         logger,
         "Obstruction polygon %zu failed precomputation (non-convex or degenerate), skipping.",
         idx);
