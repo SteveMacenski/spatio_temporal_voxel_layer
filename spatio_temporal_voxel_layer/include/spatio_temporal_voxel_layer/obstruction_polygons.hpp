@@ -39,13 +39,13 @@
 #ifndef SPATIO_TEMPORAL_VOXEL_LAYER__OBSTRUCTION_POLYGONS_HPP_
 #define SPATIO_TEMPORAL_VOXEL_LAYER__OBSTRUCTION_POLYGONS_HPP_
 
-#include <vector>
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <string>
 #include <sstream>
+#include <string>
 #include <utility>
-#include <algorithm>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -58,7 +58,10 @@ struct SphericalPoint
   double elevation;  // radians
 };
 
-struct Vec3D { double x, y, z; };
+struct Vec3D
+{
+  double x, y, z;
+};
 
 /**
  * @brief A convex polygon defined in (azimuth, elevation) space with precomputed
@@ -108,9 +111,8 @@ struct ConvexPolygon2D
       normals[i].z = dirs[i].x * dirs[j].y - dirs[i].y * dirs[j].x;
 
       // Check for degenerate edge (coincident vertices)
-      double len_sq = normals[i].x * normals[i].x +
-                      normals[i].y * normals[i].y +
-                      normals[i].z * normals[i].z;
+      double len_sq =
+        normals[i].x * normals[i].x + normals[i].y * normals[i].y + normals[i].z * normals[i].z;
 
       constexpr double kMinEdgeNormSquared = 1e-12;  // reject edges < ~0.001° apart
       if (len_sq < kMinEdgeNormSquared) {
@@ -127,9 +129,8 @@ struct ConvexPolygon2D
     }
 
     // flip normals if pointing outward (dot product with centroid < 0)
-    double test_dot = normals[0].x * centroid.x +
-                      normals[0].y * centroid.y +
-                      normals[0].z * centroid.z;
+    double test_dot =
+      normals[0].x * centroid.x + normals[0].y * centroid.y + normals[0].z * centroid.z;
     if (test_dot < 0.0) {
       for (auto & norm : normals) {
         norm.x = -norm.x;
@@ -143,9 +144,8 @@ struct ConvexPolygon2D
     constexpr double kConvexEps = 1e-9;  // tolerance for vertices lying on an edge's line
     for (size_t i = 0; i < n; ++i) {
       for (size_t k = 0; k < n; ++k) {
-        double side = normals[i].x * dirs[k].x +
-                      normals[i].y * dirs[k].y +
-                      normals[i].z * dirs[k].z;
+        double side =
+          normals[i].x * dirs[k].x + normals[i].y * dirs[k].y + normals[i].z * dirs[k].z;
         if (side < -kConvexEps) {
           return false;  // non-convex polygon: reject rather than mis-test
         }
@@ -178,8 +178,7 @@ struct ConvexPolygon2D
  * @return vector of valid, precomputed polygons
  */
 inline std::vector<ConvexPolygon2D> validatePolygons(
-  const std::vector<ConvexPolygon2D> & input,
-  const rclcpp::Logger & logger)
+  const std::vector<ConvexPolygon2D> & input, const rclcpp::Logger & logger)
 {
   std::vector<ConvexPolygon2D> valid;
   valid.reserve(input.size());
@@ -187,10 +186,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
   for (size_t idx = 0; idx < input.size(); ++idx) {
     auto poly = input[idx];
     if (poly.vertices.size() < 3) {
-      RCLCPP_WARN(
-        logger,
-        "Obstruction polygon %zu has < 3 vertices, skipping.",
-        idx);
+      RCLCPP_WARN(logger, "Obstruction polygon %zu has < 3 vertices, skipping.", idx);
       continue;
     }
 
@@ -203,10 +199,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
       }
     }
     if (has_nan) {
-      RCLCPP_WARN(
-        logger,
-        "Obstruction polygon %zu has NaN/inf vertices, skipping.",
-        idx);
+      RCLCPP_WARN(logger, "Obstruction polygon %zu has NaN/inf vertices, skipping.", idx);
       continue;
     }
 
@@ -230,8 +223,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
     if (!poly.precompute()) {
       RCLCPP_ERROR(
         logger,
-        "Obstruction polygon %zu failed precomputation (non-convex or degenerate), skipping.",
-        idx);
+        "Obstruction polygon %zu failed precomputation (non-convex or degenerate), skipping.", idx);
       continue;
     }
 
@@ -246,8 +238,7 @@ inline std::vector<ConvexPolygon2D> validatePolygons(
  * Takes raw cartesian direction (x, y, z) from sensor frame.
  */
 inline bool isInsideAnyObstruction(
-  const std::vector<ConvexPolygon2D> & polygons,
-  double x, double y, double z)
+  const std::vector<ConvexPolygon2D> & polygons, double x, double y, double z)
 {
   for (const auto & poly : polygons) {
     if (poly.isInside(x, y, z)) {
@@ -276,7 +267,7 @@ struct ObstructionField
   };
   std::vector<Span> polygons;
 
-  bool empty() const {return polygons.empty();}
+  bool empty() const { return polygons.empty(); }
 };
 
 /**
@@ -297,8 +288,7 @@ inline double polygonAngularArea(const ConvexPolygon2D & p)
 /**
  * @brief Convert validated/precomputed polygons to flat SoA and sort by angular area
  */
-inline ObstructionField flattenAndSortPolygons(
-  const std::vector<ConvexPolygon2D> & polygons)
+inline ObstructionField flattenAndSortPolygons(const std::vector<ConvexPolygon2D> & polygons)
 {
   ObstructionField field;
 
@@ -342,15 +332,13 @@ inline ObstructionField flattenAndSortPolygons(
 /**
  * @brief Check if a 3D direction falls inside any obstruction polygon
  */
-inline bool isInsideAnyObstruction(
-  const ObstructionField & field,
-  float x, float y, float z)
+inline bool isInsideAnyObstruction(const ObstructionField & field, float x, float y, float z)
 {
-  const float* nx = field.nx.data();
-  const float* ny = field.ny.data();
-  const float* nz = field.nz.data();
+  const float * nx = field.nx.data();
+  const float * ny = field.ny.data();
+  const float * nz = field.nz.data();
 
-  for (const auto& span : field.polygons) {
+  for (const auto & span : field.polygons) {
     const uint32_t end = span.start + span.count;
     int any_negative = 0;
     for (uint32_t i = span.start; i < end; ++i) {
@@ -373,17 +361,16 @@ inline bool isInsideAnyObstruction(
  * @return vector of parsed (unvalidated) polygons
  */
 inline std::vector<ConvexPolygon2D> parsePolygonsFromString(
-  const std::string & input,
-  const rclcpp::Logger & logger)
+  const std::string & input, const rclcpp::Logger & logger)
 {
   std::vector<ConvexPolygon2D> polygons;
 
   // Find the outer brackets
   size_t outer_start = input.find('[');
   size_t outer_end = input.rfind(']');
-  if (outer_start == std::string::npos || outer_end == std::string::npos ||
-    outer_end <= outer_start)
-  {
+  if (
+    outer_start == std::string::npos || outer_end == std::string::npos ||
+    outer_end <= outer_start) {
     RCLCPP_WARN(logger, "Obstruction polygons string has invalid format.");
     return polygons;
   }
@@ -411,13 +398,14 @@ inline std::vector<ConvexPolygon2D> parsePolygonsFromString(
     while (std::getline(ss, token, ',')) {
       // Trim whitespace
       size_t start = token.find_first_not_of(" \t");
-      if (start == std::string::npos) {continue;}
+      if (start == std::string::npos) {
+        continue;
+      }
       try {
         values.push_back(std::stod(token.substr(start)));
       } catch (const std::exception &) {
         RCLCPP_WARN(
-          logger, "Obstruction polygon %d: failed to parse value '%s'.",
-          poly_idx, token.c_str());
+          logger, "Obstruction polygon %d: failed to parse value '%s'.", poly_idx, token.c_str());
       }
     }
 
@@ -429,8 +417,7 @@ inline std::vector<ConvexPolygon2D> parsePolygonsFromString(
       polygons.push_back(std::move(poly));
     } else if (!values.empty()) {
       RCLCPP_WARN(
-        logger,
-        "Obstruction polygon %d needs >= 6 values (3 x/y pairs), got %zu. Skipping.",
+        logger, "Obstruction polygon %d needs >= 6 values (3 x/y pairs), got %zu. Skipping.",
         poly_idx, values.size());
     }
 
@@ -449,11 +436,9 @@ inline std::vector<ConvexPolygon2D> parsePolygonsFromString(
  *
  * For STVL use, x=azimuth (rad), y=elevation (rad).
  */
-template<typename NodeT>
+template <typename NodeT>
 std::vector<ConvexPolygon2D> parseObstructionPolygonsFromParams(
-  NodeT node,
-  const std::string & param_prefix,
-  const rclcpp::Logger & logger)
+  NodeT node, const std::string & param_prefix, const rclcpp::Logger & logger)
 {
   std::string param_name = param_prefix + ".obstruction_polygons";
   std::string polygons_str;
@@ -470,9 +455,7 @@ std::vector<ConvexPolygon2D> parseObstructionPolygonsFromParams(
 
   if (!polygons.empty()) {
     RCLCPP_INFO(
-      logger,
-      "Parsed %zu obstruction polygon(s) for %s",
-      polygons.size(), param_prefix.c_str());
+      logger, "Parsed %zu obstruction polygon(s) for %s", polygons.size(), param_prefix.c_str());
   }
 
   return validatePolygons(polygons, logger);
