@@ -41,6 +41,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cstdint>
 #include <string>
 #include <sstream>
 #include <utility>
@@ -237,6 +238,113 @@ inline bool isInsideAnyObstruction(
   for (const auto & poly : polygons) {
     if (poly.isInside(x, y, z)) {
       return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * @brief Flat, contiguous Structure-of-Arrays (SoA) storage of all obstruction
+ *        polygon edge normals, for fast point in polygon testing.
+ */
+struct ObstructionField
+{
+  // All edge normals for all polygons, contiguous, SoA
+  std::vector<float> nx;
+  std::vector<float> ny;
+  std::vector<float> nz;
+
+  // Span to indicate where each polygon's normals are in the vectors
+  struct Span
+  {
+    uint32_t start;
+    uint32_t count;
+  };
+  std::vector<Span> polygons;
+
+  bool empty() const {return polygons.empty();}
+};
+
+/**
+ * @brief Angular area size of a polygon using shoelace formula
+ */
+inline double polygonAngularArea(const ConvexPolygon2D & p)
+{
+  const size_t n = p.vertices.size();
+  double area2 = 0.0;
+  for (size_t i = 0; i < n; ++i) {
+    const auto & v0 = p.vertices[i];
+    const auto & v1 = p.vertices[(i + 1) % n];
+    area2 += v0.azimuth * v1.elevation - v1.azimuth * v0.elevation;
+  }
+  return std::fabs(area2) * 0.5;
+}
+
+/**
+ * @brief Convert validated/precomputed polygons to flat SoA and sort by angular area
+ */
+inline ObstructionField flattenAndSortPolygons(
+  const std::vector<ConvexPolygon2D> & polygons)
+{
+  ObstructionField field;
+
+  // Index polygons, largest-area first
+  std::vector<const ConvexPolygon2D *> poly2d_ordered;
+  poly2d_ordered.reserve(polygons.size());
+  for (const auto & poly : polygons) {
+    poly2d_ordered.push_back(&poly);
+  }
+  std::sort(
+    poly2d_ordered.begin(), poly2d_ordered.end(),
+    [](const ConvexPolygon2D * a, const ConvexPolygon2D * b) {
+      return polygonAngularArea(*a) > polygonAngularArea(*b);
+    });
+
+  // Store normals in flat vectors
+  size_t total_edges = 0;
+  for (const auto * poly : poly2d_ordered) {
+    total_edges += poly->normals.size();
+  }
+  field.nx.reserve(total_edges);
+  field.ny.reserve(total_edges);
+  field.nz.reserve(total_edges);
+  field.polygons.reserve(poly2d_ordered.size());
+
+  for (const auto * poly : poly2d_ordered) {
+    ObstructionField::Span span;
+    span.start = static_cast<uint32_t>(field.nx.size());
+    span.count = static_cast<uint32_t>(poly->normals.size());
+    for (const auto & normal : poly->normals) {
+      field.nx.push_back(static_cast<float>(normal.x));
+      field.ny.push_back(static_cast<float>(normal.y));
+      field.nz.push_back(static_cast<float>(normal.z));
+    }
+    field.polygons.push_back(span);
+  }
+
+  return field;
+}
+
+/**
+ * @brief Check if a 3D direction falls inside any obstruction polygon
+ */
+inline bool isInsideAnyObstruction(
+  const ObstructionField & field,
+  float x, float y, float z)
+{
+  const float* nx = field.nx.data();
+  const float* ny = field.ny.data();
+  const float* nz = field.nz.data();
+
+  for (const auto& span : field.polygons) {
+    const uint32_t end = span.start + span.count;
+    int any_negative = 0;
+    for (uint32_t i = span.start; i < end; ++i) {
+      const float dot = nx[i] * x + ny[i] * y + nz[i] * z;
+      any_negative = any_negative | (dot < 0.0f);
+    }
+    if (!any_negative) {
+      return true;  // inside this polygon -> inside some obstruction
     }
   }
   return false;

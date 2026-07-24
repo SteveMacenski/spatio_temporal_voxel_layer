@@ -90,6 +90,7 @@ private:
   bool _valid_frustum;
   bool _full_hFOV;
   std::shared_ptr<std::vector<ConvexPolygon2D>> _obstruction_polygons;
+  ObstructionField _obstruction_field;
 };
 
 }  // namespace geometry
