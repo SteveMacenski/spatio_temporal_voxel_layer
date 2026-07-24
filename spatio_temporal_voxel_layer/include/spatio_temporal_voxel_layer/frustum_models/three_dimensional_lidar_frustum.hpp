@@ -71,8 +71,7 @@ public:
   virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
 
   // Set obstruction polygons (blind spots in sensor-local angular space)
-  void SetObstructionFilter(
-    std::shared_ptr<geometry::ObstructionFilter> filter);
+  void SetObstructionFilter(std::shared_ptr<geometry::ObstructionFilter> filter);
 
 private:
   // utils to find useful frustum metadata
@@ -84,9 +83,12 @@ private:
   double _min_d_squared, _max_d_squared;
   double _tan_vFOVhalf;
   double _tan_vFOVhalf_squared;
+  // externally set postion and orientation of sensor in global space
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
-  Eigen::Quaterniond _orientation_conjugate;
+  // computed transform matrices to apply to voxels during clearing
+  Eigen::Matrix3d _rotation;
+  Eigen::Vector3d _translation;
   bool _valid_frustum;
   bool _full_hFOV;
   std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;

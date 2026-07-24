@@ -71,7 +71,10 @@ ThreeDimensionalLidarFrustum::~ThreeDimensionalLidarFrustum(void)
 void ThreeDimensionalLidarFrustum::TransformModel(void)
 /*****************************************************************************/
 {
-  _orientation_conjugate = _orientation.conjugate();
+  // Precompute the world->sensor transform matrices once.
+  _rotation = _orientation.conjugate().toRotationMatrix();
+  _translation = -_rotation * _position;
+
   _valid_frustum = true;
 }
 
@@ -80,8 +83,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
 /*****************************************************************************/
 {
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
-  Eigen::Vector3d transformed_pt =
-    _orientation_conjugate * (point_in_global_frame - _position);
+  Eigen::Vector3d transformed_pt = _rotation * point_in_global_frame + _translation;
 
   const double radial_distance_squared =
     (transformed_pt[0] * transformed_pt[0]) +
@@ -141,7 +143,7 @@ void ThreeDimensionalLidarFrustum::SetOrientation(
   const geometry_msgs::msg::Quaternion & quat)
 /*****************************************************************************/
 {
-  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z).normalized();
 }
 
 /*****************************************************************************/

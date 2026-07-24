@@ -315,7 +315,7 @@ void DepthCameraFrustum::SetOrientation(
   const geometry_msgs::msg::Quaternion & quat)
 /*****************************************************************************/
 {
-  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z).normalized();
 }
 
 /*****************************************************************************/
