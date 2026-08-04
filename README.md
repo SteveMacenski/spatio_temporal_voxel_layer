@@ -103,7 +103,7 @@ An example fully-described configuration is shown below.
 
 Note: We supply two PCL filters within STVL to massage the data to lower compute overhead. STVL has an approximate voxel filter to make the data more sparse if very dense. It also has a passthrough filter to limit processing data within the valid minimum to maximum height bounds. The voxel filter is recommended if it lowers CPU overhead, otherwise, passthrough filter. No filter is also available if you pre-process your data or are not interested in performance optimizations. 
 
-```
+```yaml
 rgbd_obstacle_layer:
   enabled:               true
   voxel_decay:           20     #seconds if linear, e^n if exponential
@@ -150,22 +150,29 @@ rgbd_obstacle_layer:
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
 
+### Obstruction polygons for voxel retention
+
 In case you want to use the 3D lidar model with defined obstructions (e.g., robot body parts blocking the sensor's FOV), you can add the `obstruction_polygons` parameter. This prevents frustum clearing in the specified azimuth/elevation regions, preserving voxels behind blind spots:
 
 ```yaml
   lidar1_clear:
+    ...
     data_type: PointCloud2
     topic: /lidar/points
     marking: false
     clearing: true
     model_type: 1                #3D Lidar
-    horizontal_fov_angle: 6.28   #radians, full circle
-    vertical_fov_angle: 0.52     #radians
-    decay_acceleration: 5.0
+    horizontal_fov_angle: 6.28   #full circle
+    vertical_fov_angle: 1.57     #90 deg
+    obstacle_range: 20.0         #should be large enough to clear further than marking range, and further than voxels that may have been retained behind obstructions while robot moved.
     obstruction_polygons: "[[0.8,-0.2, 1.2,-0.2, 1.2,0.1, 0.8,0.1], [3.5,-0.3, 4.0,-0.3, 4.0,0.0, 3.5,0.0]]"
 ```
 
 Each inner bracket `[az1,el1, az2,el2, ...]` defines one convex polygon (minimum 3 vertices, azimuth in [0, 2π] radians, elevation in [-π/2, π/2] radians). If empty or unset, behavior is identical to the original STVL. Only applies to `model_type: 1`.
+
+<img width="340" height="314" alt="stvl_obstruction_polygon_retention" src="https://github.com/user-attachments/assets/e0828595-86f9-4935-b21d-989995b964fe" />
+
+_An example of 3d lidar with obstruction from forklift mast. The voxels in the obstructed FOV (orange) are not cleared, but retained for voxel_decay seconds_
 
 ### local/global_costmap_params.yaml
 
