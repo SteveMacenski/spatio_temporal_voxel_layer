@@ -115,8 +115,8 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   }
 
   // Check if the point falls inside any obstruction polygon (blind spot)
-  if (!_obstruction_field.empty()) {
-    if (geometry::isInsideAnyObstruction(_obstruction_field,
+  if (_obstruction_filter) {
+    if (_obstruction_filter->isObstructed(
         static_cast<float>(transformed_pt[0]),
         static_cast<float>(transformed_pt[1]),
         static_cast<float>(transformed_pt[2])))
@@ -145,17 +145,11 @@ void ThreeDimensionalLidarFrustum::SetOrientation(
 }
 
 /*****************************************************************************/
-void ThreeDimensionalLidarFrustum::SetObstructionPolygons(
-  std::shared_ptr<std::vector<ConvexPolygon2D>> polygons)
+void ThreeDimensionalLidarFrustum::SetObstructionFilter(
+  std::shared_ptr<geometry::ObstructionFilter> filter)
 /*****************************************************************************/
 {
-  _obstruction_polygons = std::move(polygons);
-  // Build the flat SoA field used by the point-in-polygon test.
-  if (_obstruction_polygons) {
-    _obstruction_field = geometry::flattenAndSortPolygons(*_obstruction_polygons);
-  } else {
-    _obstruction_field = ObstructionField{};
-  }
+  _obstruction_filter = std::move(filter);
 }
 
 /*****************************************************************************/

@@ -277,16 +277,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // Load obstruction polygons for 3D lidar sources
     if (model_type == THREE_DIMENSIONAL_LIDAR) {
       std::string param_prefix = name_ + "." + source;
-      auto polygons = geometry::parseObstructionPolygonsFromParams(
-        node, param_prefix, logger_);
-      if (!polygons.empty()) {
-        RCLCPP_INFO(
-          logger_,
-          "Loaded %zu obstruction polygon(s) for source '%s'",
-          polygons.size(), source.c_str());
-        _observation_buffers.back()->SetObstructionPolygons(
-          std::make_shared<std::vector<geometry::ConvexPolygon2D>>(
-            std::move(polygons)));
+      auto filter = geometry::ObstructionFilter::fromParams(node, param_prefix, logger_);
+      if (filter) {
+        _observation_buffers.back()->SetObstructionFilter(filter);
       }
     }
 

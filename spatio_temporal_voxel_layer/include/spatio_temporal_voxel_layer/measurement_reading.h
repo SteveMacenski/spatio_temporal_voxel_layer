@@ -116,7 +116,7 @@ struct MeasurementReading
     _clearing(obs._clearing),
     _decay_acceleration(obs._decay_acceleration),
     _model_type(obs._model_type),
-    _obstruction_polygons(obs._obstruction_polygons)
+    _obstruction_filter(obs._obstruction_filter)
   {
   }
 
@@ -127,7 +127,7 @@ struct MeasurementReading
   double _vertical_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
-  std::shared_ptr<std::vector<geometry::ConvexPolygon2D>> _obstruction_polygons;
+  std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;
 };
 
 }  // namespace observation

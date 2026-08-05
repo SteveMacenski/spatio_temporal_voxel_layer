@@ -71,8 +71,8 @@ public:
   virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
 
   // Set obstruction polygons (blind spots in sensor-local angular space)
-  void SetObstructionPolygons(
-    std::shared_ptr<std::vector<ConvexPolygon2D>> polygons);
+  void SetObstructionFilter(
+    std::shared_ptr<geometry::ObstructionFilter> filter);
 
 private:
   // utils to find useful frustum metadata
@@ -89,8 +89,7 @@ private:
   Eigen::Quaterniond _orientation_conjugate;
   bool _valid_frustum;
   bool _full_hFOV;
-  std::shared_ptr<std::vector<ConvexPolygon2D>> _obstruction_polygons;
-  ObstructionField _obstruction_field;
+  std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;
 };
 
 }  // namespace geometry
