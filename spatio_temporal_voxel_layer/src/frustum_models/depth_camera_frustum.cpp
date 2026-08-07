@@ -35,25 +35,25 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
-#include <vector>
 #include "spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp"
+
+#include <vector>
 
 namespace geometry
 {
 
 /*****************************************************************************/
 DepthCameraFrustum::DepthCameraFrustum(
-  const double & vFOV, const double & hFOV, const double & min_dist,
-  const double & max_dist)
+  const double & vFOV, const double & hFOV, const double & min_dist, const double & max_dist)
 : _vFOV(vFOV), _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
 {
   _valid_frustum = false;
-  #if VISUALIZE_FRUSTUM
+#if VISUALIZE_FRUSTUM
   _node = std::make_shared<rclcpp::Node>("frustum_publisher");
   _frustum_pub = _node->create_publisher<visualization_msgs::msg::MarkerArray>("frustum", nav2::qos::StandardTopicQoS());
   rclcpp::sleep_for(std::chrono::milliseconds(500));
-  #endif
+#endif
   this->ComputePlaneNormals();
 }
 
@@ -148,9 +148,9 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
     VectorWithPt3D(
       T_1[0], T_1[1], T_1[2], pt_[2]) * -1);
 
-  #if VISUALIZE_FRUSTUM
+#if VISUALIZE_FRUSTUM
   _frustum_pts = pt_;
-  #endif
+#endif
 
   assert(_plane_normals.size() == 6);
   _valid_frustum = true;
@@ -173,12 +173,12 @@ void DepthCameraFrustum::TransformModel(void)
     it->TransformFrames(T);
   }
 
-  #if VISUALIZE_FRUSTUM
+#if VISUALIZE_FRUSTUM
   visualization_msgs::msg::MarkerArray msg_list;
   visualization_msgs::msg::Marker msg;
   for (uint i = 0; i != _frustum_pts.size(); i++) {
     // frustum pts
-    msg.header.frame_id = std::string("map");   // Use global_frame of costmap
+    msg.header.frame_id = std::string("map");  // Use global_frame of costmap
     msg.type = visualization_msgs::msg::Marker::SPHERE;
     msg.action = visualization_msgs::msg::Marker::ADD;
     msg.scale.x = 0.15;
@@ -207,11 +207,11 @@ void DepthCameraFrustum::TransformModel(void)
   }
 
   // frustum lines
-  msg.header.frame_id = std::string("map");   // Use global_frame of costmap
+  msg.header.frame_id = std::string("map");  // Use global_frame of costmap
   msg.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  msg.scale.x = 0.03;   /// ?
-  msg.scale.y = 0.03;   /// ?
-  msg.scale.z = 0.03;   /// ?
+  msg.scale.x = 0.03;  /// ?
+  msg.scale.y = 0.03;  /// ?
+  msg.scale.z = 0.03;  /// ?
   msg.pose.orientation.w = 1.0;
   msg.pose.position.x = 0;
   msg.pose.position.y = 0;
@@ -279,7 +279,7 @@ void DepthCameraFrustum::TransformModel(void)
     msg_list.markers.push_back(msg);
   }
   _frustum_pub->publish(msg_list);
-  #endif
+#endif
 }
 
 /*****************************************************************************/

@@ -42,6 +42,9 @@
 
 // M_PI
 #include <cmath>
+// STL
+#include <string>
+#include <vector>
 // STVL
 #include "spatio_temporal_voxel_layer/frustum_models/frustum.hpp"
 
@@ -54,7 +57,13 @@ class ThreeDimensionalLidarFrustum : public Frustum
 public:
   ThreeDimensionalLidarFrustum(
     const double & vFOV, const double & vFOVOffset, const double & vFOVPadding,
-    const double & hFOV, const double & min_dist, const double & max_dist);
+    const double & hFOV, const double & min_dist, const double & max_dist
+#if VISUALIZE_FRUSTUM
+    , const std::string & frame_id = ""
+    , const std::string & source_name = ""
+    , bool is_marking = false
+#endif
+  );
   virtual ~ThreeDimensionalLidarFrustum(void);
 
   // Does nothing in 3D lidar model
@@ -67,10 +76,30 @@ public:
   virtual void SetPosition(const geometry_msgs::msg::Point & origin);
   virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
 
+#if VISUALIZE_FRUSTUM
+  // Configure visualization mode: true = marking (green), false = clearing (red).
+  void SetVisualizationMode(bool is_marking);
+  // Set obstacle height bounds for visualization
+  void SetObstacleHeightBounds(double min_height, double max_height);
+  // Set the frame id used for visualization markers.
+  void SetFrameId(const std::string & frame_id);
+  // Set the observation source name for visualization namespaces.
+  void SetSourceName(const std::string & source_name);
+#endif
+
 private:
   // utils to find useful frustum metadata
   double Dot(const VectorWithPt3D &, const openvdb::Vec3d &) const;
   double Dot(const VectorWithPt3D &, const Eigen::Vector3d &) const;
+#if VISUALIZE_FRUSTUM
+  void compute_ring_points(
+    double radial_distance, double z_center, double z_extent, double padding, double azimuth_min,
+    double azimuth_step, std::vector<Eigen::Vector3d> & top_ring,
+    std::vector<Eigen::Vector3d> & bottom_ring) const;
+  void sample_ring_xy(
+    double radius, double azimuth_min, double azimuth_step, int num_samples,
+    std::vector<Eigen::Vector3d> & ring_points) const;
+#endif
 
   double _vFOV, _vFOVOffset, _vFOVPadding, _hFOV, _min_d, _max_d;
   double _hFOVhalf;
@@ -82,7 +111,33 @@ private:
   Eigen::Quaterniond _orientation_conjugate;
   bool _valid_frustum;
   bool _full_hFOV;
+
+#if VISUALIZE_FRUSTUM
+  bool _is_marking;
+  std::string _frame_id;
+  std::string _source_name;
+  double _min_obstacle_height, _max_obstacle_height;
+  // Sampled points on the frustum surface in the sensor frame, used only
+  // for visualization and debugging.
+  std::vector<Eigen::Vector3d> _top_near_pts;
+  std::vector<Eigen::Vector3d> _bottom_near_pts;
+  std::vector<Eigen::Vector3d> _top_far_pts;
+  std::vector<Eigen::Vector3d> _bottom_far_pts;
+  rclcpp::Node::SharedPtr _node;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _frustum_pub;
+#endif
 };
+
+#if VISUALIZE_FRUSTUM
+namespace observation
+{
+struct MeasurementReading;
+}
+// Publish 3D LiDAR frustum visualization for a marking reading. Isolated here
+// so the grid class does not contain frustum-visualization logic.
+void PublishMarkingFrustumVisualizationIfEnabled(
+  const observation::MeasurementReading & reading);
+#endif
 
 }  // namespace geometry
 
