@@ -84,9 +84,9 @@ private:
   // externally set postion and orientation of sensor in global space
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
-  // computed transform matrices to apply to voxels during clearing
-  Eigen::Matrix3d _rotation;
-  Eigen::Vector3d _translation;
+  // inverse of the pose above, precomputed once to map voxels into sensor-local space
+  Eigen::Matrix3d _global_to_sensor_rotation;
+  Eigen::Vector3d _global_to_sensor_translation;
   bool _valid_frustum;
   bool _full_hFOV;
   std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;
