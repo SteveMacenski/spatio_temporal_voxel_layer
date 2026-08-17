@@ -57,7 +57,8 @@ class ThreeDimensionalLidarFrustum : public Frustum
 public:
   ThreeDimensionalLidarFrustum(
     const double & vFOV, const double & vFOVPadding,
-    const double & hFOV, const double & min_dist, const double & max_dist);
+    const double & hFOV, const double & min_dist, const double & max_dist,
+    std::shared_ptr<geometry::ObstructionFilter> obstruction_filter = nullptr);
   virtual ~ThreeDimensionalLidarFrustum(void);
 
   // Does nothing in 3D lidar model
@@ -69,9 +70,6 @@ public:
   // set pose of 3d lidar in global space
   virtual void SetPosition(const geometry_msgs::msg::Point & origin);
   virtual void SetOrientation(const geometry_msgs::msg::Quaternion & quat);
-
-  // Set obstruction polygons (blind spots in sensor-local angular space)
-  void SetObstructionFilter(std::shared_ptr<geometry::ObstructionFilter> filter);
 
 private:
   // utils to find useful frustum metadata

@@ -37,6 +37,9 @@
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 
+#include <memory>
+#include <utility>
+
 #include <rclcpp/logging.hpp>
 
 namespace geometry
@@ -45,9 +48,11 @@ namespace geometry
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
   const double & vFOV, const double & vFOVPadding, const double & hFOV,
-  const double & min_dist, const double & max_dist)
+  const double & min_dist, const double & max_dist,
+  std::shared_ptr<geometry::ObstructionFilter> obstruction_filter)
 : _vFOV(vFOV), _vFOVPadding(vFOVPadding), _hFOV(hFOV),
-  _min_d(min_dist), _max_d(max_dist)
+  _min_d(min_dist), _max_d(max_dist),
+  _obstruction_filter(std::move(obstruction_filter))
 /*****************************************************************************/
 {
   _hFOVhalf = _hFOV / 2.0;
@@ -144,14 +149,6 @@ void ThreeDimensionalLidarFrustum::SetOrientation(
 /*****************************************************************************/
 {
   _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z).normalized();
-}
-
-/*****************************************************************************/
-void ThreeDimensionalLidarFrustum::SetObstructionFilter(
-  std::shared_ptr<geometry::ObstructionFilter> filter)
-/*****************************************************************************/
-{
-  _obstruction_filter = std::move(filter);
 }
 
 /*****************************************************************************/
