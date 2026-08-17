@@ -231,19 +231,31 @@ inline std::vector<ValidatedPolygon> validatePolygons(
       continue;
     }
 
-    // Verify azimuth within bounds [0-2pi]
-    bool out_of_range = false;
+    // Verify azimuth within bounds [0-2pi] and elevation within bounds [-pi/2, pi/2].
+    bool azimuth_out_of_range = false;
+    bool elevation_out_of_range = false;
     for (const auto & v : vertices) {
       if (v.azimuth < 0.0 || v.azimuth > 2.0 * M_PI) {
-        out_of_range = true;
+        azimuth_out_of_range = true;
+        break;
+      }
+      if (v.elevation < -M_PI_2 || v.elevation > M_PI_2) {
+        elevation_out_of_range = true;
         break;
       }
     }
-    if (out_of_range) {
+    if (azimuth_out_of_range) {
       RCLCPP_WARN(
         logger,
         "Obstruction polygon %zu has vertices outside [0, 2pi] azimuth range, "
         "skipping. Polygons crossing the 0/2pi boundary are not supported.",
+        idx);
+      continue;
+    }
+    if (elevation_out_of_range) {
+      RCLCPP_WARN(
+        logger,
+        "Obstruction polygon %zu has vertices outside [-pi/2, pi/2] elevation range, skipping.",
         idx);
       continue;
     }
