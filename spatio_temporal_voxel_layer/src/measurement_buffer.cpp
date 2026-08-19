@@ -61,7 +61,8 @@ MeasurementBuffer::MeasurementBuffer(
   const bool & clearing, const double & voxel_size, const Filters & filter,
   const int & voxel_min_points, const bool & enabled,
   const bool & clear_buffer_after_reading, const ModelType & model_type,
-  rclcpp::Clock::SharedPtr clock, rclcpp::Logger logger)
+  rclcpp::Clock::SharedPtr clock, rclcpp::Logger logger,
+  const double & frustum_roll, const double & frustum_pitch, const double & frustum_yaw)
 : _buffer(tf),
   _observation_keep_time(rclcpp::Duration::from_seconds(observation_keep_time)),
   _expected_update_rate(rclcpp::Duration::from_seconds(expected_update_rate)),
@@ -71,7 +72,8 @@ MeasurementBuffer::MeasurementBuffer(
   _max_obstacle_height(max_obstacle_height), _obstacle_range(obstacle_range),
   _tf_tolerance(tf_tolerance), _min_z(min_d), _max_z(max_d),
   _vertical_fov(vFOV), _vertical_fov_offset(vFOVOffset), _vertical_fov_padding(vFOVPadding),
-  _horizontal_fov(hFOV), _decay_acceleration(decay_acceleration),
+  _horizontal_fov(hFOV), _frustum_roll(frustum_roll), _frustum_pitch(frustum_pitch),
+  _frustum_yaw(frustum_yaw), _decay_acceleration(decay_acceleration),
   _voxel_size(voxel_size), _marking(marking), _clearing(clearing),
   _filter(filter), _voxel_min_points(voxel_min_points),
   _clear_buffer_after_reading(clear_buffer_after_reading),
@@ -127,6 +129,9 @@ void MeasurementBuffer::BufferROSCloud(
     _observation_list.front()._vertical_fov_offset_in_rad = _vertical_fov_offset;
     _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
     _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
+    _observation_list.front()._frustum_roll_in_rad = _frustum_roll;
+    _observation_list.front()._frustum_pitch_in_rad = _frustum_pitch;
+    _observation_list.front()._frustum_yaw_in_rad = _frustum_yaw;
     _observation_list.front()._decay_acceleration = _decay_acceleration;
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
@@ -336,6 +341,27 @@ void MeasurementBuffer::SetHorizontalFovAngle(const double & horizontal_fov_angl
 /*****************************************************************************/
 {
   _horizontal_fov = horizontal_fov_angle;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetFrustumRoll(const double & frustum_roll)
+/*****************************************************************************/
+{
+  _frustum_roll = frustum_roll;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetFrustumPitch(const double & frustum_pitch)
+/*****************************************************************************/
+{
+  _frustum_pitch = frustum_pitch;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetFrustumYaw(const double & frustum_yaw)
+/*****************************************************************************/
+{
+  _frustum_yaw = frustum_yaw;
 }
 
 /*****************************************************************************/

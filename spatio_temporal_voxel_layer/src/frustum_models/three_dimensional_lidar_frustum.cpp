@@ -42,8 +42,9 @@ namespace geometry
 
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
-  const double & vFOV, const double & vFOVOffset, const double & vFOVPadding, 
-  const double & hFOV, const double & min_dist, const double & max_dist)
+  const double & vFOV, const double & vFOVOffset, const double & vFOVPadding,
+  const double & hFOV, const double & min_dist, const double & max_dist,
+  const double & frustum_roll, const double & frustum_pitch, const double & frustum_yaw)
 : _vFOV(vFOV), _vFOVOffset(vFOVOffset), _vFOVPadding(vFOVPadding),
   _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
 /*****************************************************************************/
@@ -53,6 +54,11 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
   _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
+  const Eigen::Quaterniond frustum_orientation =
+    Eigen::AngleAxisd(frustum_yaw, Eigen::Vector3d::UnitZ()) *
+    Eigen::AngleAxisd(frustum_pitch, Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(frustum_roll, Eigen::Vector3d::UnitX());
+  _frustum_orientation_conjugate = frustum_orientation.conjugate();
   _full_hFOV = false;
   if (_hFOV > 6.27) {
     _full_hFOV = true;
@@ -78,8 +84,10 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
 /*****************************************************************************/
 {
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
-  Eigen::Vector3d transformed_pt =
+  const Eigen::Vector3d point_in_sensor_frame =
     _orientation_conjugate * (point_in_global_frame - _position);
+  const Eigen::Vector3d transformed_pt =
+    _frustum_orientation_conjugate * point_in_sensor_frame;
 
   const double radial_distance_squared =
     (transformed_pt[0] * transformed_pt[0]) +

@@ -172,7 +172,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // get the parameters for the specific topic
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVOffset, vFOVPadding;
-    double hFOV, decay_acceleration, obstacle_range;
+    double hFOV, frustumRoll, frustumPitch, frustumYaw;
+    double decay_acceleration, obstacle_range;
     std::string topic, sensor_frame, data_type, filter_str, transport_type;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
@@ -222,6 +223,13 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // horizontal FOV angle in rad
     hFOV = node->declare_or_get_parameter(
       name_ + "." + source + "." + "horizontal_fov_angle", 1.04);
+    // rotation of the 3D lidar frustum relative to the sensor frame, in radians
+    frustumRoll = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "frustum_roll", 0.0);
+    frustumPitch = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "frustum_pitch", 0.0);
+    frustumYaw = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "frustum_yaw", 0.0);
     // acceleration scales the model's decay in presence of readings
     decay_acceleration = node->declare_or_get_parameter(
       name_ + "." + source + "." + "decay_acceleration", 0.0);
@@ -271,7 +279,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           transform_tolerance, min_z, max_z, vFOV, vFOVOffset, vFOVPadding, hFOV,
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
-          node->get_clock(), node->get_logger())));
+          node->get_clock(), node->get_logger(), frustumRoll, frustumPitch, frustumYaw)));
 
     // Add buffer to marking observation buffers
     if (marking) {
@@ -912,6 +920,30 @@ SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Paramete
             if (buffer->GetSourceName() == source) {
               buffer->Lock();
               buffer->SetHorizontalFovAngle(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "frustum_roll") {
+          for (auto & buffer : _observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetFrustumRoll(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "frustum_pitch") {
+          for (auto & buffer : _observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetFrustumPitch(parameter.as_double());
+              buffer->Unlock();
+            }
+          }
+        } else if (name == name_ + "." + source + "." + "frustum_yaw") {
+          for (auto & buffer : _observation_buffers) {
+            if (buffer->GetSourceName() == source) {
+              buffer->Lock();
+              buffer->SetFrustumYaw(parameter.as_double());
               buffer->Unlock();
             }
           }
