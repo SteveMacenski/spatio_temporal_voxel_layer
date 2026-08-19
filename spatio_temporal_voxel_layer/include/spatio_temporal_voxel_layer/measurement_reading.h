@@ -71,7 +71,8 @@ struct MeasurementReading
     geometry_msgs::msg::Point & origin, sensor_msgs::msg::PointCloud2 cloud,
     double obstacle_range, double min_z, double max_z, double vFOV, double vFOVOffset,
     double vFOVPadding, double hFOV, double decay_acceleration, bool marking,
-    bool clearing, ModelType model_type)
+    bool clearing, ModelType model_type, double frustumRoll = 0.0,
+    double frustumPitch = 0.0, double frustumYaw = 0.0)
   /*****************************************************************************/
     : _origin(origin),
     _cloud(std::make_shared < sensor_msgs::msg::PointCloud2 > (cloud)),
@@ -82,6 +83,9 @@ struct MeasurementReading
     _vertical_fov_offset_in_rad(vFOVOffset),
     _vertical_fov_padding_in_m(vFOVPadding),
     _horizontal_fov_in_rad(hFOV),
+    _frustum_roll_in_rad(frustumRoll),
+    _frustum_pitch_in_rad(frustumPitch),
+    _frustum_yaw_in_rad(frustumYaw),
     _marking(marking),
     _clearing(clearing),
     _decay_acceleration(decay_acceleration),
@@ -110,6 +114,9 @@ struct MeasurementReading
     _vertical_fov_offset_in_rad(obs._vertical_fov_offset_in_rad),
     _vertical_fov_padding_in_m(obs._vertical_fov_padding_in_m),
     _horizontal_fov_in_rad(obs._horizontal_fov_in_rad),
+    _frustum_roll_in_rad(obs._frustum_roll_in_rad),
+    _frustum_pitch_in_rad(obs._frustum_pitch_in_rad),
+    _frustum_yaw_in_rad(obs._frustum_yaw_in_rad),
     _marking(obs._marking),
     _clearing(obs._clearing),
     _decay_acceleration(obs._decay_acceleration),
@@ -122,6 +129,9 @@ struct MeasurementReading
   std::shared_ptr < sensor_msgs::msg::PointCloud2 > _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
   double _vertical_fov_in_rad, _vertical_fov_offset_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
+  double _frustum_roll_in_rad {0.0};
+  double _frustum_pitch_in_rad {0.0};
+  double _frustum_yaw_in_rad {0.0};
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
 };
