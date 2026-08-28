@@ -45,6 +45,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -107,14 +108,15 @@ public:
   /**
    * @brief Project angular (az/el) vertices onto the unit sphere and compute the
    *        great-circle half-plane normal for each edge.
-   * @return the resulting cone, or std::nullopt if the vertices are too few, produce a
-   *         degenerate edge, or are not spherically convex.
+   * @return the resulting cone
+   * @throws std::runtime_error if the vertices are too few, produce a degenerate edge, or
+   *         are not spherically convex.
    */
-  static std::optional<ConvexCone> fromAngularVertices(const AngularPolygon & vertices)
+  static ConvexCone fromAngularVertices(const AngularPolygon & vertices)
   {
     const size_t n = vertices.size();
     if (n < 3) {
-      return std::nullopt;
+      throw std::runtime_error("polygon has " + std::to_string(n) + " vertices, needs at least 3");
     }
 
     // 2D -> 3D: convert (azimuth, elevation) vertices to 3D unit direction vectors
@@ -140,9 +142,11 @@ public:
       const double len_sq =
         normals[i].x * normals[i].x + normals[i].y * normals[i].y + normals[i].z * normals[i].z;
 
-      constexpr double kMinEdgeNormSquared = 1e-12;  // reject edges < ~0.001° apart
+      constexpr double kMinEdgeNormSquared = 1e-12;
       if (len_sq < kMinEdgeNormSquared) {
-        return std::nullopt;
+        throw std::runtime_error(
+                "has a degenerate edge between vertices " + std::to_string(i) + " and " +
+                std::to_string(j) + ": the two directions are coincident");
       }
     }
 
@@ -154,7 +158,7 @@ public:
       centroid.z += d.z;
     }
 
-    // flip normals if pointing outward (dot product with centroid < 0)
+    // flip normals if pointing outward (dot product with centroid < 0) winding detection
     const double test_dot =
       normals[0].x * centroid.x + normals[0].y * centroid.y + normals[0].z * centroid.z;
     if (test_dot < 0.0) {
@@ -172,7 +176,9 @@ public:
         const double side =
           normals[i].x * dirs[k].x + normals[i].y * dirs[k].y + normals[i].z * dirs[k].z;
         if (side < -kConvexEps) {
-          return std::nullopt;  // non-convex polygon: reject
+          throw std::runtime_error(
+                  "is not spherically convex: vertex " + std::to_string(k) +
+                  " lies outside the edge starting at vertex " + std::to_string(i));
         }
       }
     }
@@ -204,71 +210,54 @@ struct ValidatedPolygon
 /**
  * @brief Perform validity checks for each polygon
  * @return vector of valid, precomputed polygons paired with their 2D angular area
+ * @throws std::runtime_error on the first invalid polygon
  */
-inline std::vector<ValidatedPolygon> validatePolygons(
-  const std::vector<AngularPolygon> & input, const rclcpp::Logger & logger)
+inline std::vector<ValidatedPolygon> validatePolygons(const std::vector<AngularPolygon> & input)
 {
   std::vector<ValidatedPolygon> valid;
   valid.reserve(input.size());
 
   for (size_t idx = 0; idx < input.size(); ++idx) {
     const auto & vertices = input[idx];
+    const std::string poly_name_idx = "obstruction polygon " + std::to_string(idx);
+
     if (vertices.size() < 3) {
-      RCLCPP_WARN(logger, "Obstruction polygon %zu has < 3 vertices, skipping.", idx);
-      continue;
+      throw std::runtime_error(
+              poly_name_idx + " has " + std::to_string(vertices.size()) +
+              " vertices, needs at least 3");
     }
 
-    // Check for NaN/inf
-    bool is_finite = false;
+    // Check finiteness and value range
     for (const auto & v : vertices) {
       if (!std::isfinite(v.azimuth) || !std::isfinite(v.elevation)) {
-        is_finite = true;
-        break;
+        throw std::runtime_error(poly_name_idx + " has a NaN or inf vertex");
       }
-    }
-    if (is_finite) {
-      RCLCPP_WARN(logger, "Obstruction polygon %zu has NaN/inf vertices, skipping.", idx);
-      continue;
-    }
-
-    // Verify azimuth within bounds [0-2pi] and elevation within bounds [-pi/2, pi/2].
-    bool azimuth_out_of_range = false;
-    bool elevation_out_of_range = false;
-    for (const auto & v : vertices) {
       if (v.azimuth < 0.0 || v.azimuth > 2.0 * M_PI) {
-        azimuth_out_of_range = true;
-        break;
+        throw std::runtime_error(
+                poly_name_idx + " has azimuth " + std::to_string(v.azimuth) +
+                " outside [0, 2pi]; polygons crossing the 0/2pi boundary are not supported");
       }
       if (v.elevation < -M_PI_2 || v.elevation > M_PI_2) {
-        elevation_out_of_range = true;
-        break;
+        throw std::runtime_error(
+                poly_name_idx + " has elevation " + std::to_string(v.elevation) +
+                " outside [-pi/2, pi/2]");
       }
     }
-    if (azimuth_out_of_range) {
-      RCLCPP_WARN(
-        logger,
-        "Obstruction polygon %zu has vertices outside [0, 2pi] azimuth range, "
-        "skipping. Polygons crossing the 0/2pi boundary are not supported.",
-        idx);
-      continue;
-    }
-    if (elevation_out_of_range) {
-      RCLCPP_WARN(
-        logger,
-        "Obstruction polygon %zu has vertices outside [-pi/2, pi/2] elevation range, skipping.",
-        idx);
-      continue;
+
+    // A zero-area polygon would mask nothing, dont continue
+    constexpr double kMinAngularArea = 1e-9;
+    const double area = angularArea(vertices);
+    if (area < kMinAngularArea) {
+      throw std::runtime_error(
+              poly_name_idx + " has near-zero angular area (" + std::to_string(area) +
+              "), its vertices are collinear or coincident");
     }
 
-    std::optional<ConvexCone> cone = ConvexCone::fromAngularVertices(vertices);
-    if (!cone) {
-      RCLCPP_ERROR(
-        logger,
-        "Obstruction polygon %zu failed precomputation (non-convex or degenerate), skipping.", idx);
-      continue;
+    try {
+      valid.push_back({area, ConvexCone::fromAngularVertices(vertices)});
+    } catch (const std::exception & e) {
+      throw std::runtime_error(poly_name_idx + " " + e.what());
     }
-
-    valid.push_back({angularArea(vertices), std::move(*cone)});
   }
 
   return valid;
@@ -280,10 +269,12 @@ inline std::vector<ValidatedPolygon> validatePolygons(
  * Format: "[[x1,y1, x2,y2, x3,y3], [x4,y4, x5,y5, x6,y6]]"
  * Each inner [...] is one polygon with flat x/y vertex pairs.
  *
- * @return vector of parsed angular-domain polygons
+ * @return parsed angular-domain polygons
+ * @throws std::runtime_error on the first unreadable group. Rejecting the whole group is
+ *         what keeps a single bad value from re-pairing the survivors into vertices that
+ *         were never written.
  */
-inline std::vector<AngularPolygon> parsePolygonsFromString(
-  const std::string & input, const rclcpp::Logger & logger)
+inline std::vector<AngularPolygon> parsePolygonsFromString(const std::string & input)
 {
   std::vector<AngularPolygon> polygons;
 
@@ -293,8 +284,9 @@ inline std::vector<AngularPolygon> parsePolygonsFromString(
   if (
     outer_start == std::string::npos || outer_end == std::string::npos ||
     outer_end <= outer_start) {
-    RCLCPP_WARN(logger, "Obstruction polygons string has invalid format.");
-    return polygons;
+    throw std::runtime_error(
+            "expected a bracketed list like \"[[az,el, az,el, az,el], ...]\", got \"" + input +
+            "\"");
   }
 
   // Parse inner polygon brackets
@@ -307,9 +299,9 @@ inline std::vector<AngularPolygon> parsePolygonsFromString(
       break;
     }
     size_t inner_end = input.find(']', inner_start);
+    const std::string poly_name_idx = "obstruction polygon " + std::to_string(poly_idx);
     if (inner_end == std::string::npos || inner_end > outer_end) {
-      RCLCPP_WARN(logger, "Obstruction polygons string has unmatched brackets.");
-      break;
+      throw std::runtime_error(poly_name_idx + " has an unmatched '['");
     }
 
     // Extract the comma-separated numbers between inner brackets
@@ -326,26 +318,29 @@ inline std::vector<AngularPolygon> parsePolygonsFromString(
       try {
         values.push_back(std::stod(token.substr(start)));
       } catch (const std::exception &) {
-        RCLCPP_WARN(
-          logger, "Obstruction polygon %d: failed to parse value '%s'.", poly_idx, token.c_str());
+        throw std::runtime_error(poly_name_idx + " has unreadable value '" + token + "'");
       }
     }
 
-    if (values.size() >= 6 && values.size() % 2 == 0) {
-      AngularPolygon vertices;
-      vertices.reserve(values.size() / 2);
-      for (size_t i = 0; i < values.size(); i += 2) {
-        vertices.push_back({values[i], values[i + 1]});
-      }
-      polygons.push_back(std::move(vertices));
-    } else if (!values.empty()) {
-      RCLCPP_WARN(
-        logger, "Obstruction polygon %d needs >= 6 values (3 x/y pairs), got %zu. Skipping.",
-        poly_idx, values.size());
+    if (values.size() < 6 || values.size() % 2 != 0) {
+      throw std::runtime_error(
+              poly_name_idx + " has " + std::to_string(values.size()) +
+              " values, needs an even count of at least 6 (3 az/el pairs)");
     }
+
+    AngularPolygon vertices;
+    vertices.reserve(values.size() / 2);
+    for (size_t i = 0; i < values.size(); i += 2) {
+      vertices.push_back({values[i], values[i + 1]});
+    }
+    polygons.push_back(std::move(vertices));
 
     poly_idx++;
     pos = inner_end + 1;
+  }
+
+  if (polygons.empty()) {
+    throw std::runtime_error("no polygons found in \"" + input + "\"");
   }
 
   return polygons;
@@ -408,22 +403,21 @@ public:
     }
     node->get_parameter(param_name, polygons_str);
 
+    // Unspecified: this sensor has no blind spots to mask, which is the common case.
     if (polygons_str.empty()) {
       return nullptr;
     }
 
-    auto raw_polygons = parsePolygonsFromString(polygons_str, logger);
-
-    if (!raw_polygons.empty()) {
-      RCLCPP_INFO(
-        logger, "Parsed %zu obstruction polygon(s) for %s", raw_polygons.size(),
-        param_prefix.c_str());
+    std::vector<ValidatedPolygon> valid_polygons;
+    try {
+      valid_polygons = validatePolygons(parsePolygonsFromString(polygons_str));
+    } catch (const std::exception & e) {
+      throw std::runtime_error("Invalid '" + param_name + "': " + e.what());
     }
 
-    auto valid_polygons = validatePolygons(raw_polygons, logger);
-    if (valid_polygons.empty()) {
-      return nullptr;
-    }
+    RCLCPP_INFO(
+      logger, "Parsed %zu obstruction polygon(s) for %s", valid_polygons.size(),
+      param_prefix.c_str());
 
     auto filter = std::make_shared<ObstructionFilter>();
     filter->flattenAndSortPolygons(valid_polygons);
