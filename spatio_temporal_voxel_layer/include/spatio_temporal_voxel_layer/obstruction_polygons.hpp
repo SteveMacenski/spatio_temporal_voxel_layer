@@ -419,9 +419,9 @@ public:
       logger, "Parsed %zu obstruction polygon(s) for %s", valid_polygons.size(),
       param_prefix.c_str());
 
-    auto filter = std::make_shared<ObstructionFilter>();
-    filter->flattenAndSortPolygons(valid_polygons);
-    return filter;
+    auto obstruction_filter = std::make_shared<ObstructionFilter>();
+    obstruction_filter->flattenAndSortPolygons(valid_polygons);
+    return obstruction_filter;
   }
 
 private:
