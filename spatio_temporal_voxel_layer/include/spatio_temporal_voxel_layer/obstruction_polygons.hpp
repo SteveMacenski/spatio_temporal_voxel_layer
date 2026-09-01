@@ -43,7 +43,6 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -142,12 +141,18 @@ public:
       const double len_sq =
         normals[i].x * normals[i].x + normals[i].y * normals[i].y + normals[i].z * normals[i].z;
 
-      constexpr double kMinEdgeNormSquared = 1e-12;
+      constexpr double kMinEdgeNormSquared = 1e-12;  // reject edges < ~1e-6 rad apart
       if (len_sq < kMinEdgeNormSquared) {
         throw std::runtime_error(
                 "has a degenerate edge between vertices " + std::to_string(i) + " and " +
                 std::to_string(j) + ": the two directions are coincident");
       }
+
+      // Normalize to ensure equal application of kConvexEps below.
+      const double len = std::sqrt(len_sq);
+      normals[i].x /= len;
+      normals[i].y /= len;
+      normals[i].z /= len;
     }
 
     // Determine orientation: centroid direction should be on inside of all half-planes
@@ -169,8 +174,11 @@ public:
       }
     }
 
-    // Verify spherical convexity. For each edge all vertices must lay on same side
-    constexpr double kConvexEps = 1e-9;  // tolerance for vertices lying on an edge's line
+    // Verify spherical convexity. For each edge all vertices must lay on same side.
+    // Normals and dirs are both unit length, so each dot product is the sine of the
+    // vertex's angular distance from that edge's plane, making this tolerance a plain
+    // angle in radians that means the same thing for every polygon.
+    constexpr double kConvexEps = 1e-9;  // radians off-plane, ~6e-8 degrees
     for (size_t i = 0; i < n; ++i) {
       for (size_t k = 0; k < n; ++k) {
         const double side =
