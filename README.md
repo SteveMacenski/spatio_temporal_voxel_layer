@@ -150,7 +150,11 @@ rgbd_obstacle_layer:
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
 
-### Obstruction polygons for voxel retention
+### Obstruction polygons for voxel retention in blind spots
+
+<img width="340" height="314" alt="stvl_obstruction_polygon_retention" src="https://github.com/user-attachments/assets/e0828595-86f9-4935-b21d-989995b964fe" />
+
+_An example of 3d lidar with obstruction from forklift mast. The voxels in the obstructed FOV (orange) are not cleared, but retained for voxel_decay seconds_
 
 In case you want to use the 3D lidar model with defined obstructions (e.g., robot body parts blocking the sensor's FOV), you can add the `obstruction_polygons` parameter. This prevents frustum clearing in the specified azimuth/elevation regions, preserving voxels behind blind spots:
 
@@ -170,9 +174,13 @@ In case you want to use the 3D lidar model with defined obstructions (e.g., robo
 
 Each inner bracket `[az1,el1, az2,el2, ...]` defines one convex polygon (minimum 3 vertices, azimuth in [0, 2π] radians, elevation in [-π/2, π/2] radians). If empty or unset, behavior is identical to the original STVL. Only applies to `model_type: 1`.
 
-<img width="340" height="314" alt="stvl_obstruction_polygon_retention" src="https://github.com/user-attachments/assets/e0828595-86f9-4935-b21d-989995b964fe" />
+#### Edges are great-circle arcs, not az/el straight lines
 
-_An example of 3d lidar with obstruction from forklift mast. The voxels in the obstructed FOV (orange) are not cleared, but retained for voxel_decay seconds_
+The vertices will be represented as 3D *directions* from the sensor into the world. Each edge is the geodesic between two of them. This means in the polygon is **not** the flat box in (azimuth, elevation) that the numbers suggest. The edges will be bent according to  the following figure. Also, edges longer than pi will "flip" to cross the 0/2pi seam, because the arc is represented by the shortest distance between vertices.
+
+<img width="2247" height="957" alt="obstruction_polygon_projection" src="https://github.com/user-attachments/assets/32c2919d-0983-493d-91b7-dd8dd22a746a" />
+
+**Tip:** When you want to have a large azimuth polygon edge, split it into multiple smaller polygons to avoid bowing and flipping. Don't use multiple smaller azimuth edges in the same polygon, this will likely cause non convexity.
 
 ### local/global_costmap_params.yaml
 

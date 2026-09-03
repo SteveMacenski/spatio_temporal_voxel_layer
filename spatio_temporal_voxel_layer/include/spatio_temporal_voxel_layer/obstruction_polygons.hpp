@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -71,21 +72,6 @@ struct SphericalPoint
 };
 using AngularPolygon = std::vector<SphericalPoint>;
 
-/**
- * @brief Angular area of a 2D (azimuth, elevation) polygon via the shoelace formula.
- */
-inline double angularArea(const AngularPolygon & vertices)
-{
-  const size_t n = vertices.size();
-  double area2 = 0.0;
-  for (size_t i = 0; i < n; ++i) {
-    const auto & v0 = vertices[i];
-    const auto & v1 = vertices[(i + 1) % n];
-    area2 += v0.azimuth * v1.elevation - v1.azimuth * v0.elevation;
-  }
-  return std::fabs(area2) * 0.5;
-}
-
 // ---------------------------------------------------------------------------
 // 3D / directional domain
 // ---------------------------------------------------------------------------
@@ -96,10 +82,45 @@ struct Vec3D
 };
 
 /**
+ * @brief Solid angle covered by a spherical polygon, from its edge-plane normals.
+ *
+ * Girard's theorem: a spherical polygon's interior angles exceed the flat (n-2)*pi by exactly
+ * the area it covers on the unit sphere.
+ * @param normals unit edge-plane normals, one per edge, in vertex order
+ * @return steradians covered; 2*pi for a hemisphere, and 0 for a polygon enclosing nothing
+ */
+inline double solidAngleFromNormals(const std::vector<Vec3D> & normals)
+{
+  const size_t n = normals.size();
+  double exterior_angle_sum = 0.0;
+  for (size_t i = 0; i < n; ++i) {
+    const size_t j = (i + 1) % n;  // index of next edge
+    const double dot =
+      normals[i].x * normals[j].x + normals[i].y * normals[j].y + normals[i].z * normals[j].z;
+    // clamp because rounding can push the dot just past +-1, where acos is undefined
+    exterior_angle_sum += std::acos(std::clamp(dot, -1.0, 1.0));
+  }
+  return 2.0 * M_PI - exterior_angle_sum;
+}
+
+/**
  * @brief The 3D/directional counterpart of the 2D angular polygon: a convex
  *        polyhedral cone through the origin, defined as the intersection of
  *        great-circle half-planes (one per polygon edge). Used for
  *        point-in-polygon tests on directions instead of points.
+ *
+ * Edges are geodesics, so each one takes the SHORT way round the sphere. Two
+ * consequences:
+ *   - An edge whose azimuth step exceeds pi sweeps the other way, across 0/2pi,
+ *     so the cone covers the complement of the intended band.
+ *   - A geodesic between two vertices at equal elevation bows away from the
+ *     equator. A band drawn 0.1 rad tall (elevation) over 3.0 rad of azimuth
+ *     actually reaches el 0.96.
+ * Keep each edge's azimuth step small and slice a wide blind spot into several
+ * polygons; the filter is a union, so slicing costs nothing.
+ *
+ * Size is measured on the sphere, as the solid angle the cone covers, never as a
+ * flat area in the az/el chart.
  */
 class ConvexCone
 {
@@ -107,9 +128,9 @@ public:
   /**
    * @brief Project angular (az/el) vertices onto the unit sphere and compute the
    *        great-circle half-plane normal for each edge.
-   * @return the resulting cone
-   * @throws std::runtime_error if the vertices are too few, produce a degenerate edge, or
-   *         are not spherically convex.
+   * @return the resulting cone, carrying the solid angle it covers
+   * @throws std::runtime_error if the vertices do not describe a usable cone, with the
+   *         specific fault in the message
    */
   static ConvexCone fromAngularVertices(const AngularPolygon & vertices)
   {
@@ -137,7 +158,7 @@ public:
       normals[i].y = dirs[i].z * dirs[j].x - dirs[i].x * dirs[j].z;
       normals[i].z = dirs[i].x * dirs[j].y - dirs[i].y * dirs[j].x;
 
-      // Check for degenerate edge (coincident vertices)
+      // Check for degenerate edge (vertices coincident or 180 deg apart)
       const double len_sq =
         normals[i].x * normals[i].x + normals[i].y * normals[i].y + normals[i].z * normals[i].z;
 
@@ -145,7 +166,7 @@ public:
       if (len_sq < kMinEdgeNormSquared) {
         throw std::runtime_error(
                 "has a degenerate edge between vertices " + std::to_string(i) + " and " +
-                std::to_string(j) + ": the two directions are coincident");
+                std::to_string(j) + ": the two directions are coincident or 180 deg apart");
       }
 
       // Normalize to ensure equal application of kConvexEps below.
@@ -155,18 +176,53 @@ public:
       normals[i].z /= len;
     }
 
-    // Determine orientation: centroid direction should be on inside of all half-planes
+    // Determine orientation: the centroid direction should be on the inside of all
+    // half-planes. That only holds when the vertices all fit inside one hemisphere -
+    // otherwise their sum cancels out and there is no interior direction to reference.
     Vec3D centroid{0.0, 0.0, 0.0};
     for (const auto & d : dirs) {
       centroid.x += d.x;
       centroid.y += d.y;
       centroid.z += d.z;
     }
+    constexpr double kMinCentroidNorm = 1e-9;
+    const double centroid_norm =
+      std::sqrt(centroid.x * centroid.x + centroid.y * centroid.y + centroid.z * centroid.z);
+    if (centroid_norm < kMinCentroidNorm) {
+      throw std::runtime_error(
+              "has vertex directions that cancel out, so it wraps the sphere instead of bounding"
+              " a patch; slice it into several smaller polygons");
+    }
+    centroid.x /= centroid_norm;
+    centroid.y /= centroid_norm;
+    centroid.z /= centroid_norm;
 
-    // flip normals if pointing outward (dot product with centroid < 0) winding detection
-    const double test_dot =
-      normals[0].x * centroid.x + normals[0].y * centroid.y + normals[0].z * centroid.z;
-    if (test_dot < 0.0) {
+    // Winding detection. Normals and centroid are both unit length, so each dot is the sine
+    // of the centroid's angular distance from that edge's plane. Find extremes.
+    constexpr double kInteriorEps = 1e-9;  // radians off-plane
+    double min_dot = std::numeric_limits<double>::max();
+    double max_dot = std::numeric_limits<double>::lowest();
+    for (const auto & norm : normals) {
+      const double dot = norm.x * centroid.x + norm.y * centroid.y + norm.z * centroid.z;
+      min_dot = std::min(min_dot, dot);
+      max_dot = std::max(max_dot, dot);
+    }
+
+    if (max_dot <= kInteriorEps && min_dot >= -kInteriorEps) {
+      throw std::runtime_error(
+              "is degenerate: every vertex lies on one great circle through the sensor, so it"
+              " encloses no solid angle at all");
+    }
+
+    // if minimum dot product is still positive, all normals must point inwards
+    const bool inward = min_dot > kInteriorEps;
+
+    // Flip unless the normals already point inward, which isObstructed relies on. A convex
+    // polygon's normals are all inward or all outward together, so one global negation fixes
+    // a reversed polygon if its convex.
+    // Inconsistent winding has no right answer; flipping is arbitrary and the convexity check
+    // below rejects it.
+    if (!inward) {
       for (auto & norm : normals) {
         norm.x = -norm.x;
         norm.y = -norm.y;
@@ -186,20 +242,46 @@ public:
         if (side < -kConvexEps) {
           throw std::runtime_error(
                   "is not spherically convex: vertex " + std::to_string(k) +
-                  " lies outside the edge starting at vertex " + std::to_string(i));
+                  " lies outside the edge starting at vertex " + std::to_string(i) +
+                  ". Each polygon must be convex and well under a hemisphere across; split large"
+                  " or L-shaped regions into several polygons");
         }
       }
     }
 
-    return ConvexCone(std::move(normals));
+    const double solid_angle = solidAngleFromNormals(normals);
+
+    // A polygon covering nothing would look like a working blind spot while the frustum
+    // clears straight through it. One this large is not a blind spot at all, and is the
+    // signature of edges that swept the wrong way round the sphere.
+    constexpr double kMinSolidAngle = 1e-9;  // steradians
+    constexpr double kMaxSolidAngle = M_PI;  // a quarter of the sphere; real masks are far under
+    if (solid_angle < kMinSolidAngle) {
+      throw std::runtime_error(
+              "covers a near-zero solid angle (" + std::to_string(solid_angle) +
+              " sr) and would mask nothing");
+    }
+    if (solid_angle > kMaxSolidAngle) {
+      throw std::runtime_error(
+              "covers " + std::to_string(solid_angle) +
+              " sr, far too large for a blind spot; check whether an edge's azimuth step exceeds"
+              " pi and sweeps the wrong way, and slice it into several polygons");
+    }
+
+    return ConvexCone(std::move(normals), solid_angle);
   }
 
   const std::vector<Vec3D> & normals() const { return normals_; }
 
+  /// Solid angle in steradians, the true size of the cone.
+  double getSolidAngle() const { return solid_angle_; }
+
 private:
-  explicit ConvexCone(std::vector<Vec3D> normals) : normals_(std::move(normals)) {}
+  ConvexCone(std::vector<Vec3D> normals, double solid_angle)
+  : normals_(std::move(normals)), solid_angle_(solid_angle) {}
 
   std::vector<Vec3D> normals_;
+  double solid_angle_;  // for ordering by size
 };
 
 // ---------------------------------------------------------------------------
@@ -207,17 +289,17 @@ private:
 // ---------------------------------------------------------------------------
 
 /**
- * @brief Validated 3D cone with angular area.
+ * @brief Validated 3D cone with its solid angle.
  */
 struct ValidatedPolygon
 {
-  double angular_area;  // for size based sorting
+  double solid_angle;  // steradians, for size based sorting
   ConvexCone cone;
 };
 
 /**
  * @brief Perform validity checks for each polygon
- * @return vector of valid, precomputed polygons paired with their 2D angular area
+ * @return vector of valid, precomputed polygons paired with their solid angle
  * @throws std::runtime_error on the first invalid polygon
  */
 inline std::vector<ValidatedPolygon> validatePolygons(const std::vector<AngularPolygon> & input)
@@ -243,7 +325,8 @@ inline std::vector<ValidatedPolygon> validatePolygons(const std::vector<AngularP
       if (v.azimuth < 0.0 || v.azimuth > 2.0 * M_PI) {
         throw std::runtime_error(
                 poly_name_idx + " has azimuth " + std::to_string(v.azimuth) +
-                " outside [0, 2pi]; polygons crossing the 0/2pi boundary are not supported");
+                " outside [0, 2pi]; a polygon crossing 0/2pi is supported, but write its"
+                " vertices wrapped into range (e.g. 6.2 and 0.1)");
       }
       if (v.elevation < -M_PI_2 || v.elevation > M_PI_2) {
         throw std::runtime_error(
@@ -252,17 +335,11 @@ inline std::vector<ValidatedPolygon> validatePolygons(const std::vector<AngularP
       }
     }
 
-    // A zero-area polygon would mask nothing, dont continue
-    constexpr double kMinAngularArea = 1e-9;
-    const double area = angularArea(vertices);
-    if (area < kMinAngularArea) {
-      throw std::runtime_error(
-              poly_name_idx + " has near-zero angular area (" + std::to_string(area) +
-              "), its vertices are collinear or coincident");
-    }
-
+    // Shape and size are checked on the sphere by fromAngularVertices, which rejects a cone
+    // that is degenerate, non-convex or implausibly large.
     try {
-      valid.push_back({area, ConvexCone::fromAngularVertices(vertices)});
+      ConvexCone cone = ConvexCone::fromAngularVertices(vertices);
+      valid.push_back({cone.getSolidAngle(), std::move(cone)});
     } catch (const std::exception & e) {
       throw std::runtime_error(poly_name_idx + " " + e.what());
     }
@@ -460,7 +537,7 @@ private:
     }
     std::sort(
       ordered.begin(), ordered.end(), [](const ValidatedPolygon * a, const ValidatedPolygon * b) {
-        return a->angular_area > b->angular_area;
+        return a->solid_angle > b->solid_angle;
       });
 
     // Store normals in flat vectors
