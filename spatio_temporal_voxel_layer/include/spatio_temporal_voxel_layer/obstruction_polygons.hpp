@@ -251,11 +251,12 @@ public:
 
     const double solid_angle = solidAngleFromNormals(normals);
 
-    // A polygon covering nothing would look like a working blind spot while the frustum
-    // clears straight through it. One this large is not a blind spot at all, and is the
-    // signature of edges that swept the wrong way round the sphere.
+    // A polygon covering nothing ( < kMinSolidAngle ) would look like a working blind spot
+    // while the frustum clears straight through it.
+    // The upper bound, kMaxSolidAngle is a plausibility judgement, not a limit of the
+    // representation. A quarter of the sphere big, typical masks are far under.
     constexpr double kMinSolidAngle = 1e-9;  // steradians
-    constexpr double kMaxSolidAngle = M_PI;  // a quarter of the sphere; real masks are far under
+    constexpr double kMaxSolidAngle = M_PI;
     if (solid_angle < kMinSolidAngle) {
       throw std::runtime_error(
               "covers a near-zero solid angle (" + std::to_string(solid_angle) +
@@ -264,7 +265,7 @@ public:
     if (solid_angle > kMaxSolidAngle) {
       throw std::runtime_error(
               "covers " + std::to_string(solid_angle) +
-              " sr, far too large for a blind spot; check whether an edge's azimuth step exceeds"
+              " sr, a very large blind spot; check whether an edge's azimuth step exceeds"
               " pi and sweeps the wrong way, and slice it into several polygons");
     }
 
