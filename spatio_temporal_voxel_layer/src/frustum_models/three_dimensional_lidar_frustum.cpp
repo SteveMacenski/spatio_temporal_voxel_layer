@@ -123,14 +123,12 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   }
 
   // Check if the point falls inside any obstruction polygon (blind spot)
-  if (_obstruction_filter) {
-    if (_obstruction_filter->isObstructed(
-        static_cast<float>(transformed_pt[0]),
-        static_cast<float>(transformed_pt[1]),
-        static_cast<float>(transformed_pt[2])))
-    {
-      return false;  // point is in a blind spot
-    }
+  if (_obstruction_filter && _obstruction_filter->isObstructed(
+      static_cast<float>(transformed_pt[0]),
+      static_cast<float>(transformed_pt[1]),
+      static_cast<float>(transformed_pt[2])))
+  {
+    return false;  // point is in a blind spot
   }
 
   return true;
