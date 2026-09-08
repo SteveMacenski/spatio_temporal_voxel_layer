@@ -443,6 +443,7 @@ public:
   ObstructionFilter() = default;
 
   bool empty() const { return polygons_.empty(); }
+  size_t nPolygons() const { return polygons_.size(); }
 
   /**
    * @brief Check if a 3D direction falls inside any obstruction polygon
@@ -478,32 +479,18 @@ public:
    *   obstruction_polygons: "[[x1,y1, x2,y2, x3,y3], [x4,y4, x5,y5, x6,y6]]"
    *   x=azimuth (rad), y=elevation (rad).
    */
-  template <typename NodeT>
-  static std::shared_ptr<ObstructionFilter> fromParams(
-    NodeT node, const std::string & param_prefix, const rclcpp::Logger & logger)
+  static std::shared_ptr<ObstructionFilter> fromParam(const std::string & polygons_param)
   {
-    std::string param_name = param_prefix + ".obstruction_polygons";
-    std::string polygons_str;
-    if (!node->has_parameter(param_name)) {
-      node->declare_parameter(param_name, std::string(""));
-    }
-    node->get_parameter(param_name, polygons_str);
-
-    // Unspecified: this sensor has no blind spots to mask, which is the common case.
-    if (polygons_str.empty()) {
+    if (polygons_param.empty()) {
       return nullptr;
     }
 
     std::vector<ValidatedPolygon> valid_polygons;
     try {
-      valid_polygons = validatePolygons(parsePolygonsFromString(polygons_str));
+      valid_polygons = validatePolygons(parsePolygonsFromString(polygons_param));
     } catch (const std::exception & e) {
-      throw std::runtime_error("Invalid '" + param_name + "': " + e.what());
+      throw std::runtime_error("Invalid polygon: '" + polygons_param + "'. " + e.what());
     }
-
-    RCLCPP_INFO(
-      logger, "Parsed %zu obstruction polygon(s) for %s", valid_polygons.size(),
-      param_prefix.c_str());
 
     auto obstruction_filter = std::make_shared<ObstructionFilter>();
     obstruction_filter->flattenAndSortPolygons(valid_polygons);
