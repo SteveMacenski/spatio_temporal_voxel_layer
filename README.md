@@ -103,7 +103,7 @@ An example fully-described configuration is shown below.
 
 Note: We supply two PCL filters within STVL to massage the data to lower compute overhead. STVL has an approximate voxel filter to make the data more sparse if very dense. It also has a passthrough filter to limit processing data within the valid minimum to maximum height bounds. The voxel filter is recommended if it lowers CPU overhead, otherwise, passthrough filter. No filter is also available if you pre-process your data or are not interested in performance optimizations. 
 
-```
+```yaml
 rgbd_obstacle_layer:
   enabled:               true
   voxel_decay:           20     #seconds if linear, e^n if exponential
@@ -149,6 +149,38 @@ rgbd_obstacle_layer:
     model_type: 0                #default 0 (depth camera). Use 1 for 3D Lidar
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
+
+### Obstruction polygons for voxel retention in blind spots
+
+<img width="340" height="314" alt="stvl_obstruction_polygon_retention" src="https://github.com/user-attachments/assets/e0828595-86f9-4935-b21d-989995b964fe" />
+
+_An example of 3d lidar with obstruction from forklift mast. The voxels in the obstructed FOV (orange) are not cleared, but retained for voxel_decay seconds_
+
+In case you want to use the 3D lidar model with defined obstructions (e.g., robot body parts blocking the sensor's FOV), you can add the `obstruction_polygons` parameter. This prevents frustum clearing in the specified azimuth/elevation regions, preserving voxels behind blind spots:
+
+```yaml
+  lidar1_clear:
+    ...
+    data_type: PointCloud2
+    topic: /lidar/points
+    marking: false
+    clearing: true
+    model_type: 1                #3D Lidar
+    horizontal_fov_angle: 6.28   #full circle
+    vertical_fov_angle: 1.57     #90 deg
+    obstacle_range: 20.0         #should be large enough to clear further than marking range, and further than voxels that may have been retained behind obstructions while robot moved.
+    obstruction_polygons: "[[0.8,-0.2, 1.2,-0.2, 1.2,0.1, 0.8,0.1], [3.5,-0.3, 4.0,-0.3, 4.0,0.0, 3.5,0.0]]"
+```
+
+Each inner bracket `[az1,el1, az2,el2, ...]` defines one convex polygon (minimum 3 vertices, azimuth in [0, 2π] radians, elevation in [-π/2, π/2] radians). If empty or unset, behavior is identical to the original STVL. Only applies to `model_type: 1`.
+
+#### Edges are great-circle arcs, not az/el straight lines
+
+The vertices will be represented as 3D *directions* from the sensor into the world. Each edge is the geodesic between two of them. This means in the polygon is **not** the flat box in (azimuth, elevation) that the numbers suggest. The edges will be bent according to  the following figure. Also, edges longer than pi will "flip" to cross the 0/2pi seam, because the arc is represented by the shortest distance between vertices.
+
+<img width="2247" height="957" alt="obstruction_polygon_projection" src="https://github.com/user-attachments/assets/32c2919d-0983-493d-91b7-dd8dd22a746a" />
+
+**Tip:** When you want to have a large azimuth polygon edge, split it into multiple smaller polygons to avoid bowing and flipping. Don't use multiple smaller azimuth edges in the same polygon, this will likely cause non convexity.
 
 ### local/global_costmap_params.yaml
 

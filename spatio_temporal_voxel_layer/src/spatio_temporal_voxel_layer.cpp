@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -172,7 +173,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type, filter_str;
+    std::string topic, sensor_frame, data_type, filter_str, obstruction_polygons;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
     int voxel_min_points;
@@ -203,6 +204,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
     declareParameter(source + "." + "model_type", rclcpp::ParameterValue(0));
+    declareParameter(
+      source + "." + "obstruction_polygons",
+      rclcpp::ParameterValue(std::string("")));
 
     node->get_parameter(name_ + "." + source + "." + "topic", topic);
     node->get_parameter(name_ + "." + source + "." + "sensor_frame", sensor_frame);
@@ -244,6 +248,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     int model_type_int = 0;
     node->get_parameter(name_ + "." + source + "." + "model_type", model_type_int);
     ModelType model_type = static_cast<ModelType>(model_type_int);
+    // optional obstruction polygons string in az/el, used to persist voxels behind obstructions
+    node->get_parameter(name_ + "." + source + "." + "obstruction_polygons", obstruction_polygons);
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
@@ -272,6 +278,19 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
           node->get_clock(), node->get_logger())));
+
+    // Load obstruction polygons for 3D lidar sources
+    if (model_type == THREE_DIMENSIONAL_LIDAR) {
+      auto obstruction_filter = geometry::ObstructionFilter::fromParam(obstruction_polygons);
+      if (obstruction_filter) {
+        RCLCPP_INFO(
+          logger_,
+          "Parsed %zu obstruction polygon(s) for %s",
+          obstruction_filter->nPolygons(),
+          source.c_str());
+        _observation_buffers.back()->SetObstructionFilter(obstruction_filter);
+      }
+    }
 
     // Add buffer to marking observation buffers
     if (marking) {

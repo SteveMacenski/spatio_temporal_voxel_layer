@@ -41,11 +41,15 @@
 #define SPATIO_TEMPORAL_VOXEL_LAYER__MEASUREMENT_READING_H_
 
 #include <memory>
+#include <vector>
 
 // msgs
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+
+// obstruction polygons
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 enum ModelType
 {
@@ -111,7 +115,8 @@ struct MeasurementReading
     _marking(obs._marking),
     _clearing(obs._clearing),
     _decay_acceleration(obs._decay_acceleration),
-    _model_type(obs._model_type)
+    _model_type(obs._model_type),
+    _obstruction_filter(obs._obstruction_filter)
   {
   }
 
@@ -122,6 +127,7 @@ struct MeasurementReading
   double _vertical_fov_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
   ModelType _model_type;
+  std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;
 };
 
 }  // namespace observation
