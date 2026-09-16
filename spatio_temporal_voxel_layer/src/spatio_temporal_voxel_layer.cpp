@@ -552,6 +552,10 @@ void SpatioTemporalVoxelLayer::activate(void)
   // subscribe and place info in buffers from sensor sources
   RCLCPP_INFO(logger_, "%s was activated.", getName().c_str());
 
+  if (_voxel_pub) {
+    _voxel_pub->on_activate();
+  }
+
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
   for (; sub_it != _observation_subscribers.end(); ++sub_it) {
     (*sub_it)->subscribe();
@@ -574,6 +578,10 @@ void SpatioTemporalVoxelLayer::deactivate(void)
 {
   // unsubscribe from all sensor sources
   RCLCPP_INFO(logger_, "%s was deactivated.", getName().c_str());
+
+  if (_voxel_pub) {
+    _voxel_pub->on_deactivate();
+  }
 
   observation_subscribers_iter sub_it = _observation_subscribers.begin();
   for (; sub_it != _observation_subscribers.end(); ++sub_it) {
