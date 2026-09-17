@@ -42,6 +42,7 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include <utility>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
 #include "point_cloud_transport/subscriber_filter.hpp"
@@ -804,13 +805,13 @@ void SpatioTemporalVoxelLayer::updateBounds(
   UpdateROSCostmap(min_x, min_y, max_x, max_y, cleared_cells);
 
   // publish point cloud in navigation mode
-  if (_publish_voxels && !_mapping_mode) {
+  if (_publish_voxels && !_mapping_mode && _voxel_pub->get_subscription_count() > 0) {
     std::unique_ptr<sensor_msgs::msg::PointCloud2> pc2 =
       std::make_unique<sensor_msgs::msg::PointCloud2>();
     _voxel_grid->GetOccupancyPointCloud(pc2);
     pc2->header.frame_id = _global_frame;
     pc2->header.stamp = node->now();
-    _voxel_pub->publish(*pc2);
+    _voxel_pub->publish(std::move(pc2));
   }
 
   // update footprint
