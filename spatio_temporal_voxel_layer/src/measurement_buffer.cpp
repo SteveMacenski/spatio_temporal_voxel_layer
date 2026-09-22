@@ -96,6 +96,7 @@ void MeasurementBuffer::BufferROSCloud(
 
   const std::string origin_frame =
     _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
+  _resolved_sensor_frame = origin_frame;
 
   try {
     // transform into global frame
@@ -131,6 +132,7 @@ void MeasurementBuffer::BufferROSCloud(
     _observation_list.front()._clearing = _clearing;
     _observation_list.front()._marking = _marking;
     _observation_list.front()._model_type = _model_type;
+    _observation_list.front()._obstruction_filter = _obstruction_filter;
 
     if (_clearing && !_marking) {
       // no need to buffer points
@@ -283,6 +285,20 @@ std::string MeasurementBuffer::GetSourceName(void) const
 }
 
 /*****************************************************************************/
+ModelType MeasurementBuffer::GetModelType(void) const
+/*****************************************************************************/
+{
+  return _model_type;
+}
+
+/*****************************************************************************/
+std::string MeasurementBuffer::GetResolvedSensorFrame(void) const
+/*****************************************************************************/
+{
+  return _resolved_sensor_frame;
+}
+
+/*****************************************************************************/
 void MeasurementBuffer::SetMinObstacleHeight(const double & min_obstacle_height)
 /*****************************************************************************/
 {
@@ -315,6 +331,14 @@ void MeasurementBuffer::SetVerticalFovAngle(const double & vertical_fov_angle)
 /*****************************************************************************/
 {
   _vertical_fov = vertical_fov_angle;
+}
+
+/*****************************************************************************/
+void MeasurementBuffer::SetObstructionFilter(
+  std::shared_ptr<geometry::ObstructionFilter> filter)
+/*****************************************************************************/
+{
+  _obstruction_filter = std::move(filter);
 }
 
 /*****************************************************************************/

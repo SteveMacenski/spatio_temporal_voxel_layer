@@ -43,6 +43,8 @@
 #include <vector>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_markers.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -51,6 +53,27 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 using rcl_interfaces::msg::ParameterType;
+
+namespace
+{
+
+/*****************************************************************************/
+void warnOnMinRangeCountMismatch(
+  const rclcpp::Logger & logger, const std::string & source, size_t n_ranges, size_t n_polygons)
+/*****************************************************************************/
+{
+  // A mismatch is deliberately tolerated so the two parameters can be resized one at a time.
+  if (n_ranges == 0 || n_ranges == n_polygons) {
+    return;
+  }
+  RCLCPP_WARN(
+    logger,
+    "%s: obstruction_min_ranges has %zu value(s) for %zu obstruction_polygons. Polygons without "
+    "min_range keep the whole ray masked. Give one value per polygon.",
+    source.c_str(), n_ranges, n_polygons);
+}
+
+}  // namespace
 
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
@@ -152,6 +175,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       "voxel_grid", rclcpp::QoS(1), pub_opt);
   }
 
+  _obstruction_marker_pub = node->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "obstruction_polygons", rclcpp::QoS(1).transient_local(), pub_opt);
+
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
   _grid_saver = node->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
@@ -172,7 +198,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type, filter_str;
+    std::string topic, sensor_frame, data_type, filter_str, obstruction_polygons;
+    std::vector<double> obstruction_min_ranges;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
     int voxel_min_points;
@@ -203,6 +230,16 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     declareParameter(source + "." + "clear_after_reading", rclcpp::ParameterValue(false));
     declareParameter(source + "." + "enabled", rclcpp::ParameterValue(true));
     declareParameter(source + "." + "model_type", rclcpp::ParameterValue(0));
+    declareParameter(
+      source + "." + "obstruction_polygons",
+      rclcpp::ParameterValue(std::string("")));
+    declareParameter(
+      source + "." + "obstruction_min_ranges",
+      rclcpp::ParameterValue(std::vector<double>{}));
+    declareParameter(
+      source + "." + "publish_obstruction_markers", rclcpp::ParameterValue(false));
+    declareParameter(
+      source + "." + "obstruction_marker_range", rclcpp::ParameterValue(1.0));
 
     node->get_parameter(name_ + "." + source + "." + "topic", topic);
     node->get_parameter(name_ + "." + source + "." + "sensor_frame", sensor_frame);
@@ -244,6 +281,18 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     int model_type_int = 0;
     node->get_parameter(name_ + "." + source + "." + "model_type", model_type_int);
     ModelType model_type = static_cast<ModelType>(model_type_int);
+    // optional obstruction polygons string in az/el, used to persist voxels behind obstructions
+    node->get_parameter(name_ + "." + source + "." + "obstruction_polygons", obstruction_polygons);
+    // optional per-polygon range to the obstruction, so voxels in front of it are still cleared
+    try {
+      node->get_parameter(
+        name_ + "." + source + "." + "obstruction_min_ranges", obstruction_min_ranges);
+    } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+      throw std::runtime_error(
+              "Invalid '" + name_ + "." + source +
+              ".obstruction_min_ranges'. should look like [0.0, 2.5] (with decimal points)"
+              + e.what());
+    }
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
@@ -272,6 +321,23 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
           node->get_clock(), node->get_logger())));
+
+    // Load obstruction polygons for 3D lidar sources
+    if (model_type == THREE_DIMENSIONAL_LIDAR) {
+      auto obstruction_filter =
+        geometry::ObstructionFilter::fromParam(obstruction_polygons, obstruction_min_ranges);
+      if (obstruction_filter) {
+        RCLCPP_INFO(
+          logger_,
+          "Parsed %zu obstruction polygon(s) for %s",
+          obstruction_filter->nPolygons(),
+          source.c_str());
+        warnOnMinRangeCountMismatch(
+          logger_, source, obstruction_min_ranges.size(), obstruction_filter->nPolygons());
+        _observation_buffers.back()->SetObstructionFilter(obstruction_filter);
+        _republish_obstruction_markers = true;
+      }
+    }
 
     // Add buffer to marking observation buffers
     if (marking) {
@@ -734,6 +800,8 @@ void SpatioTemporalVoxelLayer::updateBounds(
   double * min_x, double * min_y, double * max_x, double * max_y)
 /*****************************************************************************/
 {
+  publishObstructionMarkers();
+
   // grabs new max bounds for the costmap
   if (!_enabled) {
     return;
@@ -836,10 +904,169 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
   resp->status = false;
 }
 
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
+/*****************************************************************************/
+{
+  if (!_republish_obstruction_markers || !_obstruction_marker_pub) {
+    return;
+  }
+  auto node = node_.lock();
+  if (!node) {
+    return;
+  }
+
+  visualization_msgs::msg::MarkerArray markers;
+  // Clear first
+  visualization_msgs::msg::Marker clear_all;
+  clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
+  markers.markers.push_back(clear_all);
+
+  bool every_frame_known = true;
+
+  for (const auto & buffer : _observation_buffers) {
+    const std::string source = buffer->GetSourceName();
+    const std::string prefix = name_ + "." + source + ".";
+
+    bool publish = false;
+    node->get_parameter(prefix + "publish_obstruction_markers", publish);
+    if (!publish) {
+      continue;
+    }
+
+    // sensor_frame is optional, so the frame the polygons are defined in is only known once a
+    // cloud has arrived. Stay dirty and retry next cycle rather than publish a bad frame.
+    const std::string frame = buffer->GetResolvedSensorFrame();
+    if (frame.empty()) {
+      every_frame_known = false;
+      continue;
+    }
+
+    std::string polygons_param;
+    std::vector<double> min_ranges;
+    double radius = 1.0;
+    node->get_parameter(prefix + "obstruction_polygons", polygons_param);
+    node->get_parameter(prefix + "obstruction_min_ranges", min_ranges);
+    node->get_parameter(prefix + "obstruction_marker_range", radius);
+
+    for (auto & marker : geometry::buildObstructionMarkers(
+        polygons_param, min_ranges, frame, source, radius))
+    {
+      markers.markers.push_back(std::move(marker));
+    }
+  }
+
+  _obstruction_marker_pub->publish(markers);
+  if (every_frame_known) {
+    _republish_obstruction_markers = false;
+  }
+}
+
+/*****************************************************************************/
+rcl_interfaces::msg::SetParametersResult
+SpatioTemporalVoxelLayer::updateObstructionFilter(
+  const std::string & source, const std::vector<rclcpp::Parameter> & parameters)
+/*****************************************************************************/
+{
+  auto result = rcl_interfaces::msg::SetParametersResult();
+  result.successful = true;
+
+  const std::string polygons_name = name_ + "." + source + "." + "obstruction_polygons";
+  const std::string min_ranges_name = name_ + "." + source + "." + "obstruction_min_ranges";
+
+  const rclcpp::Parameter * new_polygons = nullptr;
+  const rclcpp::Parameter * new_min_ranges = nullptr;
+  for (const auto & parameter : parameters) {
+    if (parameter.get_name() == polygons_name) {
+      new_polygons = &parameter;
+    } else if (parameter.get_name() == min_ranges_name) {
+      new_min_ranges = &parameter;
+    }
+  }
+
+  // This runs for every source on every parameter change, so leave immediately when neither
+  // obstruction parameter is part of this one.
+  if (!new_polygons && !new_min_ranges) {
+    return result;
+  }
+
+  auto node = node_.lock();
+  if (!node) {
+    result.successful = false;
+    result.reason = "node has expired, cannot update obstruction polygons";
+    return result;
+  }
+
+  // Get latest param values. The two parameters validate against each other, so both values are
+  // needed even when only one is being set.
+  std::string polygons_param;
+  std::vector<double> min_ranges;
+  if (new_polygons) {
+    polygons_param = new_polygons->as_string();
+  } else {
+    node->get_parameter(polygons_name, polygons_param);
+  }
+  if (new_min_ranges) {
+    min_ranges = new_min_ranges->as_double_array();
+  } else {
+    node->get_parameter(min_ranges_name, min_ranges);
+  }
+
+  // Validate. On rejection the parameters are not committed
+  std::shared_ptr<geometry::ObstructionFilter> obstruction_filter;
+  try {
+    obstruction_filter = geometry::ObstructionFilter::fromParam(polygons_param, min_ranges);
+  } catch (const std::exception & e) {
+    result.successful = false;
+    result.reason = std::string("Obstruction polygons for '") + source + "' unchanged. " +
+      e.what();
+    RCLCPP_WARN(logger_, "%s", result.reason.c_str());
+    return result;
+  }
+
+  for (auto & buffer : _observation_buffers) {
+    if (buffer->GetSourceName() != source) {
+      continue;
+    }
+    // Only the 3D lidar frustum consults the filter
+    if (buffer->GetModelType() != THREE_DIMENSIONAL_LIDAR) {
+      continue;
+    }
+    buffer->Lock();
+    buffer->SetObstructionFilter(obstruction_filter);
+    buffer->Unlock();
+    _republish_obstruction_markers = true;
+
+    if (obstruction_filter) {
+      RCLCPP_INFO(
+        logger_, "Parsed %zu obstruction polygon(s) for %s",
+        obstruction_filter->nPolygons(), source.c_str());
+      warnOnMinRangeCountMismatch(
+        logger_, source, min_ranges.size(), obstruction_filter->nPolygons());
+    } else {
+      RCLCPP_INFO(logger_, "Cleared obstruction polygons for %s", source.c_str());
+    }
+  }
+
+  return result;
+}
+
+/*****************************************************************************/
 rcl_interfaces::msg::SetParametersResult
 SpatioTemporalVoxelLayer::dynamicParametersCallback(std::vector<rclcpp::Parameter> parameters)
 {
   auto result = rcl_interfaces::msg::SetParametersResult();
+
+  // Evaluate obstruction parameters per observation source
+  std::stringstream source_ss(_topics_string);
+  std::string obstruction_source;
+  while (source_ss >> obstruction_source) {
+    result = updateObstructionFilter(obstruction_source, parameters);
+    if (!result.successful) {
+      return result;
+    }
+  }
+
   for (auto parameter : parameters) {
     const auto & type = parameter.get_type();
     const auto & name = parameter.get_name();
