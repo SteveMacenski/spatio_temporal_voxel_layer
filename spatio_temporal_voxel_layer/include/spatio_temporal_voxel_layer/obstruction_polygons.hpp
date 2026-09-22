@@ -50,8 +50,6 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
 namespace geometry
 {
 
@@ -117,7 +115,7 @@ inline double solidAngleFromNormals(const std::vector<Vec3D> & normals)
  *     equator. A band drawn 0.1 rad tall (elevation) over 3.0 rad of azimuth
  *     actually reaches el 0.96.
  * Keep each edge's azimuth step small and slice a wide blind spot into several
- * polygons; the filter is a union, so slicing costs nothing.
+ * polygons.
  *
  * Size is measured on the sphere, as the solid angle the cone covers, never as a
  * flat area in the az/el chart.
@@ -251,24 +249,6 @@ public:
 
     const double solid_angle = solidAngleFromNormals(normals);
 
-    // A polygon covering nothing ( < kMinSolidAngle ) would look like a working blind spot
-    // while the frustum clears straight through it.
-    // The upper bound, kMaxSolidAngle is a plausibility judgement, not a limit of the
-    // representation. A quarter of the sphere big, typical masks are far under.
-    constexpr double kMinSolidAngle = 1e-9;  // steradians
-    constexpr double kMaxSolidAngle = M_PI;
-    if (solid_angle < kMinSolidAngle) {
-      throw std::runtime_error(
-              "covers a near-zero solid angle (" + std::to_string(solid_angle) +
-              " sr) and would mask nothing");
-    }
-    if (solid_angle > kMaxSolidAngle) {
-      throw std::runtime_error(
-              "covers " + std::to_string(solid_angle) +
-              " sr, a very large blind spot; check whether an edge's azimuth step exceeds"
-              " pi and sweeps the wrong way, and slice it into several polygons");
-    }
-
     return ConvexCone(std::move(normals), solid_angle);
   }
 
@@ -360,8 +340,8 @@ inline std::vector<ValidatedPolygon> validatePolygons(
     // Unset means zero, i.e. the obstruction hides its whole ray
     const double min_range = min_ranges.empty() ? 0.0 : min_ranges[idx];
 
-    // Shape and size are checked on the sphere by fromAngularVertices, which rejects a cone
-    // that is degenerate, non-convex or implausibly large.
+    // Shape is checked on the sphere by fromAngularVertices, which rejects a cone that is
+    // degenerate or non-convex.
     try {
       ConvexCone cone = ConvexCone::fromAngularVertices(vertices);
       valid.push_back({cone.getSolidAngle(), min_range, std::move(cone)});
