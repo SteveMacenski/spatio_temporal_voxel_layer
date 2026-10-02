@@ -128,13 +128,17 @@ public:
     std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Response> resp);
 
 private:
-  // Sensor callbacks
+  // Sensor callbacks. LaserScan callbacks take a per-source projector because
+  // MessageFilter may invoke them concurrently on the TF thread; a shared
+  // LaserProjection is not thread-safe (mutable trig cache).
   void LaserScanCallback(
     sensor_msgs::msg::LaserScan::ConstSharedPtr message,
-    const std::shared_ptr<buffer::MeasurementBuffer> & buffer);
+    const std::shared_ptr<buffer::MeasurementBuffer> & buffer,
+    const std::shared_ptr<laser_geometry::LaserProjection> & projector);
   void LaserScanValidInfCallback(
     sensor_msgs::msg::LaserScan::ConstSharedPtr raw_message,
-    const std::shared_ptr<buffer::MeasurementBuffer> & buffer);
+    const std::shared_ptr<buffer::MeasurementBuffer> & buffer,
+    const std::shared_ptr<laser_geometry::LaserProjection> & projector);
   void PointCloud2Callback(
     sensor_msgs::msg::PointCloud2::ConstSharedPtr message,
     const std::shared_ptr<buffer::MeasurementBuffer> & buffer);
@@ -152,7 +156,8 @@ private:
     const std::shared_ptr<message_filters::SubscriberBase> & subcriber);
 
 
-  laser_geometry::LaserProjection _laser_projector;
+  // One projector per LaserScan source; kept alive for MessageFilter binds.
+  std::vector<std::shared_ptr<laser_geometry::LaserProjection>> _laser_projectors;
   std::vector<std::shared_ptr<message_filters::SubscriberBase>> _observation_subscribers;
   std::vector<std::shared_ptr<tf2_ros::MessageFilterBase>> _observation_notifiers;
   std::vector<std::shared_ptr<buffer::MeasurementBuffer>> _observation_buffers;
