@@ -142,9 +142,21 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
 
   auto sub_opt = rclcpp::SubscriptionOptions();
   sub_opt.callback_group = callback_group_;
+  sub_opt.qos_overriding_options = rclcpp::QosOverridingOptions(
+    {rclcpp::QosPolicyKind::Reliability,
+    rclcpp::QosPolicyKind::Depth,
+    rclcpp::QosPolicyKind::History,
+    rclcpp::QosPolicyKind::Durability}
+  );
 
   auto pub_opt = rclcpp::PublisherOptions();
   sub_opt.callback_group = callback_group_;
+  pub_opt.qos_overriding_options = rclcpp::QosOverridingOptions(
+    {rclcpp::QosPolicyKind::Reliability,
+    rclcpp::QosPolicyKind::Depth,
+    rclcpp::QosPolicyKind::History,
+    rclcpp::QosPolicyKind::Durability}
+  );
 
   if(_publish_voxels)
   {
