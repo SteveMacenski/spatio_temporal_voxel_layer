@@ -148,10 +148,25 @@ rgbd_obstacle_layer:
     vertical_fov_angle: 0.7      #default 0.7, radians
     vertical_fov_offset: 0.0     # default 0, radians. 3D Lidar only. Offset from planar axis. f.e. MID360 has a vFOV of -7deg to 52deg => offset +22.5deg (0.3927 rad)
     horizontal_fov_angle: 1.04   #default 1.04, radians
+    frustum_roll: 0.0            #default 0, radians. 3D Lidar only
+    frustum_pitch: 0.0           #default 0, radians. 3D Lidar only
+    frustum_yaw: 0.0             #default 0, radians. 3D Lidar only
     decay_acceleration: 1.       #default 0, 1/s^2. If laser scanner MUST be 0
     model_type: 0                #default 0 (depth camera). Use 1 for 3D Lidar
 ```
 More configuration samples are included in the example folder, including a 3D lidar one.
+
+For a partial 3D lidar horizontal FOV, the default forward direction is the sensor
+frame's positive X axis. The `frustum_roll`, `frustum_pitch`, and `frustum_yaw`
+parameters rotate the complete lidar frustum relative to the sensor frame using
+fixed-axis roll, pitch, and yaw angles in radians. For example, set
+`frustum_yaw: 1.57079632679` to point the center of the horizontal FOV along the
+sensor frame's positive Y axis. A yaw of `0.78539816339` points it halfway between
+positive X and positive Y. Pitch can be used when the desired direction also has a
+vertical component. The zero defaults preserve the original positive-X behavior.
+These parameters have no observable effect on the horizontal coverage when
+`horizontal_fov_angle` configures a full 360-degree FOV, though roll and pitch still
+rotate the vertical FOV band.
 
 ### local/global_costmap_params.yaml
 

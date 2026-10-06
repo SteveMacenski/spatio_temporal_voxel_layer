@@ -54,7 +54,9 @@ class ThreeDimensionalLidarFrustum : public Frustum
 public:
   ThreeDimensionalLidarFrustum(
     const double & vFOV, const double & vFOVOffset, const double & vFOVPadding,
-    const double & hFOV, const double & min_dist, const double & max_dist);
+    const double & hFOV, const double & min_dist, const double & max_dist,
+    const double & frustum_roll = 0.0, const double & frustum_pitch = 0.0,
+    const double & frustum_yaw = 0.0);
   virtual ~ThreeDimensionalLidarFrustum(void);
 
   // Does nothing in 3D lidar model
@@ -80,6 +82,7 @@ private:
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   Eigen::Quaterniond _orientation_conjugate;
+  Eigen::Quaterniond _frustum_orientation_conjugate;
   bool _valid_frustum;
   bool _full_hFOV;
 };

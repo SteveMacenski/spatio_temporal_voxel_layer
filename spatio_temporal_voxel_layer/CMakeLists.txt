@@ -127,8 +127,13 @@ else()
 endif()
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_three_dimensional_lidar_frustum
+    test/test_three_dimensional_lidar_frustum.cpp)
+  target_link_libraries(test_three_dimensional_lidar_frustum ${library_name})
 endif()
 
 install(TARGETS ${library_name}

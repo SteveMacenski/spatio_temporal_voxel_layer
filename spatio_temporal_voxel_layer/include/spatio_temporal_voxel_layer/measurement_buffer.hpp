@@ -111,7 +111,10 @@ public:
     const bool & clear_buffer_after_reading,
     const ModelType & model_type,
     rclcpp::Clock::SharedPtr clock,
-    rclcpp::Logger logger);
+    rclcpp::Logger logger,
+    const double & frustum_roll = 0.0,
+    const double & frustum_pitch = 0.0,
+    const double & frustum_yaw = 0.0);
 
   ~MeasurementBuffer(void);
 
@@ -137,6 +140,9 @@ public:
   void SetVerticalFovPadding(const double & vertical_fov_padding);
   void SetHorizontalFovAngle(const double & horizontal_fov_angle);
   void SetVerticalFovAngle(const double & vertical_fov_angle);
+  void SetFrustumRoll(const double & frustum_roll);
+  void SetFrustumPitch(const double & frustum_pitch);
+  void SetFrustumYaw(const double & frustum_yaw);
 
   // State knoweldge if sensors are operating as expected
   bool UpdatedAtExpectedRate(void) const;
@@ -160,6 +166,7 @@ private:
   std::list<observation::MeasurementReading> _observation_list;
   double _min_obstacle_height, _max_obstacle_height, _obstacle_range, _tf_tolerance;
   double _min_z, _max_z, _vertical_fov, _vertical_fov_offset, _vertical_fov_padding, _horizontal_fov;
+  double _frustum_roll, _frustum_pitch, _frustum_yaw;
   double _decay_acceleration, _voxel_size;
   bool _marking, _clearing;
   Filters _filter;
