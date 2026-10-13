@@ -174,7 +174,7 @@ In case you want to use the 3D lidar model with defined obstructions (e.g., robo
 ```
 
 Each inner bracket `[az1,el1, az2,el2, ...]` defines one convex polygon (minimum 3 vertices, azimuth in [0, 2π] radians, elevation in [-π/2, π/2] radians). If empty or unset, behavior is identical to the original STVL. Only applies to `model_type: 1`.
-`obstrcution_min_ranges` indicates range before the obstruction in which clearing can still take place.
+`obstruction_min_ranges` indicates range before the obstruction in which clearing can still take place.
 
 #### Edges are great-circle arcs, not az/el straight lines
 
