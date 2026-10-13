@@ -495,7 +495,7 @@ public:
   static std::shared_ptr<ObstructionFilter> fromParam(
     const std::string & polygons_param, const std::vector<double> & min_ranges = {})
   {
-    if (polygons_param.empty()) {
+    if (polygons_param.find_first_not_of(" \t\r\n[]") == std::string::npos) {
       return nullptr;
     }
 
