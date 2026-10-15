@@ -255,15 +255,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // optional obstruction polygons string in az/el, used to persist voxels behind obstructions
     node->get_parameter(name_ + "." + source + "." + "obstruction_polygons", obstruction_polygons);
     // optional per-polygon range to the obstruction, so voxels in front of it are still cleared
-    try {
-      node->get_parameter(
-        name_ + "." + source + "." + "obstruction_min_ranges", obstruction_min_ranges);
-    } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
-      throw std::runtime_error(
-              "Invalid '" + name_ + "." + source +
-              ".obstruction_min_ranges'. should look like [0.0, 2.5] (with decimal points)"
-              + e.what());
-    }
+    node->get_parameter(
+      name_ + "." + source + "." + "obstruction_min_ranges", obstruction_min_ranges);
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
