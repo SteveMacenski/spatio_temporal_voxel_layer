@@ -115,22 +115,26 @@ void MeasurementBuffer::BufferROSCloud(
       tf2_ros::fromMsg(local_pose.header.stamp), tf2::durationFromSec(0.5));
     _buffer.transform(local_pose, global_pose, _global_frame);
 
-    _observation_list.front()._origin.x = global_pose.pose.position.x;
-    _observation_list.front()._origin.y = global_pose.pose.position.y;
-    _observation_list.front()._origin.z = global_pose.pose.position.z;
+    auto & reading = _observation_list.front();
+    reading._origin.x = global_pose.pose.position.x;
+    reading._origin.y = global_pose.pose.position.y;
+    reading._origin.z = global_pose.pose.position.z;
 
-    _observation_list.front()._orientation = global_pose.pose.orientation;
-    _observation_list.front()._obstacle_range_in_m = _obstacle_range;
-    _observation_list.front()._min_z_in_m = _min_z;
-    _observation_list.front()._max_z_in_m = _max_z;
-    _observation_list.front()._vertical_fov_in_rad = _vertical_fov;
-    _observation_list.front()._vertical_fov_offset_in_rad = _vertical_fov_offset;
-    _observation_list.front()._vertical_fov_padding_in_m = _vertical_fov_padding;
-    _observation_list.front()._horizontal_fov_in_rad = _horizontal_fov;
-    _observation_list.front()._decay_acceleration = _decay_acceleration;
-    _observation_list.front()._clearing = _clearing;
-    _observation_list.front()._marking = _marking;
-    _observation_list.front()._model_type = _model_type;
+    reading._orientation = global_pose.pose.orientation;
+    reading._obstacle_range_in_m = _obstacle_range;
+    reading._min_z_in_m = _min_z;
+    reading._max_z_in_m = _max_z;
+    reading._vertical_fov_in_rad = _vertical_fov;
+    reading._vertical_fov_offset_in_rad = _vertical_fov_offset;
+    reading._vertical_fov_padding_in_m = _vertical_fov_padding;
+    reading._horizontal_fov_in_rad = _horizontal_fov;
+    reading._decay_acceleration = _decay_acceleration;
+    reading._clearing = _clearing;
+    reading._marking = _marking;
+    reading._min_obstacle_height = _min_obstacle_height;
+    reading._max_obstacle_height = _max_obstacle_height;
+    reading._model_type = _model_type;
+    reading._source_name = _source_name;
 
     if (_clearing && !_marking) {
       // no need to buffer points
@@ -174,7 +178,7 @@ void MeasurementBuffer::BufferROSCloud(
       pcl_conversions::fromPCL(*cloud_filtered, *cld_global);
     }
 
-    _observation_list.front()._cloud.reset(cld_global.release());
+    reading._cloud.reset(cld_global.release());
   } catch (tf2::TransformException & ex) {
     // if fails, remove the empty observation
     _observation_list.pop_front();
@@ -255,8 +259,7 @@ bool MeasurementBuffer::UpdatedAtExpectedRate(void) const
     RCLCPP_WARN(
       logger_,
       "%s buffer updated in %.2fs, it should be updated every %.2fs.",
-      _topic_name.c_str(), update_time.seconds(),
-      _expected_update_rate.seconds());
+      _topic_name.c_str(), update_time.seconds(), _expected_update_rate.seconds());
   }
   return current;
 }

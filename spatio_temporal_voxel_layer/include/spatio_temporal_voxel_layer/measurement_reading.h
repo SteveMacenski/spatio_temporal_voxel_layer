@@ -41,6 +41,7 @@
 #define SPATIO_TEMPORAL_VOXEL_LAYER__MEASUREMENT_READING_H_
 
 #include <memory>
+#include <string>
 
 // msgs
 #include "geometry_msgs/msg/point.hpp"
@@ -62,19 +63,21 @@ struct MeasurementReading
   /*****************************************************************************/
   MeasurementReading()
   /*****************************************************************************/
-    : _cloud(std::make_shared < sensor_msgs::msg::PointCloud2 > ())
+  : _cloud(std::make_shared<sensor_msgs::msg::PointCloud2>())
   {
   }
 
   /*****************************************************************************/
   MeasurementReading(
-    geometry_msgs::msg::Point & origin, sensor_msgs::msg::PointCloud2 cloud,
-    double obstacle_range, double min_z, double max_z, double vFOV, double vFOVOffset,
-    double vFOVPadding, double hFOV, double decay_acceleration, bool marking,
-    bool clearing, ModelType model_type)
+    geometry_msgs::msg::Point & origin, sensor_msgs::msg::PointCloud2 cloud, double obstacle_range,
+    double min_z, double max_z, double vFOV, double vFOVOffset, double vFOVPadding, double hFOV,
+    double decay_acceleration, bool marking, bool clearing, ModelType model_type,
+    double min_obstacle_height = 0.0, double max_obstacle_height = 3.0,
+    const std::string & source_name = "")
   /*****************************************************************************/
-    : _origin(origin),
-    _cloud(std::make_shared < sensor_msgs::msg::PointCloud2 > (cloud)),
+  : _origin(origin),
+    _orientation(),
+    _cloud(std::make_shared<sensor_msgs::msg::PointCloud2>(cloud)),
     _obstacle_range_in_m(obstacle_range),
     _min_z_in_m(min_z),
     _max_z_in_m(max_z),
@@ -85,24 +88,42 @@ struct MeasurementReading
     _marking(marking),
     _clearing(clearing),
     _decay_acceleration(decay_acceleration),
-    _model_type(model_type)
+    _min_obstacle_height(min_obstacle_height),
+    _max_obstacle_height(max_obstacle_height),
+    _model_type(model_type),
+    _source_name(source_name)
   {
   }
 
   /*****************************************************************************/
   MeasurementReading(sensor_msgs::msg::PointCloud2 cloud, double obstacle_range)
   /*****************************************************************************/
-    : _cloud(std::make_shared < sensor_msgs::msg::PointCloud2 > (cloud)),
-    _obstacle_range_in_m(obstacle_range)
+  : _origin(),
+    _orientation(),
+    _cloud(std::make_shared<sensor_msgs::msg::PointCloud2>(cloud)),
+    _obstacle_range_in_m(obstacle_range),
+    _min_z_in_m(0.0),
+    _max_z_in_m(0.0),
+    _vertical_fov_in_rad(0.0),
+    _vertical_fov_offset_in_rad(0.0),
+    _vertical_fov_padding_in_m(0.0),
+    _horizontal_fov_in_rad(0.0),
+    _marking(0.0),
+    _clearing(0.0),
+    _decay_acceleration(0.0),
+    _min_obstacle_height(0.0),
+    _max_obstacle_height(0.0),
+    _model_type(DEPTH_CAMERA),
+    _source_name("")
   {
   }
 
   /*****************************************************************************/
   MeasurementReading(const MeasurementReading & obs)
   /*****************************************************************************/
-    : _origin(obs._origin),
+  : _origin(obs._origin),
     _orientation(obs._orientation),
-    _cloud(std::make_shared < sensor_msgs::msg::PointCloud2 > (*(obs._cloud))),
+    _cloud(std::make_shared<sensor_msgs::msg::PointCloud2>(*(obs._cloud))),
     _obstacle_range_in_m(obs._obstacle_range_in_m),
     _min_z_in_m(obs._min_z_in_m),
     _max_z_in_m(obs._max_z_in_m),
@@ -113,17 +134,23 @@ struct MeasurementReading
     _marking(obs._marking),
     _clearing(obs._clearing),
     _decay_acceleration(obs._decay_acceleration),
-    _model_type(obs._model_type)
+    _min_obstacle_height(obs._min_obstacle_height),
+    _max_obstacle_height(obs._max_obstacle_height),
+    _model_type(obs._model_type),
+    _source_name(obs._source_name)
   {
   }
 
   geometry_msgs::msg::Point _origin;
   geometry_msgs::msg::Quaternion _orientation;
-  std::shared_ptr < sensor_msgs::msg::PointCloud2 > _cloud;
+  std::shared_ptr<sensor_msgs::msg::PointCloud2> _cloud;
   double _obstacle_range_in_m, _min_z_in_m, _max_z_in_m;
-  double _vertical_fov_in_rad, _vertical_fov_offset_in_rad, _vertical_fov_padding_in_m, _horizontal_fov_in_rad;
+  double _vertical_fov_in_rad, _vertical_fov_offset_in_rad, _vertical_fov_padding_in_m,
+    _horizontal_fov_in_rad;
   double _marking, _clearing, _decay_acceleration;
+  double _min_obstacle_height, _max_obstacle_height;
   ModelType _model_type;
+  std::string _source_name;
 };
 
 }  // namespace observation
