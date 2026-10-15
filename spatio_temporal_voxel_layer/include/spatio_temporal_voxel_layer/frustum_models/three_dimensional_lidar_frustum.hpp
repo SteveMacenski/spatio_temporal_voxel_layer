@@ -42,8 +42,11 @@
 
 // M_PI
 #include <cmath>
+#include <vector>
+#include <memory>
 // STVL
 #include "spatio_temporal_voxel_layer/frustum_models/frustum.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace geometry
 {
@@ -54,7 +57,8 @@ class ThreeDimensionalLidarFrustum : public Frustum
 public:
   ThreeDimensionalLidarFrustum(
     const double & vFOV, const double & vFOVPadding,
-    const double & hFOV, const double & min_dist, const double & max_dist);
+    const double & hFOV, const double & min_dist, const double & max_dist,
+    std::shared_ptr<geometry::ObstructionFilter> obstruction_filter = nullptr);
   virtual ~ThreeDimensionalLidarFrustum(void);
 
   // Does nothing in 3D lidar model
@@ -77,11 +81,15 @@ private:
   double _min_d_squared, _max_d_squared;
   double _tan_vFOVhalf;
   double _tan_vFOVhalf_squared;
+  // externally set postion and orientation of sensor in global space
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
-  Eigen::Quaterniond _orientation_conjugate;
+  // inverse of the pose above, precomputed once to map voxels into sensor-local space
+  Eigen::Matrix3d _global_to_sensor_rotation;
+  Eigen::Vector3d _global_to_sensor_translation;
   bool _valid_frustum;
   bool _full_hFOV;
+  std::shared_ptr<geometry::ObstructionFilter> _obstruction_filter;
 };
 
 }  // namespace geometry
