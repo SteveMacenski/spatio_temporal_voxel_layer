@@ -104,7 +104,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   }
 
   // Check if inside frustum valid vFOV
-  const double z_rel;
+  double z_rel;
   if (_vFOVOffset == 0.0) {
     z_rel = transformed_pt[2];
   } else {
