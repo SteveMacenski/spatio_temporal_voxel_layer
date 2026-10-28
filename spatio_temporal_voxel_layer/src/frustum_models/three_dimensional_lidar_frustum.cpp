@@ -37,15 +37,22 @@
 
 #include <spatio_temporal_voxel_layer/frustum_models/three_dimensional_lidar_frustum.hpp>
 
+#include <memory>
+#include <utility>
+
+#include <rclcpp/logging.hpp>
+
 namespace geometry
 {
 
 /*****************************************************************************/
 ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
   const double & vFOV, const double & vFOVOffset, const double & vFOVPadding, 
-  const double & hFOV, const double & min_dist, const double & max_dist)
+  const double & hFOV, const double & min_dist, const double & max_dist,
+  std::shared_ptr<geometry::ObstructionFilter> obstruction_filter)
 : _vFOV(vFOV), _vFOVOffset(vFOVOffset), _vFOVPadding(vFOVPadding),
-  _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist)
+  _hFOV(hFOV), _min_d(min_dist), _max_d(max_dist),
+  _obstruction_filter(std::move(obstruction_filter))
 /*****************************************************************************/
 {
   _hFOVhalf = _hFOV / 2.0;
@@ -70,7 +77,10 @@ ThreeDimensionalLidarFrustum::~ThreeDimensionalLidarFrustum(void)
 void ThreeDimensionalLidarFrustum::TransformModel(void)
 /*****************************************************************************/
 {
-  _orientation_conjugate = _orientation.conjugate();
+  // Precompute the world->sensor transform matrices once.
+  _global_to_sensor_rotation = _orientation.conjugate().toRotationMatrix();
+  _global_to_sensor_translation = -_global_to_sensor_rotation * _position;
+
   _valid_frustum = true;
 }
 
@@ -80,7 +90,7 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
 {
   Eigen::Vector3d point_in_global_frame(pt[0], pt[1], pt[2]);
   Eigen::Vector3d transformed_pt =
-    _orientation_conjugate * (point_in_global_frame - _position);
+    _global_to_sensor_rotation * point_in_global_frame + _global_to_sensor_translation;
 
   const double radial_distance_squared =
     (transformed_pt[0] * transformed_pt[0]) +
@@ -120,6 +130,15 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
     }
   }
 
+  // Check if the point falls inside any obstruction polygon (blind spot)
+  if (_obstruction_filter && _obstruction_filter->isObstructed(
+      static_cast<float>(transformed_pt[0]),
+      static_cast<float>(transformed_pt[1]),
+      static_cast<float>(transformed_pt[2])))
+  {
+    return false;  // point is in a blind spot
+  }
+
   return true;
 }
 
@@ -136,7 +155,7 @@ void ThreeDimensionalLidarFrustum::SetOrientation(
   const geometry_msgs::msg::Quaternion & quat)
 /*****************************************************************************/
 {
-  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z);
+  _orientation = Eigen::Quaterniond(quat.w, quat.x, quat.y, quat.z).normalized();
 }
 
 /*****************************************************************************/
