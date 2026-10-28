@@ -46,6 +46,7 @@
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
 #include "point_cloud_transport/subscriber_filter.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -174,7 +175,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     double observation_keep_time, expected_update_rate, min_obstacle_height, max_obstacle_height;
     double min_z, max_z, vFOV, vFOVOffset, vFOVPadding;
     double hFOV, decay_acceleration, obstacle_range;
-    std::string topic, sensor_frame, data_type, filter_str, transport_type;
+    std::string topic, sensor_frame, data_type, filter_str, transport_type, obstruction_polygons;
+    std::vector<double> obstruction_min_ranges;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
     int voxel_min_points;
@@ -243,6 +245,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     model_type_int = node->declare_or_get_parameter(
       name_ + "." + source + "." + "model_type", 0);
     ModelType model_type = static_cast<ModelType>(model_type_int);
+    // optional obstruction polygons string in az/el, used to persist voxels behind obstructions
+    obstruction_polygons = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "obstruction_polygons", std::string(""));
+    // optional per-polygon range to the obstruction, so voxels in front of it are still cleared
+    obstruction_min_ranges = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "obstruction_min_ranges", std::vector<double>{});
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
@@ -273,6 +281,20 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           decay_acceleration, marking, clearing, _voxel_size,
           filter, voxel_min_points, enabled, clear_after_reading, model_type,
           node->get_clock(), node->get_logger())));
+
+    // Load obstruction polygons for 3D lidar sources
+    if (model_type == THREE_DIMENSIONAL_LIDAR) {
+      auto obstruction_filter =
+        geometry::ObstructionFilter::fromParam(obstruction_polygons, obstruction_min_ranges);
+      if (obstruction_filter) {
+        RCLCPP_INFO(
+          logger_,
+          "Parsed %zu obstruction polygon(s) for %s",
+          obstruction_filter->nPolygons(),
+          source.c_str());
+        _observation_buffers.back()->SetObstructionFilter(obstruction_filter);
+      }
+    }
 
     // Add buffer to marking observation buffers
     if (marking) {
