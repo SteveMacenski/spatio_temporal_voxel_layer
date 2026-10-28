@@ -51,6 +51,7 @@ ThreeDimensionalLidarFrustum::ThreeDimensionalLidarFrustum(
   _hFOVhalf = _hFOV / 2.0;
   _tan_vFOVhalf = tan(_vFOV / 2.0);
   _tan_vFOVhalf_squared = _tan_vFOVhalf * _tan_vFOVhalf;
+  _tan_vFOVOffset = tan(_vFOVOffset);
   _min_d_squared = _min_d * _min_d;
   _max_d_squared = _max_d * _max_d;
   _full_hFOV = false;
@@ -93,12 +94,17 @@ bool ThreeDimensionalLidarFrustum::IsInside(const openvdb::Vec3d & pt)
   }
 
   // Check if inside frustum valid vFOV
-  const double z_rel = transformed_pt[2] - sqrt(radial_distance_squared) * std::tan(_vFOVOffset);
+  const double z_rel;
+  if (_vFOVOffset == 0.0) {
+    z_rel = transformed_pt[2];
+  } else {
+    // avoid calculating square root of radial distance when not necessary
+    z_rel = transformed_pt[2] - sqrt(radial_distance_squared) * _tan_vFOVOffset;
+  }
   const double v_padded = fabs(z_rel) + _vFOVPadding;
 
-  if (( v_padded * v_padded / radial_distance_squared) >
-    _tan_vFOVhalf_squared)
-  {
+  if (v_padded * v_padded >
+    radial_distance_squared * _tan_vFOVhalf_squared) {
     return false;
   }
 
