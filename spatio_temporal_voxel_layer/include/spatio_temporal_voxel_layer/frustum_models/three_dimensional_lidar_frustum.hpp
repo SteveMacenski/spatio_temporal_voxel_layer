@@ -77,6 +77,7 @@ private:
   double _min_d_squared, _max_d_squared;
   double _tan_vFOVhalf;
   double _tan_vFOVhalf_squared;
+  double _tan_vFOVOffset;
   Eigen::Vector3d _position;
   Eigen::Quaterniond _orientation;
   Eigen::Quaterniond _orientation_conjugate;
