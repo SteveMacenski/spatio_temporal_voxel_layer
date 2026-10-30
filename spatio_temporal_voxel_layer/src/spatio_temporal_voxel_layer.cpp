@@ -42,6 +42,8 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
@@ -55,6 +57,110 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 using rcl_interfaces::msg::ParameterType;
+
+namespace
+{
+
+std::vector<geometry_msgs::msg::Point> sampleObstructionBoundary(
+  const geometry::AngularPolygon & vertices, double visualization_range,
+  size_t samples_per_edge = 12)
+{
+  std::vector<geometry_msgs::msg::Point> loop;
+  const size_t n = vertices.size();
+  if (n < 2 || samples_per_edge == 0) {
+    return loop;
+  }
+
+  std::vector<geometry::Vec3D> directions(n);
+  for (size_t i = 0; i < n; ++i) {
+    // Convert each azimuth/elevation pair into a unit direction on the sphere.
+    const double cos_el = std::cos(vertices[i].elevation);
+    directions[i] = {
+      cos_el * std::cos(vertices[i].azimuth), cos_el * std::sin(vertices[i].azimuth),
+      std::sin(vertices[i].elevation)};
+  }
+
+  loop.reserve(n * samples_per_edge + 1);
+  for (size_t i = 0; i < n; ++i) {
+    const auto & a = directions[i];
+    const auto & b = directions[(i + 1) % n];
+    // The dot product of unit directions is cos(omega), their angle apart.
+    const double dot = std::clamp(a.x * b.x + a.y * b.y + a.z * b.z, -1.0, 1.0);
+    const double omega = std::acos(dot);
+    const double sin_omega = std::sin(omega);
+
+    for (size_t k = 0; k < samples_per_edge; ++k) {
+      const double t = static_cast<double>(k) / static_cast<double>(samples_per_edge);
+      const bool degenerate = sin_omega < 1e-9;
+      // Slerp samples the shorter spherical arc; use linear weights near zero angle.
+      const double wa = degenerate ? (1.0 - t) : std::sin((1.0 - t) * omega) / sin_omega;
+      const double wb = degenerate ? t : std::sin(t * omega) / sin_omega;
+      const geometry::Vec3D direction{
+        wa * a.x + wb * b.x, wa * a.y + wb * b.y, wa * a.z + wb * b.z};
+      const double length = std::sqrt(
+        direction.x * direction.x + direction.y * direction.y + direction.z * direction.z);
+      if (length < 1e-12) {
+        continue;
+      }
+
+      geometry_msgs::msg::Point point;
+      // Normalize the interpolated direction and scale it to the visualization radius.
+      point.x = visualization_range * direction.x / length;
+      point.y = visualization_range * direction.y / length;
+      point.z = visualization_range * direction.z / length;
+      loop.push_back(point);
+    }
+  }
+
+  if (!loop.empty()) {
+    // Repeat the first point so the LINE_STRIP closes the boundary.
+    loop.push_back(loop.front());
+  }
+  return loop;
+}
+
+std::vector<visualization_msgs::msg::Marker> buildObstructionMarkers(
+  const std::string & polygons_param, const std::vector<double> & min_ranges,
+  const std::string & frame, const std::string & ns, double visualization_range)
+{
+  if (!std::isfinite(visualization_range) || visualization_range <= 0.0) {
+    throw std::invalid_argument("obstruction marker range must be finite and greater than zero");
+  }
+
+  std::vector<visualization_msgs::msg::Marker> markers;
+  if (polygons_param.empty() || frame.empty()) {
+    return markers;
+  }
+
+  const auto polygons = geometry::parsePolygonsFromString(polygons_param);
+  for (size_t i = 0; i < polygons.size(); ++i) {
+    const double min_range = i < min_ranges.size() ? min_ranges[i] : 0.0;
+    const std::vector<std::pair<double, float>> loops = min_range > 0.0 ?
+      std::vector<std::pair<double, float>>{{visualization_range, 1.0f}, {min_range, 0.35f}} :
+      std::vector<std::pair<double, float>>{{visualization_range, 1.0f}};
+
+    for (size_t l = 0; l < loops.size(); ++l) {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = frame;
+      marker.ns = ns;
+      marker.id = static_cast<int>(i) * 2 + static_cast<int>(l);
+      marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.pose.orientation.w = 1.0;
+      marker.scale.x = 0.02;
+      marker.color.r = 1.0f;
+      marker.color.g = 0.55f;
+      marker.color.a = loops[l].second;
+      marker.frame_locked = true;
+      marker.points = sampleObstructionBoundary(polygons[i], loops[l].first);
+      markers.push_back(std::move(marker));
+    }
+  }
+
+  return markers;
+}
+
+}  // namespace
 
 /*****************************************************************************/
 SpatioTemporalVoxelLayer::SpatioTemporalVoxelLayer(void)
@@ -155,6 +261,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       "voxel_grid", nav2::qos::StandardTopicQoS(1), callback_group_);
   }
 
+  _obstruction_marker_pub = node->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "obstruction_polygons", rclcpp::QoS(1).transient_local(), callback_group_);
+
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
   _grid_saver = node->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
@@ -179,6 +288,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     std::vector<double> obstruction_min_ranges;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
+    double obstruction_marker_range;
+    bool publish_obstruction_markers;
     int voxel_min_points;
     buffer::Filters filter;
 
@@ -251,6 +362,18 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // optional per-polygon range to the obstruction, so voxels in front of it are still cleared
     obstruction_min_ranges = node->declare_or_get_parameter(
       name_ + "." + source + "." + "obstruction_min_ranges", std::vector<double>{});
+    publish_obstruction_markers = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "publish_obstruction_markers", false);
+    obstruction_marker_range = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "obstruction_marker_range", 1.0);
+    if (
+      publish_obstruction_markers &&
+      (!std::isfinite(obstruction_marker_range) || obstruction_marker_range <= 0.0))
+    {
+      throw std::runtime_error(
+              name_ + "." + source +
+              ".obstruction_marker_range must be finite and greater than zero");
+    }
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
@@ -293,6 +416,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           obstruction_filter->nPolygons(),
           source.c_str());
         _observation_buffers.back()->SetObstructionFilter(obstruction_filter);
+        if (publish_obstruction_markers) {
+          _obstruction_marker_configs.push_back(
+            {_observation_buffers.back(), obstruction_polygons, obstruction_min_ranges,
+              obstruction_marker_range});
+          _obstruction_markers_pending = true;
+        }
       }
     }
 
@@ -759,6 +888,8 @@ void SpatioTemporalVoxelLayer::updateBounds(
   double * min_x, double * min_y, double * max_x, double * max_y)
 /*****************************************************************************/
 {
+  publishObstructionMarkers();
+
   // grabs new max bounds for the costmap
   if (!_enabled) {
     return;
@@ -862,6 +993,39 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
 
   RCLCPP_WARN(logger_, "SpatioTemporalVoxelLayer: Failed to save grid.");
   resp->status = false;
+}
+
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
+/*****************************************************************************/
+{
+  if (!_obstruction_markers_pending || !_obstruction_marker_pub) {
+    return;
+  }
+
+  visualization_msgs::msg::MarkerArray markers;
+  visualization_msgs::msg::Marker clear_all;
+  clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
+  markers.markers.push_back(clear_all);
+
+  for (const auto & config : _obstruction_marker_configs) {
+    const std::string source = config.buffer->GetSourceName();
+    config.buffer->Lock();
+    const std::string frame = config.buffer->GetResolvedSensorFrame();
+    config.buffer->Unlock();
+    if (frame.empty()) {
+      return;
+    }
+
+    for (auto & marker : buildObstructionMarkers(
+        config.polygons, config.min_ranges, frame, source, config.visualization_range))
+    {
+      markers.markers.push_back(std::move(marker));
+    }
+  }
+
+  _obstruction_marker_pub->publish(markers);
+  _obstruction_markers_pending = false;
 }
 
 rcl_interfaces::msg::SetParametersResult
