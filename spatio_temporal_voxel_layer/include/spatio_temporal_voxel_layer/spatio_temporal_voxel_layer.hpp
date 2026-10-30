@@ -67,6 +67,7 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "geometry_msgs/msg/point.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 #include "spatio_temporal_voxel_layer/srv/save_grid.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 // projector
@@ -134,6 +135,16 @@ public:
     std::shared_ptr<spatio_temporal_voxel_layer::srv::SaveGrid::Response> resp);
 
 private:
+  struct ObstructionMarkerConfig
+  {
+    std::shared_ptr<buffer::MeasurementBuffer> buffer;
+    std::string polygons;
+    std::vector<double> min_ranges;
+    double visualization_range;
+  };
+
+  void publishObstructionMarkers(void);
+
   // Sensor callbacks
   void LaserScanCallback(
     sensor_msgs::msg::LaserScan::ConstSharedPtr message,
@@ -177,6 +188,9 @@ private:
   bool _publish_voxels, _mapping_mode, was_reset_;
   nav2::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
   nav2::ServiceServer<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _obstruction_marker_pub;
+  std::vector<ObstructionMarkerConfig> _obstruction_marker_configs;
+  bool _obstruction_markers_pending{false};
   std::unique_ptr<rclcpp::Duration> _map_save_duration;
   rclcpp::Time _last_map_save_time;
   std::string _global_frame;
