@@ -42,11 +42,14 @@
 #include <memory>
 #include <vector>
 #include <mutex>
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 #include "spatio_temporal_voxel_layer/spatio_temporal_voxel_layer.hpp"
 #include "point_cloud_transport/subscriber_filter.hpp"
 #include "spatio_temporal_voxel_layer/obstruction_polygons.hpp"
+#include "spatio_temporal_voxel_layer/obstruction_visualization.hpp"
 
 namespace spatio_temporal_voxel_layer
 {
@@ -155,6 +158,9 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
       "voxel_grid", nav2::qos::StandardTopicQoS(1), callback_group_);
   }
 
+  _obstruction_marker_pub = node->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "obstruction_polygons", rclcpp::QoS(1).transient_local(), callback_group_);
+
   auto save_grid_callback = std::bind(
     &SpatioTemporalVoxelLayer::SaveGridCallback, this, _1, _2, _3);
   _grid_saver = node->create_service<spatio_temporal_voxel_layer::srv::SaveGrid>(
@@ -179,6 +185,8 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     std::vector<double> obstruction_min_ranges;
     bool inf_is_valid = false, clearing, marking;
     bool clear_after_reading, enabled;
+    double obstruction_marker_range;
+    bool publish_obstruction_markers;
     int voxel_min_points;
     buffer::Filters filter;
 
@@ -251,6 +259,18 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
     // optional per-polygon range to the obstruction, so voxels in front of it are still cleared
     obstruction_min_ranges = node->declare_or_get_parameter(
       name_ + "." + source + "." + "obstruction_min_ranges", std::vector<double>{});
+    publish_obstruction_markers = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "publish_obstruction_markers", false);
+    obstruction_marker_range = node->declare_or_get_parameter(
+      name_ + "." + source + "." + "obstruction_marker_range", 1.0);
+    if (
+      publish_obstruction_markers &&
+      (!std::isfinite(obstruction_marker_range) || obstruction_marker_range <= 0.0))
+    {
+      RCLCPP_WARN(logger_, "%s.%s.obstruction_marker_range must be finite and greater than zero. Using default value of 1.0.",
+        name_.c_str(), source.c_str());
+      obstruction_marker_range = 1.0;
+    }
 
     if (filter_str == "passthrough") {
       RCLCPP_INFO(logger_, "Passthough filter activated.");
@@ -293,6 +313,12 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
           obstruction_filter->nPolygons(),
           source.c_str());
         _observation_buffers.back()->SetObstructionFilter(obstruction_filter);
+        if (publish_obstruction_markers) {
+          _obstruction_marker_configs.push_back(
+            {_observation_buffers.back(), obstruction_polygons, obstruction_min_ranges,
+              obstruction_marker_range});
+          _obstruction_markers_pending = true;
+        }
       }
     }
 
@@ -759,6 +785,8 @@ void SpatioTemporalVoxelLayer::updateBounds(
   double * min_x, double * min_y, double * max_x, double * max_y)
 /*****************************************************************************/
 {
+  publishObstructionMarkers();
+
   // grabs new max bounds for the costmap
   if (!_enabled) {
     return;
@@ -862,6 +890,40 @@ void SpatioTemporalVoxelLayer::SaveGridCallback(
 
   RCLCPP_WARN(logger_, "SpatioTemporalVoxelLayer: Failed to save grid.");
   resp->status = false;
+}
+
+/*****************************************************************************/
+void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
+/*****************************************************************************/
+{
+  if (!_obstruction_markers_pending || !_obstruction_marker_pub) {
+    return;
+  }
+
+  std::unique_ptr<visualization_msgs::msg::MarkerArray> markers =
+      std::make_unique<visualization_msgs::msg::MarkerArray>();
+  visualization_msgs::msg::Marker clear_all;
+  clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
+  markers->markers.push_back(clear_all);
+
+  for (const auto & config : _obstruction_marker_configs) {
+    const std::string source = config.buffer->GetSourceName();
+    config.buffer->Lock();
+    const std::string frame = config.buffer->GetResolvedSensorFrame();
+    config.buffer->Unlock();
+    if (frame.empty()) {
+      return;
+    }
+
+    for (auto & marker : obstruction_visualization::buildObstructionMarkers(
+        config.polygons, config.min_ranges, frame, source, config.visualization_range))
+    {
+      markers->markers.push_back(std::move(marker));
+    }
+  }
+
+  _obstruction_marker_pub->publish(std::move(markers));
+  _obstruction_markers_pending = false;
 }
 
 rcl_interfaces::msg::SetParametersResult
