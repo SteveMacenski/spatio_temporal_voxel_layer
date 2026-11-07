@@ -997,10 +997,11 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
     return;
   }
 
-  visualization_msgs::msg::MarkerArray markers;
+  std::unique_ptr<visualization_msgs::msg::MarkerArray> markers =
+      std::make_unique<visualization_msgs::msg::MarkerArray>();
   visualization_msgs::msg::Marker clear_all;
   clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
-  markers.markers.push_back(clear_all);
+  markers->markers.push_back(clear_all);
 
   for (const auto & config : _obstruction_marker_configs) {
     const std::string source = config.buffer->GetSourceName();
@@ -1014,11 +1015,11 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
     for (auto & marker : buildObstructionMarkers(
         config.polygons, config.min_ranges, frame, source, config.visualization_range))
     {
-      markers.markers.push_back(std::move(marker));
+      markers->markers.push_back(std::move(marker));
     }
   }
 
-  _obstruction_marker_pub->publish(markers);
+  _obstruction_marker_pub->publish(std::move(markers));
   _obstruction_markers_pending = false;
 }
 
