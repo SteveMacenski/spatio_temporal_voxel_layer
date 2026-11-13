@@ -129,6 +129,10 @@ endif()
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_depth_camera_frustum test/test_depth_camera_frustum.cpp)
+  target_link_libraries(test_depth_camera_frustum ${library_name})
 endif()
 
 install(TARGETS ${library_name}
