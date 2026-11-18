@@ -96,6 +96,7 @@ void MeasurementBuffer::BufferROSCloud(
 
   const std::string origin_frame =
     _sensor_frame == "" ? cloud.header.frame_id : _sensor_frame;
+  _resolved_sensor_frame = origin_frame;
 
   try {
     // transform into global frame
@@ -281,6 +282,13 @@ std::string MeasurementBuffer::GetSourceName(void) const
 /*****************************************************************************/
 {
   return _source_name;
+}
+
+/*****************************************************************************/
+std::string MeasurementBuffer::GetResolvedSensorFrame(void) const
+/*****************************************************************************/
+{
+  return _sensor_frame.empty() ? _resolved_sensor_frame : _sensor_frame;
 }
 
 /*****************************************************************************/
