@@ -914,14 +914,20 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
   clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
   markers->markers.push_back(clear_all);
 
+  // each source may have either a known or unknown frame. Flags are set to determine to publish
+  // markers and/or clear the pending flag.
+  bool has_known_frame = false;
+  bool has_unknown_frame = false;
   for (const auto & config : _obstruction_marker_configs) {
     const std::string source = config.buffer->GetSourceName();
     config.buffer->Lock();
     const std::string frame = config.buffer->GetResolvedSensorFrame();
     config.buffer->Unlock();
     if (frame.empty()) {
-      return;
+      has_unknown_frame = true;
+      continue;
     }
+    has_known_frame = true;
 
     for (auto & marker : obstruction_visualization::buildObstructionMarkers(
         config.polygons, config.min_ranges, frame, source, config.visualization_range))
@@ -930,8 +936,12 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
     }
   }
 
+  if (!has_known_frame) {
+    return;
+  }
+
   _obstruction_marker_pub->publish(std::move(markers));
-  _obstruction_markers_pending = false;
+  _obstruction_markers_pending = has_unknown_frame;
 }
 
 rcl_interfaces::msg::SetParametersResult
