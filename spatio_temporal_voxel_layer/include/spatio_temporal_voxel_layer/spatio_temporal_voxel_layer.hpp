@@ -187,8 +187,8 @@ private:
 
   bool _publish_voxels, _mapping_mode, was_reset_;
   nav2::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _voxel_pub;
+  nav2::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _obstruction_marker_pub;
   nav2::ServiceServer<spatio_temporal_voxel_layer::srv::SaveGrid>::SharedPtr _grid_saver;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr _obstruction_marker_pub;
   std::vector<ObstructionMarkerConfig> _obstruction_marker_configs;
   bool _obstruction_markers_pending{false};
   std::unique_ptr<rclcpp::Duration> _map_save_duration;
