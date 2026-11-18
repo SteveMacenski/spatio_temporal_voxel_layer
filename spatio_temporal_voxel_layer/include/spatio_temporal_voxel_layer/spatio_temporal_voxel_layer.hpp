@@ -141,6 +141,8 @@ private:
     std::string polygons;
     std::vector<double> min_ranges;
     double visualization_range;
+    std::vector<visualization_msgs::msg::Marker> markers;
+    bool markers_cached{false};
   };
 
   void publishObstructionMarkers(void);

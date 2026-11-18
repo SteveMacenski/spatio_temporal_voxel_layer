@@ -316,7 +316,7 @@ void SpatioTemporalVoxelLayer::onInitialize(void)
         if (publish_obstruction_markers) {
           _obstruction_marker_configs.push_back(
             {_observation_buffers.back(), obstruction_polygons, obstruction_min_ranges,
-              obstruction_marker_range});
+              obstruction_marker_range, {}, false});
           _obstruction_markers_pending = true;
         }
       }
@@ -908,17 +908,16 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
     return;
   }
 
-  std::unique_ptr<visualization_msgs::msg::MarkerArray> markers =
-      std::make_unique<visualization_msgs::msg::MarkerArray>();
-  visualization_msgs::msg::Marker clear_all;
-  clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
-  markers->markers.push_back(clear_all);
-
-  // each source may have either a known or unknown frame. Flags are set to determine to publish
-  // markers and/or clear the pending flag.
+  // Cache markers once each source frame is known; retry unresolved sources on later updates.
   bool has_known_frame = false;
   bool has_unknown_frame = false;
-  for (const auto & config : _obstruction_marker_configs) {
+  bool markers_updated = false;
+  for (auto & config : _obstruction_marker_configs) {
+    if (config.markers_cached) {
+      has_known_frame = true;
+      continue;
+    }
+
     const std::string source = config.buffer->GetSourceName();
     config.buffer->Lock();
     const std::string frame = config.buffer->GetResolvedSensorFrame();
@@ -929,19 +928,32 @@ void SpatioTemporalVoxelLayer::publishObstructionMarkers(void)
     }
     has_known_frame = true;
 
-    for (auto & marker : obstruction_visualization::buildObstructionMarkers(
-        config.polygons, config.min_ranges, frame, source, config.visualization_range))
-    {
-      markers->markers.push_back(std::move(marker));
-    }
+    config.markers = obstruction_visualization::buildObstructionMarkers(
+      config.polygons, config.min_ranges, frame, source, config.visualization_range);
+    config.markers_cached = true;
+    markers_updated = true;
   }
 
   if (!has_known_frame) {
     return;
   }
 
-  _obstruction_marker_pub->publish(std::move(markers));
   _obstruction_markers_pending = has_unknown_frame;
+  if (!markers_updated) {
+    return;
+  }
+
+  std::unique_ptr<visualization_msgs::msg::MarkerArray> markers =
+      std::make_unique<visualization_msgs::msg::MarkerArray>();
+  visualization_msgs::msg::Marker clear_all;
+  clear_all.action = visualization_msgs::msg::Marker::DELETEALL;
+  markers->markers.push_back(clear_all);
+  for (const auto & config : _obstruction_marker_configs) {
+    markers->markers.insert(
+      markers->markers.end(), config.markers.begin(), config.markers.end());
+  }
+
+  _obstruction_marker_pub->publish(std::move(markers));
 }
 
 rcl_interfaces::msg::SetParametersResult
