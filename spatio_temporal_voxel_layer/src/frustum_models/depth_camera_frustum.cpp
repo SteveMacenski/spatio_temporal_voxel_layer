@@ -35,6 +35,7 @@
  * Author: Steve Macenski (steven.macenski@simberobotics.com)
  *********************************************************************/
 
+#include <cmath>
 #include <vector>
 #include "spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp"
 
@@ -73,34 +74,21 @@ void DepthCameraFrustum::ComputePlaneNormals(void)
     return;
   }
 
-  // Z vector and deflected vector capture
-  std::vector<Eigen::Vector3d> deflected_vecs;
-  deflected_vecs.reserve(4);
-  Eigen::Vector3d Z = Eigen::Vector3d::UnitZ();
+  // corner rays of a pinhole camera at unit depth, going CCW
+  const double tan_h = std::tan(_hFOV / 2.);
+  const double tan_v = std::tan(_vFOV / 2.);
+  const std::vector<Eigen::Vector3d> corner_rays = {
+    Eigen::Vector3d(tan_h, -tan_v, 1.),
+    Eigen::Vector3d(tan_h, tan_v, 1.),
+    Eigen::Vector3d(-tan_h, tan_v, 1.),
+    Eigen::Vector3d(-tan_h, -tan_v, 1.)};
 
-  // rotate going CCW
-  Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(_vFOV / 2., Eigen::Vector3d::UnitX()));
-  Eigen::Affine3d ry =
-    Eigen::Affine3d(Eigen::AngleAxisd(_hFOV / 2., Eigen::Vector3d::UnitY()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(-_vFOV / 2., Eigen::Vector3d::UnitX()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  ry = Eigen::Affine3d(Eigen::AngleAxisd(-_hFOV / 2., Eigen::Vector3d::UnitY()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  rx = Eigen::Affine3d(Eigen::AngleAxisd(_vFOV / 2., Eigen::Vector3d::UnitX()));
-  deflected_vecs.push_back(rx * ry * Z);
-
-  // get and store CCW 4 corners for each 2 planes at ends
+  // get and store CCW 4 corners for each 2 planes at depths min_d and max_d
   std::vector<Eigen::Vector3d> pt_;
-  pt_.reserve(2 * deflected_vecs.size());
-  std::vector<Eigen::Vector3d>::iterator it;
-  for (it = deflected_vecs.begin(); it != deflected_vecs.end(); ++it) {
-    pt_.push_back(*(it) * _min_d);
-    pt_.push_back(*(it) * _max_d);
+  pt_.reserve(2 * corner_rays.size());
+  for (const Eigen::Vector3d & ray : corner_rays) {
+    pt_.push_back(ray * _min_d);
+    pt_.push_back(ray * _max_d);
   }
 
   assert(pt_.size() == 8);
