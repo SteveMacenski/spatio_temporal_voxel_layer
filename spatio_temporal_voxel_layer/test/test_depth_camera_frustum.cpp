@@ -1,46 +1,88 @@
-// Copyright 2026 A Gudamu
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*********************************************************************
+ *
+ * Software License Agreement
+ *
+ *  Copyright (c) 2018, Simbe Robotics, Inc.
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of Simbe Robotics, Inc. nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Author: A Gudamu
+ *********************************************************************/
 
 #include <cmath>
 #include <tuple>
 
+#include <Eigen/Geometry>
+
 #include "gtest/gtest.h"
 #include "spatio_temporal_voxel_layer/frustum_models/depth_camera_frustum.hpp"
 
-// vertical FOV, horizontal FOV [deg], min and max depth [m]
-class FrustumTest
-  : public ::testing::TestWithParam<std::tuple<double, double, double, double>>
+namespace
 {
+
+// Camera pose in the world: position (x, y, z) [m] and roll, pitch, yaw [deg]
+struct Pose
+{
+  double x, y, z, roll, pitch, yaw;
 };
 
-// A pinhole camera looking along +z sees a point when its depth is between
-// min and max and its image coordinates x/z, y/z are within the FOV.
-TEST_P(FrustumTest, matchesPinholeModel)
+// Checks IsInside() against a pinhole camera that looks along its +z axis:
+// a point is in view when its depth is between min and max and its image
+// coordinates x/z, y/z are within the FOV. The points are sampled in the
+// camera frame and moved to the world with the camera pose, so a non-identity
+// pose exercises TransformModel().
+void ExpectMatchesPinholeModel(
+  double vfov_deg, double hfov_deg, double min_d, double max_d, const Pose & pose)
 {
-  const double vfov = std::get<0>(GetParam()) * M_PI / 180.;
-  const double hfov = std::get<1>(GetParam()) * M_PI / 180.;
-  const double min_d = std::get<2>(GetParam());
-  const double max_d = std::get<3>(GetParam());
+  const double vfov = vfov_deg * M_PI / 180.;
+  const double hfov = hfov_deg * M_PI / 180.;
   const double tan_h = std::tan(hfov / 2.);
   const double tan_v = std::tan(vfov / 2.);
 
+  const Eigen::Quaterniond q =
+    Eigen::AngleAxisd(pose.yaw * M_PI / 180., Eigen::Vector3d::UnitZ()) *
+    Eigen::AngleAxisd(pose.pitch * M_PI / 180., Eigen::Vector3d::UnitY()) *
+    Eigen::AngleAxisd(pose.roll * M_PI / 180., Eigen::Vector3d::UnitX());
+  const Eigen::Vector3d t(pose.x, pose.y, pose.z);
+
   geometry::DepthCameraFrustum frustum(vfov, hfov, min_d, max_d);
-  geometry_msgs::msg::Point origin;
-  geometry_msgs::msg::Quaternion identity;
-  identity.w = 1.0;
-  frustum.SetPosition(origin);
-  frustum.SetOrientation(identity);
+  geometry_msgs::msg::Point position;
+  position.x = pose.x;
+  position.y = pose.y;
+  position.z = pose.z;
+  geometry_msgs::msg::Quaternion orientation;
+  orientation.x = q.x();
+  orientation.y = q.y();
+  orientation.z = q.z();
+  orientation.w = q.w();
+  frustum.SetPosition(position);
+  frustum.SetOrientation(orientation);
   frustum.TransformModel();
 
   const double step = 0.0937;  // not a divisor of the bounds
@@ -56,7 +98,8 @@ TEST_P(FrustumTest, matchesPinholeModel)
           continue;
         }
         const bool expected = dx > 0. && dy > 0. && dz > 0.;
-        const bool inside = frustum.IsInside(openvdb::Vec3d(x, y, z));
+        const Eigen::Vector3d w = q * Eigen::Vector3d(x, y, z) + t;
+        const bool inside = frustum.IsInside(openvdb::Vec3d(w.x(), w.y(), w.z()));
         checked++;
         wrong_inside += inside && !expected;
         wrong_outside += !inside && expected;
@@ -66,6 +109,29 @@ TEST_P(FrustumTest, matchesPinholeModel)
   EXPECT_GT(checked, 1000);
   EXPECT_EQ(wrong_inside, 0) << "points outside the camera's view counted as inside";
   EXPECT_EQ(wrong_outside, 0) << "points in the camera's view counted as outside";
+}
+
+}  // namespace
+
+// vertical FOV, horizontal FOV [deg], min and max depth [m]
+class FrustumTest
+  : public ::testing::TestWithParam<std::tuple<double, double, double, double>>
+{
+};
+
+TEST_P(FrustumTest, matchesPinholeModelAtIdentityPose)
+{
+  const auto [vfov, hfov, min_d, max_d] = GetParam();
+  ExpectMatchesPinholeModel(vfov, hfov, min_d, max_d, Pose{0., 0., 0., 0., 0., 0.});
+}
+
+TEST_P(FrustumTest, matchesPinholeModelAtTransformedPose)
+{
+  const auto [vfov, hfov, min_d, max_d] = GetParam();
+  // translated and rotated about all three axes
+  ExpectMatchesPinholeModel(vfov, hfov, min_d, max_d, Pose{1.5, -0.7, 0.4, 20., -35., 120.});
+  // optical frame of a camera mounted on a robot looking along the robot's +x
+  ExpectMatchesPinholeModel(vfov, hfov, min_d, max_d, Pose{0.2, 0., 1.1, -90., 0., -90.});
 }
 
 INSTANTIATE_TEST_SUITE_P(
